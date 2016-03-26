@@ -79,6 +79,10 @@
     h2 {
         margin-bottom: $spacing-unit / 2;
     }
+
+    p {
+        margin-bottom: 0;
+    }
 }
 
 .post-meta {
@@ -90,6 +94,11 @@
     display: block;
     font-size: $heading-font-size;
     font-family: $heading-font-family;
+}
+
+.post-continue {
+    font-size: $base-font-size;
+    margin-bottom: $spacing-unit;
 }
 
 

@@ -14,6 +14,8 @@ layout: default
             </h2>
 
             {{ post.excerpt }}
+
+            <a class="post-continue" href="{{ post.url | prepend: site.baseurl }}">Continue reading...</a>
         </li>
         {% endfor %}
     </ul>
