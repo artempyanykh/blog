@@ -10,7 +10,7 @@ title: Connecting Dots
 email: artem.pyanykh@gmail.com
 description: > # this means to ignore newlines until "baseurl:"
   Math, programming, productivity -- these are the topics that interest me the most.
-  And that is what I may write about from time to time.
+  When I happen to find time I write something interesting on the subject.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://artempyanykh.github.io" # the base hostname & protocol for your site
 twitter_username: artem_pyanykh

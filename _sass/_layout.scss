@@ -44,7 +44,7 @@
 
     // Remove navs on smaller screens
     @include media-query($on-palm) {
-        .page-link {
+        .hide-on-mobile {
             display: none;
         }
     }
@@ -134,4 +134,31 @@
             font-size: $h4-mob-heading-font-size;
         }
     }
+}
+
+/**
+* About
+*/
+
+.about {
+    .post-title {
+        text-align: center;
+    }
+}
+
+.about-photo {
+    height: 140px;
+    width: 140px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: auto;
+}
+
+.about-tldr {
+    width: $content-width / 2;
+    margin: $spacing-unit auto;
+}
+
+.about-extended {
+    margin-top: $spacing-unit;
 }
