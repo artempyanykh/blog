@@ -3,16 +3,33 @@
 ---
 @charset "utf-8";
 
-
+@import url(https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,400italic,600,600italic,700,700italic);
+@import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,400italic,700,700italic);
+@import url(https://fonts.googleapis.com/css?family=Dancing+Script);
 
 // Our variables
-$base-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+$logo-font-family: 'Dancing Script', cursive;
+$logo-font-size: 32px;
+$logo-font-weight: 400;
+
+$heading-font-family: "Droid Serif", serif;
+$heading-font-weight: 400;
+$heading-font-size: 32px;            
+$heading-mob-font-size: $heading-font-size - 2;            
+$h2-heading-font-size: $heading-font-size - 4;
+$h2-mob-heading-font-size: $h2-heading-font-size - 2;
+$h3-heading-font-size: $h2-heading-font-size - 2;
+$h3-mob-heading-font-size: $h3-heading-font-size - 2;
+$h4-heading-font-size: $h3-heading-font-size - 2;
+$h4-mob-heading-font-size: $h4-heading-font-size - 2;
+
+$base-font-family: "Source Sans Pro", sans-serif;
 $base-font-size:   16px;
 $base-font-weight: 400;
 $small-font-size:  $base-font-size * 0.875;
 $base-line-height: 1.5;
 
-$spacing-unit:     30px;
+$spacing-unit:     20px;
 
 $text-color:       #111;
 $background-color: #fdfdfd;
@@ -28,8 +45,6 @@ $content-width:    800px;
 $on-palm:          600px;
 $on-laptop:        800px;
 
-
-
 // Use media queries like this:
 // @include media-query($on-palm) {
 //     .wrapper {
@@ -42,8 +57,6 @@ $on-laptop:        800px;
         @content;
     }
 }
-
-
 
 // Import partials from `sass_dir` (defaults to `_sass`)
 @import
