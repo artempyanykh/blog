@@ -1,23 +1,24 @@
 ---
-layout: default
+layout: list
 ---
 
-<div class="home">
 
-    <ul class="post-list">
-        {% for post in site.posts %}
-        <li>
-            <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
+<ul class="post-list">
+  {% for post in site.posts %}
+  <li>
+    <div class="post-list-meta">{{ post.date | date: "%b %-d, %Y" }}</div>
+    <h2 class="post-list-title">
+      <a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
+    </h2>
 
-            <h2>
-                <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
-            </h2>
+    <summary class="post-list-excerpt">
+      {{ post.excerpt }}
+    </summary>
 
-            {{ post.excerpt }}
+    <a class="post-list-continue" href="{{ post.url | prepend: site.baseurl }}">
+      continue reading&hellip;
+    </a>
+  </li>
+  {% endfor %}
+</ul>
 
-            <a class="post-continue" href="{{ post.url | prepend: site.baseurl }}">Continue reading...</a>
-        </li>
-        {% endfor %}
-    </ul>
-
-</div>

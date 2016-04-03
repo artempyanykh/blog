@@ -1,0 +1,16 @@
+.about-photo {
+  height: 140px;
+  width: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: auto;
+  margin-bottom: $spacing-unit;
+}
+
+.about-tldr {
+  padding: 0 $spacing-unit * 4;
+
+  @include media-query($on-palm) {
+    padding: 0;
+  }
+}

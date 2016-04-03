@@ -1,0 +1,55 @@
+.header-page {
+  display: flex;
+  justify-content: space-between;
+}
+
+.header-page-link {
+  cursor: pointer;
+  @include flex(0 1 auto);
+  margin-right: $spacing-unit;
+
+  @include media-query($on-palm) {
+    display: none;
+  }
+}
+
+.header-page .logo {
+  position: relative;
+  top: $spacing-unit / 4;
+
+  width: $heading-font-size - 2;
+  height: $heading-font-size - 2;
+
+  border-bottom: dotted 1px $p-black-c;
+  @include transition("color 0.5s ease, background-color 0.5s ease, border-bottom-color 0.5s ease");
+  &:hover {
+    color: $p-red-c;
+    background-color: $p-smoke-c;
+    border-bottom-color: $p-red-c;
+  }
+
+  @include logo-hover(
+      $p-white-c, $p-smoke-c,
+      $p-black-c, $p-red-c
+  );
+}
+
+.header-page-title {
+  @include flex(1 auto);
+
+  text-align: right;
+  font-size: $heading-font-size;
+
+  @include media-query($on-palm) {
+    text-align: left;
+    font-size: $heading-mob-font-size;
+  }
+}
+
+.post-meta {
+  @extend %vertical-rhythm;
+
+  time {
+    border-top: 1px dotted $p-black-c;
+  }
+}

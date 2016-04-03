@@ -1,6 +1,6 @@
 ---
-layout: post
-title: "> blog init _"
+layout: page
+title: Where it all begins
 date: 2016-03-26
 categories: other
 ---
