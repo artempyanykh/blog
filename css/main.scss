@@ -12,23 +12,23 @@
 $heading-font-family: "Droid Serif", serif;
 $heading-font-weight: 400;
 
-$heading-font-size: 32px;
-$heading-mob-font-size: $heading-font-size - 6;
+$heading-font-size: 30px;
+$heading-mob-font-size: $heading-font-size - 4;
 
 $h2-heading-font-size: $heading-font-size - 4;
-$h2-mob-heading-font-size: $h2-heading-font-size - 6;
+$h2-mob-heading-font-size: $h2-heading-font-size - 4;
 
 $h3-heading-font-size: $h2-heading-font-size - 2;
-$h3-mob-heading-font-size: $h3-heading-font-size - 6;
+$h3-mob-heading-font-size: $h3-heading-font-size - 4;
 
 $h4-heading-font-size: $h3-heading-font-size - 2;
-$h4-mob-heading-font-size: $h4-heading-font-size - 6;
+$h4-mob-heading-font-size: $h4-heading-font-size - 4;
 
 $base-font-family: "Source Sans Pro", sans-serif;
 $base-font-weight: 400;
 
 $base-font-size: 18px;
-$base-mob-font-size: 14px;
+$base-mob-font-size: 16px;
 
 $small-font-size: $base-font-size * 0.75;
 $small-mob-font-size: $base-mob-font-size * 0.75;
