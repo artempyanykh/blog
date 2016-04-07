@@ -4,6 +4,9 @@
 {% include head.html %}
 
 <body>
+{% if jekyll.environment != "development" %}
+  {% include ga.html %}
+{% endif %}
 
 <header class="header">
   <h1 style="display: none;">Learning is fun</h1>
