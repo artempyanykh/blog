@@ -128,9 +128,9 @@ blockquote {
  */
 pre,
 code {
-  /* border: 1px solid $p-gray-light-c; */
-  border-radius: 3px;
-  background-color: $p-smoke-c;
+  border: 1px dotted $p-gray-c;
+  border-radius: 2px;
+  background-color: #fff;
   font-family: $code-font-family;
   @include cross-font-size($code-base-size, $code-mob-size);
 }
@@ -186,6 +186,24 @@ pre {
       background-color: $p-smoke-c;
       border-bottom-color: $p-red-c;
     }
+  }
+
+  p {
+    text-align: justify;
+  }
+
+  img {
+    display: block;
+    margin: 0 auto;
+  }
+
+  hr {
+    margin-left: -$spacing-unit;
+    margin-right: -$spacing-unit;
+  }
+
+  .footnotes {
+    margin-top: $spacing-unit;
   }
 }
 
