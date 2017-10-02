@@ -145,7 +145,7 @@ Give it a minute and think which law doesn't hold here.
 Sometimes when there is a functor defined with `type F0[A] = F[A]`, people say that `F` is a functor.
 This is confusing and not true.
 `F[_]` is just a type constructor or, in other words, a mapping from any type `A` to some other type.
-A functor as a thing on its own and specific `F` is just a part of its definition.
+A functor is a thing on its own, and specific `F` is just a part of its definition.
 
 An interesting question is whether there is a single functor with `type F0[A] = List[A]`.
 The answer is _yes_, and it actually holds true for pretty much every parametric data type.
