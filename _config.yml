@@ -20,3 +20,5 @@ repository: https://github.com/artempyanykh/artempyanykh.github.io.git
 
 # Build settings
 markdown: kramdown
+plugins:
+  - jekyll-org
