@@ -2,6 +2,7 @@
 source "https://rubygems.org"
 
 gem 'github-pages', group: :jekyll_plugins
+gem 'jekyll-org', group: :jekyll_plugins
 
 group :development do
   gem 'guard'
