@@ -6,8 +6,8 @@
 </description>
     <link>http://localhost:4000/blog/</link>
     <atom:link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Thu, 20 Dec 2018 14:28:49 +0300</pubDate>
-    <lastBuildDate>Thu, 20 Dec 2018 14:28:49 +0300</lastBuildDate>
+    <pubDate>Thu, 20 Dec 2018 14:35:34 +0300</pubDate>
+    <lastBuildDate>Thu, 20 Dec 2018 14:35:34 +0300</lastBuildDate>
     <generator>Jekyll v3.7.4</generator>
     
       <item>
@@ -51,11 +51,11 @@ _main:
       <item>
         <title>What is a Functor anyway?</title>
         <description>&lt;p&gt;&lt;strong&gt;A functor is a homomorphism of categories.&lt;/strong&gt;
-Nice and short definition, but it made absolutely no sense to me.&lt;br /&gt;
+Nice and short definition, but it made absolutely no sense to me.
 At the time I decided to step up my FP game, I was pretty well versed in Scalaz, confidently used Functor, Monad, Applicative and the like.
 So, I jumped into a textbook on Category Theory… and got totally stuck.
 Something just hadn’t clicked in my mind, I couldn’t map the math to Scalaz code, and instead of being enlightened I only got confused.
-Then other things came up, and Cats were put on a back-burner.&lt;br /&gt;
+Then other things came up, and Cats were put on a back-burner.
 The issue as I see it now was in the wrong mindset I developed while being exposed only to the code and internet articles.
 Recently, I made another attempt in learning Category Theory which is on-going now and to some extent more successful.&lt;/p&gt;
 
@@ -79,7 +79,7 @@ So, let’s start with the most basic thing in Cats, namely the definition of a 
 This is best visualized with an actual arrow going from $A$ to $B$, that is $A \xrightarrow{f} B$.&lt;/p&gt;
 
 &lt;p&gt;For each pair of arrows $f$ and $g$ such that $\cod f = \dom g$ there should exist another arrow $g \circ f$ called &lt;em&gt;a composition&lt;/em&gt;.
-This operation should be associative, that is 
+This operation should be associative, that is
 \[
 (h \circ g) \circ f = h \circ (g \circ f).
 \]&lt;/p&gt;
@@ -112,7 +112,7 @@ Let’s make the last step and figure out what category we’re dealing with as 
 I like to call it $\mathscr{F}lower$.
 It consists of one artificial object $O$, and four arrows denoted as $0, 1, 2, 3$, with the composition being addition modulo 4.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/assets/posts/what-is-a-functor/graphs.svg&quot; width=&quot;200&quot; alt=&quot;Flower category&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/blog/assets/posts/what-is-a-functor/graphs.svg&quot; width=&quot;200&quot; alt=&quot;Flower category&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;A simple exercise for a reader would be to prove that:&lt;/p&gt;
 
@@ -213,7 +213,7 @@ Fascinating!&lt;/p&gt;
 &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;We don’t have a parametric data type here. 
+&lt;p&gt;We don’t have a parametric data type here.
 Instead, we map every type to &lt;code class=&quot;highlighter-rouge&quot;&gt;Int&lt;/code&gt;.
 It’s a good exercise to show that this actually is a functor.&lt;/p&gt;
 

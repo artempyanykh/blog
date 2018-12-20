@@ -6,11 +6,11 @@ use_math: true
 ---
 
 **A functor is a homomorphism of categories.**
-Nice and short definition, but it made absolutely no sense to me.  
+Nice and short definition, but it made absolutely no sense to me.
 At the time I decided to step up my FP game, I was pretty well versed in Scalaz, confidently used Functor, Monad, Applicative and the like.
 So, I jumped into a textbook on Category Theory... and got totally stuck.
 Something just hadn't clicked in my mind, I couldn't map the math to Scalaz code, and instead of being enlightened I only got confused.
-Then other things came up, and Cats were put on a back-burner.  
+Then other things came up, and Cats were put on a back-burner.
 The issue as I see it now was in the wrong mindset I developed while being exposed only to the code and internet articles.
 Recently, I made another attempt in learning Category Theory which is on-going now and to some extent more successful.
 
@@ -32,7 +32,7 @@ Each arrow has a domain $\dom f = A \in C_0$ and a codomain $\cod f = B \in C_0$
 This is best visualized with an actual arrow going from $A$ to $B$, that is $A \xrightarrow{f} B$.
 
 For each pair of arrows $f$ and $g$ such that $\cod f = \dom g$ there should exist another arrow $g \circ f$ called *a composition*.
-This operation should be associative, that is 
+This operation should be associative, that is
 \\[
 (h \circ g) \circ f = h \circ (g \circ f).
 \\]
@@ -63,7 +63,7 @@ It helps to consider another example of a category.
 I like to call it $\mathscr{F}lower$.
 It consists of one artificial object $O$, and four arrows denoted as $0, 1, 2, 3$, with the composition being addition modulo 4.
 
-<img src="/assets/posts/what-is-a-functor/graphs.svg" width="200" alt="Flower category">
+<img src="{{ "/assets/posts/what-is-a-functor/graphs.svg" | prepend: site.baseurl }}" width="200" alt="Flower category">
 
 A simple exercise for a reader would be to prove that:
 
@@ -160,7 +160,7 @@ class IntFunctor extends Functor {
 }
 ```
 
-We don't have a parametric data type here. 
+We don't have a parametric data type here.
 Instead, we map every type to `Int`.
 It's a good exercise to show that this actually is a functor.
 
@@ -201,10 +201,10 @@ The downside of the latter definition, in my opinion, is that it hides _objects 
 At this point, I'm pretty happy with my understanding of basic categorical notions and how to map them to the code.
 There are a couple more things that require a deeper dive in, for instance, the notion of _structure preserving_ actually has a precise definition, although it was used rather loosely in this post.
 Also, the proof of uniqueness of `ListFunctor` and other similar functors is still an open question to me.
-   
+
 ---
 ---
-  
+
 [^morphisms]: Arrows are also called morphisms.
 [^lang]: $\mathscr{L}$ from "**L**anguage". I'm deliberately avoiding possible complications related to the presence of side-effects and such.
 [^endo]: _Endo_ stands for "internal/within".
