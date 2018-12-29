@@ -1,5 +1,0 @@
-directories ["../blog"]
-
-guard 'livereload' do
-  watch /^.*\.html/
-end
