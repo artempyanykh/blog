@@ -5,6 +5,7 @@ gem 'github-pages', group: :jekyll_plugins
 gem 'jekyll-org', group: :jekyll_plugins
 
 group :development do
+  gem 'foreman'
   gem 'guard'
   gem 'guard-livereload'
 end

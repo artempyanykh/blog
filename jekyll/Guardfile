@@ -1,3 +1,5 @@
+directories ["../blog"]
+
 guard 'livereload' do
-  watch /^_site/
+  watch /^.*\.html/
 end

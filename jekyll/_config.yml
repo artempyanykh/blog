@@ -5,8 +5,8 @@
 # For technical reasons, this file is *NOT* reloaded automatically when you use
 # 'jekyll serve'. If you change this file, please restart the server process.
 
-# Site settings
-title: Learning is fun
+#### Site settings
+title: Lab notes
 email: artem.pyanykh@gmail.com
 description: > # this means to ignore newlines until "baseurl:"
   Math, programming, productivity -- these are the topics that interest me the most.
@@ -19,7 +19,8 @@ github_username:  artempyanykh
 linkedin_username: artempyanykh
 repository: https://github.com/artempyanykh/artempyanykh.github.io.git
 
-# Build settings
+#### Build settings
 markdown: kramdown
+highlighter: rouge
 plugins:
   - jekyll-org

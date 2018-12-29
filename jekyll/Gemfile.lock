@@ -19,6 +19,7 @@ GEM
     concurrent-ruby (1.1.4)
     dnsruby (1.61.2)
       addressable (~> 2.5)
+    dotenv (0.7.0)
     em-websocket (0.5.1)
       eventmachine (>= 0.12.9)
       http_parser.rb (~> 0.6.0)
@@ -29,6 +30,9 @@ GEM
     faraday (0.15.4)
       multipart-post (>= 1.2, < 3)
     ffi (1.9.25)
+    foreman (0.64.0)
+      dotenv (~> 0.7.0)
+      thor (>= 0.13.6)
     formatador (0.2.5)
     forwardable-extended (2.6.0)
     gemoji (3.0.0)
@@ -279,6 +283,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  foreman
   github-pages
   guard
   guard-livereload

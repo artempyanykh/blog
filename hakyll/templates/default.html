@@ -1,0 +1,58 @@
+<!-- -*- tab-width: 4; -*- -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>$title$</title>
+    <link rel="stylesheet" href="/css/default.css" />
+    <link rel="stylesheet" href="/css/syntax.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+  </head>
+  <body>
+    <header>
+      <h1 style="display: none;">Lab notes</h1>
+
+      <div class="header-index">
+        <span class="header-index-link">
+          $partial("templates/logo.html")$
+          <a href="/">
+            <span class="header-index-text">ab notes</span>
+          </a>
+        </span>
+      </div>
+    </header>
+
+    <main role="main">
+      $body$
+    </main>
+
+    <footer>
+      <nav class="footer-nav">
+        <a class="footer-nav-item" href="/">
+          <span class="fa fa-home fa-lg"></span>
+        </a>
+
+        <a class="footer-nav-item" href="https://github.com/$github_username$">
+          <span class="fa fa-github fa-lg"></span>
+        </a>
+
+        <a class="footer-nav-item" href="https://ru.linkedin.com/in/$linkedin_username$/en">
+          <span class="fa fa-linkedin fa-lg"></span>
+        </a>
+
+        <a class="footer-nav-item" href="https://twitter.com/$twitter_username$">
+          <span class="fa fa-twitter fa-lg"></span>
+        </a>
+
+        <a class="footer-nav-item" href="/about.html">
+          <span class="fa fa-question fa-lg"></span>
+        </a>
+      </nav>
+    </footer>
+    $partial("templates/ga.html")$
+  </body>
+</html>

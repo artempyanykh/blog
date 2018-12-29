@@ -1,0 +1,1 @@
+/Users/artempyanykh/@dev/artempyanykh.github.io/hakyll/posts/2018-12-26-asm-minimalism.org

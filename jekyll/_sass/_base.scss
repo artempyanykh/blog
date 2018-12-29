@@ -130,7 +130,7 @@ pre,
 code {
   border: 1px dotted $p-gray-c;
   border-radius: 2px;
-  background-color: #fff;
+  // background-color: #fff;
   font-family: $code-font-family;
   @include cross-font-size($code-base-size, $code-mob-size);
 }

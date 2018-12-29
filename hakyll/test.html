@@ -1,0 +1,49 @@
+<p>— title: Bare minimum category: asm date: 2018-12-27 —</p>
+<p>A <code>hello-world</code> is the gold standard for a minimal program. An implementation usually takes a couple lines of code in a high(-er) level programming language, and is pretty trivial. However, things that are happening under the hood are far from being trivial including memory allocation, register and stack manipulation, and interop with an OS kernel. With that said, going a couple layers down that stack to the bare assembly in order to build a minimal working program (and a couple other ones) seemed like fun to me.</p>
+<!--more-->
+
+<h1 id="preliminaries">Preliminaries</h1>
+<p>First, let's start with a couple <code>hello-world</code> implementations: in Haskell and in C. In implementation in Haskell is a simple one-liner:</p>
+<div class="sourceCode" id="cb1" data-startFrom="" data-tangle="haskell-hello-world.hs"><pre class="sourceCode numberSource haskell numberLines"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" title="1">main <span class="fu">=</span> <span class="fu">putStrLn</span> <span class="st">&quot;Hello World!&quot;</span></a></code></pre></div>
+<p>We can compile it using <code>ghc</code> and run getting the expected output:</p>
+<div class="sourceCode" id="cb2" data-startFrom="" data-results="verbatim" data-exports="both"><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb2-1" title="1">ghc haskell-hello-world.hs -o bin/haskell-hello-world &gt; /dev/null</a>
+<a class="sourceLine" id="cb2-2" title="2">bin/haskell-hello-world</a>
+<a class="sourceLine" id="cb2-3" title="3">echo $?</a></code></pre></div>
+<pre class="example"><code>Hello World!
+0
+</code></pre>
+<p>An implementation in C is a bit longer, but conceptually not that different:</p>
+<div class="sourceCode" id="c-hello-world" data-org-language="C" data-startFrom="" data-tangle="c-hello-world.c"><pre class="sourceCode numberSource c numberLines"><code class="sourceCode c"><a class="sourceLine" id="c-hello-world-1" title="1"><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></a>
+<a class="sourceLine" id="c-hello-world-2" title="2"></a>
+<a class="sourceLine" id="c-hello-world-3" title="3"><span class="dt">int</span> main(<span class="dt">int</span> argc, <span class="dt">const</span> <span class="dt">char</span> *argv[])</a>
+<a class="sourceLine" id="c-hello-world-4" title="4">{</a>
+<a class="sourceLine" id="c-hello-world-5" title="5">        printf(<span class="st">&quot;Hello World!</span><span class="sc">\n</span><span class="st">&quot;</span>);</a>
+<a class="sourceLine" id="c-hello-world-6" title="6">        <span class="cf">return</span> <span class="dv">0</span>;</a>
+<a class="sourceLine" id="c-hello-world-7" title="7">}</a></code></pre></div>
+<p>Again, compiling and running this code produces what is expected:</p>
+<div class="sourceCode" id="cb4" data-startFrom="" data-results="verbatim" data-exports="both"><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb4-1" title="1">cc c-hello-world.c -o bin/c-hello-world &gt; /dev/null</a>
+<a class="sourceLine" id="cb4-2" title="2">bin/c-hello-world</a>
+<a class="sourceLine" id="cb4-3" title="3">echo $?</a></code></pre></div>
+<pre class="example"><code>Hello World!
+0
+</code></pre>
+<p>The C code nicely highlights some of the main points in the program's structure, that will be helpful later on, specifically:</p>
+<ol>
+<li>We define an entry point into our program called <code>main</code>.</li>
+<li>We take command-line arguments in <code>argc</code> and <code>argv</code>.</li>
+<li>We call a function <code>printf</code> from C standard library that our executable gets linked with.</li>
+<li>We return an exit code.</li>
+</ol>
+<p>That's quite a few things, especially for an implementation in assembly. Can we do less, and still produce a valid executable? Sure!</p>
+<h1 id="do-nothing-in-assembly">Do nothing in assembly</h1>
+<p>First things first. I'll be using <code>nasm</code> and hence Intel's assembly dialect. The code will be written for 64-bit MacOS X<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
+<div class="sourceCode" id="cb6" data-startFrom="" data-tangle="do-nothing-incomplete.asm"><pre class="sourceCode numberSource asm numberLines"><code class="sourceCode fasm"><a class="sourceLine" id="cb6-1" title="1">        <span class="bu">SECTION</span> .text</a>
+<a class="sourceLine" id="cb6-2" title="2">        GLOBAL _main</a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="fu">_main:</span></a></code></pre></div>
+<h1 id="footnotes">Footnotes</h1>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>That fact that it's 64-bit is important as the calling conventions for 32-bit code are quite different.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+</ol>
+</section>

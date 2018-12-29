@@ -1,2 +1,5 @@
 .sass-cache/
 .texpadtmp/
+.stack-work/
+_site/
+_cache/

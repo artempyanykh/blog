@@ -1,0 +1,622 @@
+* Tutorial (variations on "hello world")
+** Part 1. First programs and sub-routines
+   :PROPERTIES:
+   :header-args: :exports both :eval never-export
+   :END:
+     Let's try to add some asm code block and see how it can be
+     compiled, executed, and results printed into buffer.
+
+     A good first step would be to write a minimal program in assembly
+     that runs and properly terminates. The code would look like
+     #+BEGIN_SRC asm :tangle asm-min-dyn.asm
+               SECTION .text
+               GLOBAL _main
+       _main:
+               mov     rax, 13         ; exit code
+               ret
+     #+END_SRC
+     #+BEGIN_SRC shell :results verbatim
+     nasm asm-min-dyn.asm -f macho64 -o build64/asm-min-dyn.o -g && \
+       ld build64/asm-min-dyn.o -lc -o bin/asm-min-dyn -macosx_version_min 10.13.0 -e _main
+     bin/asm-min-dyn
+     echo $?
+     #+END_SRC
+
+     #+RESULTS:
+     : 13
+
+     This code however uses dynamic linking and at the last line
+     passes control to C runtime with ~ret~ instruction. Thus while it
+     is minimal in terms of number of lines, it's not conceptually
+     minimal.
+
+     To make a truly minimal program that does nothing we need a
+     statically linked binary, which requires us to take control over
+     program termination in our hands. All that we need to to is call
+     an ~exit~ syscal with a return code. Let's see how it looks.
+     #+BEGIN_SRC asm :tangle asm-min-static.asm
+               SECTION .text
+               GLOBAL _main
+
+       _main:
+               mov     rdi, 42         ; return code
+               mov     rax, 0x02000001 ; exit syscall on 64bit Macho
+       exit:
+               syscall
+     #+END_SRC
+     #+BEGIN_SRC shell :results verbatim
+     nasm asm-min-static.asm -f macho64 -o build64/asm-min-static.o -g && \
+       ld build64/asm-min-static.o -static -o bin/asm-min-static -macosx_version_min 10.13.0 -e _main
+     bin/asm-min-static
+     echo $?
+     #+END_SRC
+
+     #+RESULTS:
+     : 42
+
+     Good! The program starts and immediately ends with an supplied
+     exit code. Note register values immediately before program exit,
+     in particular ~rbp~ and ~rsp~. We'll get back to it later:
+     #+BEGIN_EXAMPLE
+       General Purpose Registers:
+              rax = 0x0000000002000001
+              rbx = 0x0000000000000000
+              rcx = 0x0000000000000000
+              rdx = 0x0000000000000000
+              rdi = 0x000000000000002a
+              rsi = 0x0000000000000000
+              rbp = 0x0000000000000000
+              rsp = 0x00007ffeefbff590
+              ...
+     #+END_EXAMPLE
+
+     #+BEGIN_SRC asm :tangle st-align.asm
+               section .data
+               msg     db      'Hello stack!', 0x0, 0xA
+               len     equ     $ - msg
+
+               section .text
+               global _start
+
+       _start:
+               ;; push rbp
+               ;; mov rbp, rsp
+
+               call _print
+
+               ;; pop rbp
+               ret
+
+       _print:
+               mov rdi, 1
+               mov rsi, msg
+               mov rdx, len
+               mov rax, 0x02000004
+               syscall
+
+               ret
+     #+END_SRC
+     #+BEGIN_SRC shell
+       nasm -f macho64 st-align.asm -o build64/st-align.o
+       ld -lc -macosx_version_min 10.13.0 -o bin/st-align build64/st-align.o -e _start
+     #+END_SRC
+
+     #+RESULTS:
+     
+     This is a 32-bit version of a hello world, that computes the lenth of a string to output in runtime.
+     #+NAME: brave_new_world
+     #+BEGIN_SRC asm :tangle bnw.asm
+               GLOBAL _main
+
+               SECTION .data
+               msg db 'Hello, brave new world! Repent and rejoice!', 0xA
+
+               SECTION .text
+       _main:
+       ;;; arguments are passed on the stack
+       ;;; stack is 16 bytes aligned
+       ;;; syscall number is in eax
+               mov     ebx, msg
+               mov     eax, msg
+               jmp     calclen
+       printmsg:
+               sub     eax, ebx        ; get the len into eax
+               push    eax             ; msg len
+               push    msg             ; pointer to msg
+               push    1               ; stdout
+               mov     eax, 4
+               sub     esp, 4
+               int     80h
+               add     esp, 16
+
+               ret
+
+       calclen:
+               cmp     byte [eax], 0   ; zero byte?
+               jz      printmsg
+               inc     eax
+               jmp     calclen
+     #+END_SRC
+
+  
+     Let's move forward by making it 64-bit and move the length calculation into a subroutine.
+     #+BEGIN_SRC asm :tangle subr.asm
+               GLOBAL _main
+
+               SECTION .data
+               msg db 'Hello, brave new world! Repent and rejoice!', 0xA
+
+               SECTION .text
+       _main:
+       ;;; rdi, rsi, rdx, r10, r8, r9
+       ;;; sycall number in rax register
+               lea     rbx, [rel msg]
+               mov     rdi, rbx
+               call    strlen
+               mov     rdi, 1          ; stdout
+               mov     rsi, rbx        ; pointer to msg
+               mov     rdx, rax        ; msg len
+               mov     rax, 0x02000004 ;
+               syscall
+
+               ret
+
+       strlen: ; a pointer to a string is in rdi, return len is in rax
+               mov     rax, rdi
+       strlen_loop:
+               cmp     byte [rax], 0   ; zero byte?
+               jz      strlen_fin
+               inc     rax
+               jmp     strlen_loop
+       strlen_fin:
+               sub     rax, rdi
+               ret
+     #+END_SRC
+
+     There are already some reusable pieces of logic that can be moved into a separate file and included whenever is needed.
+     #+BEGIN_SRC asm :tangle functions.asm
+       ;;; int strlen(char* msg)
+       ;;; msg is in rdi, resulting len is in rax
+       strlen:
+               mov     rax, rdi
+       strlen_loop:
+               cmp     byte [rax], 0   ; zero byte?
+               jz      strlen_fin
+               inc     rax
+               jmp     strlen_loop
+       strlen_fin:
+               sub     rax, rdi
+               ret
+
+       ;;; void print(char* msg)
+       print:
+               push    rbx
+               mov     rbx, rdi
+               call    strlen
+
+               mov     rdi, 1          ; 1 arg = fd (1 stdout)
+               mov     rsi, rbx        ; 2 arg = msg pointer
+               mov     rdx, rax        ; 3 arg = msg len
+               mov     rax, 0x02000004
+               syscall
+
+               pop     rbx
+               ret
+     #+END_SRC
+
+     Now we can rewrite the hello-world program using subroutines from included ~functions.asm~ file.
+     #+BEGIN_SRC asm :tangle hw-inc.asm
+               %include 'functions.asm'
+
+               GLOBAL _main
+
+               SECTION .data
+               msg1 db 'Hello, reusable world!', 0xA
+               msg2 db 'I was printed using included subroutines!', 0xA
+
+               SECTION .text
+       _main:
+               lea     rdi, [rel msg1]
+               call    print
+
+               lea     rdi, [rel msg2]
+               call    print
+
+               ret
+     #+END_SRC
+     #+BEGIN_SRC shell :results verbatim
+     make hw-inc > /dev/null && bin/hw-inc | cat
+     #+END_SRC
+
+     #+RESULTS:
+     : Hello, reusable world!
+     : I was printed using included subroutines!
+     : I was printed using included subroutines!
+
+     For some reason the last message is printed twice. Why is that
+     so? The problem is ~msg1~ wasn't terminated properly with a null
+     byte, hence a first call to ~print~ actually printed both
+     messages. So, keep track of your null bytes.
+
+     Anyway, let's fix the issue.
+     #+BEGIN_SRC asm :tangle hw-inc-proper.asm
+               %include 'functions.asm'
+
+               GLOBAL _main
+
+               SECTION .data
+               msg1 db 'Hello, reusable world!', 0xA, 0x0
+               msg2 db 'I was printed using included subroutines!', 0xA, 0x0
+
+               SECTION .text
+       _main:
+               lea     rdi, [rel msg1]
+               call    print
+
+               lea     rdi, [rel msg2]
+               call    print
+
+               ret
+     #+END_SRC
+     #+BEGIN_SRC shell :results verbatim
+     make hw-inc-proper > /dev/null && bin/hw-inc-proper | cat
+     #+END_SRC
+
+     #+BEGIN_SRC asm :tangle lf-stack.asm
+               SECTION .data
+               msg     db      'Hello', 0
+               ln      equ     $ - msg
+
+               SECTION .text
+               global _main
+
+       _main:
+               mov     rdi, 1
+               mov     rsi, msg
+               mov     rdx, ln
+               mov     rax, 0x02000004
+               sub     rsp, 8
+               syscall
+               add     rsp, 8
+
+               mov     ax, 0xA
+               push    ax
+               mov     rdi, 1
+               mov     rsi, rsp
+               mov     rdx, 1
+               mov     rax, 0x02000004
+               sub     rsp, 6          ; align stack to 16 bytes
+               syscall
+               add     rsp, 6          ; undo stack changes
+               pop     ax              ;
+
+               mov     rax, 0
+               ret
+     #+END_SRC
+     #+BEGIN_SRC shell
+       nasm -f macho64 lf-stack.asm -o build64/lf-stack.o && \
+           ld -lc -macosx_version_min 10.13.0 -o bin/lf-stack build64/lf-stack.o
+     #+END_SRC
+
+     #+RESULTS:
+
+     #+BEGIN_SRC C :tangle printf-c-ex.c
+       #include <stdio.h>
+
+       int main(int args, char *argv[])
+       {
+               printf("%d", 42);
+               return 0;
+       }
+     #+END_SRC
+
+     #+RESULTS:
+     : 42
+
+     Is there a way we could use an existing ~printf~ function to
+     format the output? Let's find out.
+
+     Several things that we need to keep in mind:
+     1. We need to link with libc.
+     2. External symbols on MacOS are prefixed with underscore. So,
+        ~_printf~ and not ~printf~.
+     3. Funny enough ~rsp~ is not 16 bytes aligned. This means that
+        any ~call~ will fail with ~EXC_BAD_ACCESS~.
+     #+BEGIN_SRC asm :tangle asmprint.asm
+               SECTION .text
+               GLOBAL _main
+       _main:
+               extern _printf
+               sub     rsp, 8          ; 16 bytes align the stack
+
+               mov     rdi, single_number_fmt
+               mov     rsi, 42
+               xor     rax, rax
+               call    _printf
+
+               add     rsp, 8          ; get back to the old esp before returning
+               mov     rax, 11
+               ret
+
+               SECTION .data
+               particular_number db 42
+               single_number_fmt db '%d', 0xA, 0
+               single_number_len equ $ - single_number_fmt
+     #+END_SRC
+     #+BEGIN_SRC shell :results verbatim
+     make asmprint && bin/asmprint | cat
+     echo $?
+     #+END_SRC
+
+     #+RESULTS:
+     : nasm -f macho64 -g asmprint.asm -o build64/asmprint.o
+     : ld -macosx_version_min 10.13.0 -lc -e _main build64/asmprint.o -o bin/asmprint
+     : 42
+     : 0
+
+     Without stack alignment the app fails on the following instruction:
+     #+BEGIN_SRC asm
+       0x7fff61b5fc56 <+0>: movdqa xmmword ptr [rsp], xmm0
+     #+END_SRC
+     
+     Funny enough, at program entry ~rsp~ and ~rbp~ are not aligned.
+     #+BEGIN_EXAMPLE
+     rbp = 0x00007ffeefbff550
+     rsp = 0x00007ffeefbff548
+     #+END_EXAMPLE
+     This is because ~rsp~ contains the return address for ~ret~
+     instruction to jump to to initiate program exit.
+
+     This is what ~printf~ look like in assembly:
+     #+BEGIN_EXAMPLE
+     ->  0x7fff786488ec <+0>:   push   rbp
+         0x7fff786488ed <+1>:   mov    rbp, rsp
+         0x7fff786488f0 <+4>:   sub    rsp, 0xd0
+         0x7fff786488f7 <+11>:  mov    r10, rdi
+         0x7fff786488fa <+14>:  test   al, al
+         0x7fff786488fc <+16>:  je     0x7fff78648924            ; <+56>
+         0x7fff786488fe <+18>:  movaps xmmword ptr [rbp - 0xa0], xmm0
+         0x7fff78648905 <+25>:  movaps xmmword ptr [rbp - 0x90], xmm1
+         0x7fff7864890c <+32>:  movaps xmmword ptr [rbp - 0x80], xmm2
+         0x7fff78648910 <+36>:  movaps xmmword ptr [rbp - 0x70], xmm3
+         0x7fff78648914 <+40>:  movaps xmmword ptr [rbp - 0x60], xmm4
+         0x7fff78648918 <+44>:  movaps xmmword ptr [rbp - 0x50], xmm5
+         0x7fff7864891c <+48>:  movaps xmmword ptr [rbp - 0x40], xmm6
+         0x7fff78648920 <+52>:  movaps xmmword ptr [rbp - 0x30], xmm7
+         0x7fff78648924 <+56>:  lea    rax, [rbp - 0xd0]
+         0x7fff7864892b <+63>:  mov    qword ptr [rax + 0x28], r9
+         0x7fff7864892f <+67>:  mov    qword ptr [rax + 0x20], r8
+         0x7fff78648933 <+71>:  mov    qword ptr [rax + 0x18], rcx
+         0x7fff78648937 <+75>:  mov    qword ptr [rax + 0x10], rdx
+         0x7fff7864893b <+79>:  mov    qword ptr [rax + 0x8], rsi
+         0x7fff7864893f <+83>:  lea    rcx, [rip + 0x32d5c72a]   ; __stack_chk_guard
+         0x7fff78648946 <+90>:  mov    rcx, qword ptr [rcx]
+         0x7fff78648949 <+93>:  mov    qword ptr [rbp - 0x8], rcx
+         0x7fff7864894d <+97>:  lea    rcx, [rbp - 0x20]
+         0x7fff78648951 <+101>: mov    qword ptr [rcx + 0x10], rax
+         0x7fff78648955 <+105>: lea    rax, [rbp + 0x10]
+         0x7fff78648959 <+109>: mov    qword ptr [rcx + 0x8], rax
+         0x7fff7864895d <+113>: movabs rax, 0x3000000008
+         0x7fff78648967 <+123>: mov    qword ptr [rcx], rax
+         0x7fff7864896a <+126>: lea    rax, [rip + 0x32d5e027]   ; __stdoutp
+         0x7fff78648971 <+133>: mov    rdi, qword ptr [rax]
+         0x7fff78648974 <+136>: mov    rax, qword ptr [rip + 0x32d5c695] ; __locale_key
+         0x7fff7864897b <+143>: mov    rax, qword ptr gs:[8*rax]
+         0x7fff78648984 <+152>: test   rax, rax
+         0x7fff78648987 <+155>: lea    rsi, [rip + 0x32d5cd2a]   ; __global_locale
+         0x7fff7864898e <+162>: cmovne rsi, rax
+         0x7fff78648992 <+166>: mov    rdx, r10
+         0x7fff78648995 <+169>: call   0x7fff7864a84c            ; vfprintf_l
+         0x7fff7864899a <+174>: lea    rcx, [rip + 0x32d5c6cf]   ; __stack_chk_guard
+         0x7fff786489a1 <+181>: mov    rcx, qword ptr [rcx]
+         0x7fff786489a4 <+184>: cmp    rcx, qword ptr [rbp - 0x8]
+         0x7fff786489a8 <+188>: jne    0x7fff786489b3            ; <+199>
+         0x7fff786489aa <+190>: add    rsp, 0xd0
+         0x7fff786489b1 <+197>: pop    rbp
+         0x7fff786489b2 <+198>: ret
+         0x7fff786489b3 <+199>: call   0x7fff78663a29            ; __stack_chk_fail
+     #+END_EXAMPLE
+
+     Lesson 16: reading arguments from the stack, adding them together
+     and printing the result.
+
+     #+BEGIN_SRC asm :tangle cmd-args.asm
+               section .data
+               num_fmt db      '%d', 0xA, 0
+
+               SECTION .text
+               global  _main
+               extern  _printf
+               extern  _strtol
+
+       _main:
+       ;;; prologue
+               push    rbp
+               mov     rbp, rsp
+
+               push    r12
+               push    r13
+               push    r14
+               push    rbx
+
+       ;;; body
+               mov     r12, rdi        ; get a number of passed args in r12
+               mov     r14, rsi        ; get an array pointer in r14
+
+               mov     rbx, 0          ; init sum
+               mov     r13, 1          ; init counter
+
+       .do_sum:
+               cmp     r13, r12
+               jge     .done_sum        ;
+
+               mov     rbp, rsp     ; save rsp
+               and     rsp, 0xff_ff_ff_ff_ff_ff_ff_f0 ; 16-byte align stack before calling atoi
+
+               mov     rdi, [r14 + 8*r13] ; pointer to string
+               call    str_to_base10
+               add     rbx, rax        ; add a converted from string int value to accumulator
+
+               mov     rsp, rbp        ; restore rsp
+               add     r13, 1
+               jmp     .do_sum
+
+       .done_sum:
+               mov     rdi, num_fmt
+               mov     rsi, rbx
+               xor     rax, rax
+               ;; align stack
+               mov     rbp, rsp
+               and     rsp,    0xff_ff_ff_ff_ff_ff_ff_f0 ; 16-byte align stack before calling printf
+               call    _printf
+               ;; restore stack
+               mov     rsp, rbp
+
+       ;;; epilogue
+               pop     rbx
+               pop     r14
+               pop     r13
+               pop     r12
+
+               pop     rbp
+               ret
+
+       str_to_base10:
+               mov     rsi, 0
+               mov     rdx, 10
+               sub     rsp, 8
+               call    _strtol
+               add     rsp, 8
+               ret
+     #+END_SRC
+     #+BEGIN_SRC shell :results verbatim
+       make cmd-args
+       bin/cmd-args 1 2 3 hello 42 | cat
+       echo $?
+     #+END_SRC
+
+     #+RESULTS:
+     : nasm -f macho64 -g cmd-args.asm -o build64/cmd-args.o
+     : ld -macosx_version_min 10.13.0 -lc -e _main build64/cmd-args.o -o bin/cmd-args
+     : 48
+     : 0
+
+     As the last introductory assembly excercise let's write a
+     solution to FizzBuzz problem. A FizzBuzz problem statement is as
+     follows:
+     #+BEGIN_QUOTE
+     For each number from 1 to 100 print 'Fizz' if a number is
+     divisible by 3, print 'Buzz' if it is divisible by 5, and print
+     'FizzBuzz' if it's divisible by both 3 and 5.
+     #+END_QUOTE
+     Let's rock some assembly!
+     #+BEGIN_SRC asm :tangle fizzbuzz.asm
+               SECTION .data
+               fizz_str        db      'Fizz', 0
+               buzz_str        db      'Buzz', 0
+               fizzbuzz_str    db      'FizzBuzz', 0
+               str_fmt         db      '%s', 0xA, 0
+               num_fmt         db      '%d', 0xA, 0
+
+               SECTION .text
+               global _main
+               extern _printf
+
+       _main:
+               push    rbp
+               mov     rbp, rsp
+
+               push    rbx
+               mov     bx, 0
+
+               sub     rsp, 8
+       .loop:
+               add     bx, 1
+               cmp     bx, 100
+               jg      .done
+
+               mov     ax, bx
+               mov     dh, 15
+               div     dh
+               cmp     ah, 0
+               jne     .check3
+               call    print_fizzbuzz
+               jmp     .loop
+       .check3:
+               mov     ax, bx
+               mov     dh, 3
+               div     dh
+               cmp     ah, 0
+               jne     .check5
+               call    print_fizz
+               jmp     .loop
+
+       .check5:
+               mov     ax, bx
+               mov     dh, 5
+               div     dh
+               cmp     ah, 0
+               jne     .just_num
+               call    print_buzz
+               jmp     .loop
+
+       .just_num:
+               movzx   rdi, bx
+               call    print_num
+               jmp     .loop
+
+       .done:
+               add     rsp, 8
+               pop     rbx
+               pop     rbp
+               ret
+
+       print_fizz:
+               mov     rdi, str_fmt
+               mov     rsi, fizz_str
+               sub     rsp, 8
+               call    _printf
+               add     rsp, 8
+               ret
+
+       print_buzz:
+               mov     rdi, str_fmt
+               mov     rsi, buzz_str
+               sub     rsp, 8
+               call    _printf
+               add     rsp, 8
+               ret
+
+       print_fizzbuzz:
+               mov     rdi, str_fmt
+               mov     rsi, fizzbuzz_str
+               sub     rsp, 8
+               call    _printf
+               add     rsp, 8
+               ret
+
+       print_num:
+               mov     rsi, rdi
+               mov     rdi, num_fmt
+               sub     rsp, 8
+               call    _printf
+               add     rsp, 8
+               ret
+     #+END_SRC
+     
+* C interrupts
+  #+BEGIN_SRC C :tangle div0.c
+    #include <stdio.h>
+
+    int main(int argc, const char *argv[])
+    {
+            int res = 0;
+            res = 1 / 0;
+            printf("Result is %d", res);
+
+            return 0;
+    }
+  #+END_SRC
+
+  #+RESULTS:
+  : Result is -355530216
