@@ -1,0 +1,221 @@
+<!-- -*- tab-width: 4; -*- -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Assembling a no-op</title>
+    <link rel="stylesheet" href="../css/default.css" />
+    <link rel="stylesheet" href="../css/syntax.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="icon" type="image/png" href="../images/favicon.png">
+  </head>
+  <body>
+    <header>
+      <div class="header-page">
+        <span class="header-page-link">
+          <svg class="logo" data-name="Lab notes - logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 726 726" data-href="/" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <a xlink:href="/">
+    <rect id="link-fill" stroke="none" width="726" height="726" rx="47.41" ry="47.41"></rect>
+  </a>
+
+  <title>Assembling a no-op</title>
+
+  <rect id="bg" width="726" height="726" rx="47.41" ry="47.41"></rect>
+
+  <g>
+    <path id="letter" d="M1533.7,1732.64c-9.79-25.5-19.58-51-28.48-81.14h-4.45c-6.23,24.73-17.8,53.32-27.59,78.82l-88.1,216.38h-81.87L1459,1600.49c3.56-8.5,5.34-13.91,5.34-17.77,0-4.64-1.78-11.59-6.23-20.87-27.59-65.68-59.62-117.46-112.12-117.46a105.24,105.24,0,0,0-15.13.77l7.12-52.55c7.12-2.32,19.58-3.09,30.26-3.09,84.54,0,124.58,70.32,170.85,177l164.62,380.2h-82.76Z" transform="translate(-1144 -1314)"></path>
+  </g>
+</svg>
+
+        </span>
+
+        <h1>Assembling a no-op</h1>
+      </div>
+    </header>
+
+    <main role="main">
+      <article>
+    <section class="header">
+        Posted on December 31, 2018
+        
+    </section>
+    <section>
+        <p>When I hear <code>hello-world</code> I imagine a trivial one-line program. However, things that are actually happening under the hood are far from being trivial: memory allocation, register and stack manipulation, and interop with an OS kernel among others. So I figured that going a couple layers down the stack to the bare assembly in order to build a minimal working program (and a couple more complex ones) might be a fun excercise.</p>
+<p>This is the first post about assembly on MacOS X, that covers “getting started”, calling conventions and system calls. I plan to write another post with more practical examples later on.</p>
+<!--more-->
+
+<h1 id="preliminaries">Preliminaries</h1>
+<p>First things first. I’ll be using <code>nasm</code> and hence Intel’s assembly dialect. The code will be written for 64-bit<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> MacOS X. Porting the code to Linux should be quite straightforward as the only thing that’s different is system call numbers.</p>
+<p><code>nasm</code> can be installed easily with a package manager like <code>brew</code>:</p>
+<div class="sourceCode" id="cb1" data-startFrom><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb1-1" title="1">brew install nasm</a></code></pre></div>
+<p>The second part of the toolchain is the linker – <code>ld</code> – which becomes available after installing XCode command line tools:</p>
+<div class="sourceCode" id="cb2" data-startFrom><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb2-1" title="1">xcode-select --install</a></code></pre></div>
+<p>To make sure everything’s set, the following commands should produce a legible output:</p>
+<div class="sourceCode" id="cb3" data-startFrom data-results="verbatim"><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb3-1" title="1">nasm -v</a></code></pre></div>
+<pre class="example"><code>NASM version 2.14 compiled on Nov  8 2018
+</code></pre>
+<div class="sourceCode" id="cb5" data-startFrom data-results="verbatim"><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb5-1" title="1">ld -v 2&gt;&amp;1 | head -2</a></code></pre></div>
+<pre class="example"><code>@(#)PROGRAM:ld  PROJECT:ld64-409.12
+BUILD 17:47:51 Sep 25 2018
+</code></pre>
+<h1 id="an-awkward-no-op-in-assembly-or-how-to-trigger-a-bus-error">An awkward no-op in assembly, or how to trigger a bus error</h1>
+<p>Let’s start with a program that literally does nothing. As a first cut, we could try to only define a code segment with a global symbol that will be an entry point to our program and a single “do-nothing” instruction:</p>
+<div class="sourceCode" id="cb7" data-startFrom data-tangle="do-nothing-incomplete.asm"><pre class="sourceCode numberSource asm numberLines"><code class="sourceCode fasm"><a class="sourceLine" id="cb7-1" title="1">        <span class="bu">SECTION</span> .text</a>
+<a class="sourceLine" id="cb7-2" title="2">        GLOBAL _main</a>
+<a class="sourceLine" id="cb7-3" title="3"><span class="fu">_main:</span>  <span class="bu">nop</span></a></code></pre></div>
+<p>We can use the following script to compile and link this program:</p>
+<div class="sourceCode" id="cb8" data-startFrom data-results="none"><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb8-1" title="1">nasm -f macho64 -o build64/do-nothing-incomplete.o do-nothing-incomplete.asm &amp;&amp; \</a>
+<a class="sourceLine" id="cb8-2" title="2">    ld -static -e _main -o bin/do-nothing-incomplete -macosx_version_min 10.13.0 \</a>
+<a class="sourceLine" id="cb8-3" title="3">       build64/do-nothing-incomplete.o</a></code></pre></div>
+<p><code>nasm -f macho64</code> tells NASM to produce a 64bit Mach-O object file, which is then transformed into a statically linked executable using <code>ld -static</code> stanza; <code>-e _main</code> tells a linker the name of the symbol which will serve as an entry point to the program.</p>
+<p>During execution, however, the program fails with an error:</p>
+<pre class="example"><code>[1]    70339 bus error  bin/do-nothing-incomplete
+</code></pre>
+<p>This may seem odd as we don’t access memory. So where this bus error came from?</p>
+<p>A short session in debugger reveals the following:</p>
+<pre class="example"><code>(lldb) r
+Process 70526 launched: 'bin/do-nothing-incomplete' (x86_64)
+Process 70526 stopped
+* thread #1, stop reason = EXC_BAD_ACCESS (code=2, address=0x2000)
+    frame #0: 0x0000000000002000 do-nothing-incomplete
+-&gt;  0x2000: add    al, byte ptr [rax]
+    0x2002: add    byte ptr [rax], al
+    0x2004: add    eax, dword ptr [rcx]
+    0x2006: adc    byte ptr [rax], al
+Target 0: (do-nothing-incomplete) stopped.
+(lldb) dis -s 0x1fff
+do-nothing-incomplete`main:
+    0x1fff &lt;+0&gt;: nop
+    0x2000:      add    al, byte ptr [rax]
+    0x2002:      add    byte ptr [rax], al
+    0x2004:      add    eax, dword ptr [rcx]
+    0x2006:      adc    byte ptr [rax], al
+    0x2008:      add    byte ptr [rax], dl
+    0x200a:      add    byte ptr [rax], al
+    0x200c:      add    byte ptr [rax], al
+    0x200e:      add    byte ptr [rax], al
+(lldb) p/x $rax
+(unsigned long) $0 = 0x0000000000000000
+</code></pre>
+<p><code>dis -s 0x1fff</code> shows our <code>nop</code> command followed by some other commands. Since we didn’t explicitly signal to the OS that the program is ready to terminate with an <code>exit</code> system call, a processor started executing whatever was next in memory, and because <code>rax</code> was zero the instruction <code>add al, byte ptr [rax]</code> tried to access zero byte in memory and failed with a bus error.</p>
+<p>The cause of the problem is clear. But where did those other instructions come from? Let’s peek into the structure of our executable with <code>otool</code>. Command <code>otool -l</code> prints the load commands, which is pretty much a <em>Table of Contents</em> of our binary:</p>
+<div class="sourceCode" id="cb11" data-startFrom data-results="verbatim" data-exports="both"><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb11-1" title="1">otool -l bin/do-nothing-incomplete | grep -C 4 2000</a></code></pre></div>
+<pre class="example"><code>Load command 2
+      cmd LC_SEGMENT_64
+  cmdsize 72
+  segname __LINKEDIT
+   vmaddr 0x0000000000002000
+   vmsize 0x0000000000001000
+  fileoff 4096
+ filesize 64
+  maxprot 0x00000007
+</code></pre>
+<p>We can see that at address <code>0x2000</code> starts <code>__LINKEDIT</code> segment, which is something that should not be interpreted and executed as code. Thus <strong>a well-behaved program needs to signal its exit</strong> to the OS, and we, in turn, need to talk a bit about system calls and calling conventions.</p>
+<h1 id="system-calls-and-sysv-abi">System calls and SysV ABI</h1>
+<p>As long as a program is doing its own things, it can use whatever registers it wants and do whatever it wants with the stack. But collaboration with OS and other libraries requires a common set of rules that all parties need to adhere to. Such a set of rules is called “Application Binary Interface” or ABI for short.</p>
+<p>Modern 64-bit Linux and MacOS X systems follow <strong>System V ABI</strong><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. The set of rules is very extensive, but for this post we’ll only need the following:</p>
+<ol>
+<li>For regular calls integer arguments are passed in registers <code>rdi, rsi, rdx, rcx, r8, r9</code> in the specified order.</li>
+<li>For system calls register <code>r10</code> is used instead of <code>rcx</code>, while values in registers <code>rcx</code> and <code>r11</code> are clobbered by the kernel. The number of the system call to invoke is passed in <code>rax</code>.</li>
+<li>An integer result of the call is returned in registers <code>rax</code> or <code>rax + rdx</code> depending on the size of the returned value.</li>
+<li>Registers <code>rbx, rbp, rsp, r12-r15</code> are preserved across function calls. In other words, when you want to use these registers in your subroutine, you need to save them on the stack and restore their values before returning to the caller.</li>
+<li>The stack should be 16 bytes aligned before the call.</li>
+</ol>
+<p>The last rule is not strictly necessary for all calls. You can write and call your own subroutine and most likely things will be fine without stack alignment. However, the situation is different when calling external subroutines, which may in turn call operations that require memory alignment of their operands; we’ll get back to it later.</p>
+<p>We know how to pass arguments and invoke a system call with a particular number<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>. What is missing is a list of system calls for OS X kernel.</p>
+<p>I couldn’t find such a list in official documentation. There is a list for 32-bit<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>, but unfortunately it doesn’t work out of the box. Luckily someone on the internet wrote that a syscall number for 64-bit assembly is <code>number-in-the-list</code> + <code>0x0200_0000</code>. Thus an <code>exit</code> syscall which is number 1 in the list, will have number <code>0x0200_0001</code> in assembly.</p>
+<h1 id="a-proper-noop-in-assembly">A proper noop in assembly</h1>
+<p>Now we know how to do system calls, so we can properly trigger an exit, and return a meaningful exit code of <code>42</code>.</p>
+<div class="sourceCode" id="cb13" data-startFrom data-tangle="do-nothing-complete.asm"><pre class="sourceCode numberSource asm numberLines"><code class="sourceCode fasm"><a class="sourceLine" id="cb13-1" title="1">        <span class="bu">SECTION</span> .text</a>
+<a class="sourceLine" id="cb13-2" title="2">        GLOBAL start            <span class="co">; start is the default name of the entry point</span></a>
+<a class="sourceLine" id="cb13-3" title="3"><span class="fu">start:</span></a>
+<a class="sourceLine" id="cb13-4" title="4">        <span class="bu">mov</span>     <span class="kw">rdi</span>, <span class="dv">42</span>         <span class="co">; first parameter &quot;exit code&quot; = 42</span></a>
+<a class="sourceLine" id="cb13-5" title="5">        <span class="bu">mov</span>     <span class="kw">rax</span>, <span class="bn">0x0200</span>_<span class="dv">0001</span> <span class="co">; exit syscall number in rax = 0x02000000 + 1</span></a>
+<a class="sourceLine" id="cb13-6" title="6">        <span class="bu">syscall</span></a></code></pre></div>
+<p>This time around we don’t need to specify the name of the entry point to the linker, as we went with the default. The code compiles and links without issues:</p>
+<div class="sourceCode" id="cb14" data-startFrom data-results="none"><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb14-1" title="1">nasm -f macho64 -o build64/do-nothing-complete.o do-nothing-complete.asm &amp;&amp; \</a>
+<a class="sourceLine" id="cb14-2" title="2">    ld -static -o bin/do-nothing-complete build64/do-nothing-complete.o</a></code></pre></div>
+<p>and the resulting binary produces the expected result:</p>
+<div class="sourceCode" id="cb15" data-startFrom><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb15-1" title="1">bin/do-nothing-complete</a>
+<a class="sourceLine" id="cb15-2" title="2">echo $?</a></code></pre></div>
+<pre class="example"><code>42
+</code></pre>
+<p>Actually, we could omit explicitly providing an exit code and just invoke a system call with whatever is in <code>rdi</code> at the moment. This way it’s possible to make a “do-nothing” program even smaller.</p>
+<div class="sourceCode" id="cb17" data-startFrom data-tangle="do-nothing-minimal.asm"><pre class="sourceCode numberSource asm numberLines"><code class="sourceCode fasm"><a class="sourceLine" id="cb17-1" title="1">        <span class="bu">SECTION</span> .text</a>
+<a class="sourceLine" id="cb17-2" title="2">        GLOBAL start</a>
+<a class="sourceLine" id="cb17-3" title="3"><span class="fu">start:</span></a>
+<a class="sourceLine" id="cb17-4" title="4">        <span class="bu">mov</span>     <span class="kw">rax</span>, <span class="bn">0x0200</span>_<span class="dv">0001</span></a>
+<a class="sourceLine" id="cb17-5" title="5">        <span class="bu">syscall</span></a></code></pre></div>
+<div class="sourceCode" id="cb18" data-startFrom data-results="none"><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb18-1" title="1">nasm -f macho64 -o build64/do-nothing-minimal.o do-nothing-minimal.asm &amp;&amp; \</a>
+<a class="sourceLine" id="cb18-2" title="2">    ld -static -o bin/do-nothing-minimal build64/do-nothing-minimal.o</a></code></pre></div>
+<p>And although SysV ABI states in Section 3.4.1 that the state of <code>rdi</code> is undefined, the kernel zeroes it out, so we get a proper 0 exit code:</p>
+<div class="sourceCode" id="cb19" data-startFrom><pre class="sourceCode numberSource shell numberLines"><code class="sourceCode"><a class="sourceLine" id="cb19-1" title="1">bin/do-nothing-minimal</a>
+<a class="sourceLine" id="cb19-2" title="2">echo $?</a></code></pre></div>
+<pre class="example"><code>0
+</code></pre>
+<h1 id="whats-next">What’s next</h1>
+<p>So far, I’ve covered only statically linked self-contained executables. Although interesting, it’s not very practical (to the extent one can consider programming in assembly practical). So far, I plan to write one more post and cover the following topics:</p>
+<ul>
+<li>dynamic linking with C runtime,</li>
+<li>using external symbols from linked libraries,</li>
+<li>16-byte stack alignment, SSE instructions and segfaults,</li>
+<li>accessing <code>argc</code> and <code>argv</code>,</li>
+<li>jumps, loops, etc.</li>
+</ul>
+<p>But that’s for 2019.</p>
+<h1 id="footnotes">Footnotes</h1>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>That fact that it’s 64-bit is important as the calling conventions for 32-bit code on MacOS are quite different.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>Latest SysV ABI PDFs can be found on <a href="https://github.com/hjl-tools/x86-psABI/wiki/X86-psABI">this page on Github</a>.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>In 64-bit assembly a syscall is triggered with a <code>syscall</code> instruction.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+<li id="fn4"><p>Relevant lines from <a href="https://opensource.apple.com/source/xnu/xnu-1504.3.12/bsd/kern/syscalls.master">this source file</a>.<a href="#fnref4" class="footnote-back">↩</a></p></li>
+</ol>
+</section>
+    </section>
+</article>
+
+    </main>
+
+    <footer>
+      <nav class="footer-nav">
+
+        <a class="footer-nav-item" href="../">
+          <span class="fa fa-home fa-lg"></span>
+        </a>
+
+        <a class="footer-nav-item" href="https://github.com/artempyanykh">
+          <span class="fa fa-github fa-lg"></span>
+        </a>
+
+        <a class="footer-nav-item" href="https://ru.linkedin.com/in/artempyanykh/en">
+          <span class="fa fa-linkedin fa-lg"></span>
+        </a>
+
+        <a class="footer-nav-item" href="https://twitter.com/artem_pyanykh">
+          <span class="fa fa-twitter fa-lg"></span>
+        </a>
+
+        <a class="footer-nav-item" href="../about.html">
+          <span class="fa fa-question fa-lg"></span>
+        </a>
+      </nav>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+
+    <!-- Google Tag Manager -->
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-5D92C6" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-5D92C6');</script>
+<!-- End Google Tag Manager -->
+
+  </body>
+</html>
