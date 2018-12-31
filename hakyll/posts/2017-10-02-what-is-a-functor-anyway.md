@@ -89,7 +89,7 @@ We also need laws that capture the essence of being a _structure preserving_ map
    $$
 2. Functor should preserve composition:
    $$
-   \forall f, g \in C_1 \text{where } \cod f = \dom g: F_1 (g \circ_\mathscr{C} f) = F_1(f) \circ_\mathscr{D} F_1(g).
+   \forall f, g \in C_1, \cod f = \dom g: F_1 (g \circ_\mathscr{C} f) = F_1(f) \circ_\mathscr{D} F_1(g).
    $$
 3. Functor should preserve identity arrow:
    $$

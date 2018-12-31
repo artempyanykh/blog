@@ -1,82 +1,242 @@
 ---
-title: Bare minimum
+title: Assembling a no-op
 category: asm
-date: 2018-12-27
+date: 2018-12-31
 ---
 
 # -*- mode: Org; fill-column: 100; -*-
 
 #+OPTIONS: toc:nil
 
-A =hello-world= is the gold standard for a minimal program. An implementation usually takes a couple
-lines of code in a high(-er) level programming language, and is pretty trivial. However, things that
-are happening under the hood are far from being trivial including memory allocation, register and
-stack manipulation, and interop with an OS kernel. With that said, going a couple layers down that
-stack to the bare assembly in order to build a minimal working program (and a couple other ones)
-seemed like fun to me.
+When I hear =hello-world= I imagine a trivial one-line program. However, things that are actually
+happening under the hood are far from being trivial: memory allocation, register and stack
+manipulation, and interop with an OS kernel among others. So I figured that going a couple layers
+down the stack to the bare assembly in order to build a minimal working program (and a couple more
+complex ones) might be a fun excercise.
+
+This is the first post about assembly on MacOS X, that covers "getting started", calling conventions
+and system calls. I plan to write another post with more practical examples later on.
 
 #+BEGIN_EXPORT html
 <!--more-->
 #+END_EXPORT
 
 * Preliminaries
-  First, let's start with a couple =hello-world= implementations: in Haskell and in C. In
-  implementation in Haskell is a simple one-liner:
-  #+BEGIN_SRC haskell -n :tangle haskell-hello-world.hs
-    main = putStrLn "Hello World!"
-  #+END_SRC
-  We can compile it using =ghc= and run getting the expected output:
-  #+BEGIN_SRC shell -n :results verbatim :exports both
-    ghc haskell-hello-world.hs -o bin/haskell-hello-world > /dev/null
-    bin/haskell-hello-world
-    echo $?
-  #+END_SRC
-
-  #+RESULTS:
-  : Hello World!
-  : 0
-
-  An implementation in C is a bit longer, but conceptually not that different:
-  #+NAME: c-hello-world
-  #+BEGIN_SRC C -n :tangle c-hello-world.c
-    #include <stdio.h>
-
-    int main(int argc, const char *argv[])
-    {
-            printf("Hello World!\n");
-            return 0;
-    }
-  #+END_SRC
-  Again, compiling and running this code produces what is expected:
-  #+BEGIN_SRC shell -n :results verbatim :exports both
-    cc c-hello-world.c -o bin/c-hello-world > /dev/null
-    bin/c-hello-world
-    echo $?
-  #+END_SRC
-
-  #+RESULTS:
-  : Hello World!
-  : 0
-
-  The C code nicely highlights some of the main points in the program's structure, that will be
-  helpful later on, specifically:
-  1. We define an entry point into our program called ~main~.
-  2. We take command-line arguments in ~argc~ and ~argv~.
-  3. We call a function ~printf~ from C standard library that our executable gets linked with.
-  4. We return an exit code.
-
-  That's quite a few things, especially for an implementation in assembly. Can we do less, and still
-  produce a valid executable? Sure!
-
-* Do nothing in assembly
   First things first. I'll be using =nasm= and hence Intel's assembly dialect. The code will be
-  written for 64-bit MacOS X[fn:1].
+  written for 64-bit[fn:1] MacOS X. Porting the code to Linux should be quite straightforward as the
+  only thing that's different is system call numbers.
+
+  =nasm= can be installed easily with a package manager like =brew=:
+  #+BEGIN_SRC shell -n
+    brew install nasm
+  #+END_SRC
+
+  The second part of the toolchain is the linker -- =ld= -- which becomes available after installing
+  XCode command line tools:
+  #+BEGIN_SRC shell -n
+    xcode-select --install
+  #+END_SRC
+
+  To make sure everything's set, the following commands should produce a legible output:
+  #+BEGIN_SRC shell -n :results verbatim
+    nasm -v
+  #+END_SRC
+
+  #+RESULTS:
+  : NASM version 2.14 compiled on Nov  8 2018
+
+  #+BEGIN_SRC shell -n :results verbatim
+    ld -v 2>&1 | head -2
+  #+END_SRC
+
+  #+RESULTS:
+  : @(#)PROGRAM:ld  PROJECT:ld64-409.12
+  : BUILD 17:47:51 Sep 25 2018
+
+* An awkward no-op in assembly, or how to trigger a bus error
+  Let's start with a program that literally does nothing. As a first cut, we could try to only
+  define a code segment with a global symbol that will be an entry point to our program and a single
+  "do-nothing" instruction:
 
   #+BEGIN_SRC asm -n :tangle do-nothing-incomplete.asm
             SECTION .text
             GLOBAL _main
-    _main:
+    _main:  nop
   #+END_SRC
+
+  We can use the following script to compile and link this program:
+  #+BEGIN_SRC shell -n :results none
+    nasm -f macho64 -o build64/do-nothing-incomplete.o do-nothing-incomplete.asm && \
+        ld -static -e _main -o bin/do-nothing-incomplete -macosx_version_min 10.13.0 \
+           build64/do-nothing-incomplete.o
+  #+END_SRC
+
+  ~nasm -f macho64~ tells NASM to produce a 64bit Mach-O object file, which is then transformed into
+  a statically linked executable using ~ld -static~ stanza; ~-e _main~ tells a linker the name of
+  the symbol which will serve as an entry point to the program.
+
+  During execution, however, the program fails with an error:
+  #+BEGIN_EXAMPLE
+    [1]    70339 bus error  bin/do-nothing-incomplete
+  #+END_EXAMPLE
+  This may seem odd as we don't access memory. So where this bus error came from?
+
+  A short session in debugger reveals the following:
+  #+BEGIN_EXAMPLE
+    (lldb) r
+    Process 70526 launched: 'bin/do-nothing-incomplete' (x86_64)
+    Process 70526 stopped
+    ,* thread #1, stop reason = EXC_BAD_ACCESS (code=2, address=0x2000)
+        frame #0: 0x0000000000002000 do-nothing-incomplete
+    ->  0x2000: add    al, byte ptr [rax]
+        0x2002: add    byte ptr [rax], al
+        0x2004: add    eax, dword ptr [rcx]
+        0x2006: adc    byte ptr [rax], al
+    Target 0: (do-nothing-incomplete) stopped.
+    (lldb) dis -s 0x1fff
+    do-nothing-incomplete`main:
+        0x1fff <+0>: nop
+        0x2000:      add    al, byte ptr [rax]
+        0x2002:      add    byte ptr [rax], al
+        0x2004:      add    eax, dword ptr [rcx]
+        0x2006:      adc    byte ptr [rax], al
+        0x2008:      add    byte ptr [rax], dl
+        0x200a:      add    byte ptr [rax], al
+        0x200c:      add    byte ptr [rax], al
+        0x200e:      add    byte ptr [rax], al
+    (lldb) p/x $rax
+    (unsigned long) $0 = 0x0000000000000000
+  #+END_EXAMPLE
+  ~dis -s 0x1fff~ shows our ~nop~ command followed by some other commands. Since we didn't
+  explicitly signal to the OS that the program is ready to terminate with an ~exit~ system call, a
+  processor started executing whatever was next in memory, and because ~rax~ was zero the
+  instruction ~add al, byte ptr [rax]~ tried to access zero byte in memory and failed with a bus
+  error.
+
+  The cause of the problem is clear. But where did those other instructions come from? Let's peek
+  into the structure of our executable with ~otool~. Command ~otool -l~ prints the load commands,
+  which is pretty much a /Table of Contents/ of our binary:
+  #+BEGIN_SRC shell -n :results verbatim :exports both
+    otool -l bin/do-nothing-incomplete | grep -C 4 2000
+  #+END_SRC
+
+  #+RESULTS:
+  : Load command 2
+  :       cmd LC_SEGMENT_64
+  :   cmdsize 72
+  :   segname __LINKEDIT
+  :    vmaddr 0x0000000000002000
+  :    vmsize 0x0000000000001000
+  :   fileoff 4096
+  :  filesize 64
+  :   maxprot 0x00000007
+  We can see that at address =0x2000= starts =__LINKEDIT= segment, which is something that should
+  not be interpreted and executed as code. Thus *a well-behaved program needs to signal its exit* to
+  the OS, and we, in turn, need to talk a bit about system calls and calling conventions.
+
+* System calls and SysV ABI
+  As long as a program is doing its own things, it can use whatever registers it wants and do
+  whatever it wants with the stack. But collaboration with OS and other libraries requires a common
+  set of rules that all parties need to adhere to. Such a set of rules is called "Application Binary
+  Interface" or ABI for short.
+
+  Modern 64-bit Linux and MacOS X systems follow *System V ABI*[fn:2]. The set of rules is very
+  extensive, but for this post we'll only need the following:
+  1. For regular calls integer arguments are passed in registers ~rdi, rsi, rdx, rcx, r8, r9~ in the
+     specified order.
+  2. For system calls register ~r10~ is used instead of ~rcx~, while values in registers ~rcx~ and
+     ~r11~ are clobbered by the kernel. The number of the system call to invoke is passed in ~rax~.
+  3. An integer result of the call is returned in registers ~rax~ or ~rax + rdx~ depending on the
+     size of the returned value.
+  4. Registers ~rbx, rbp, rsp, r12-r15~ are preserved across function calls. In other words, when
+     you want to use these registers in your subroutine, you need to save them on the stack and
+     restore their values before returning to the caller.
+  5. The stack should be 16 bytes aligned before the call.
+
+  The last rule is not strictly necessary for all calls. You can write and call your own subroutine
+  and most likely things will be fine without stack alignment. However, the situation is different
+  when calling external subroutines, which may in turn call operations that require memory alignment
+  of their operands; we'll get back to it later.
+
+  We know how to pass arguments and invoke a system call with a particular number[fn:3]. What is
+  missing is a list of system calls for OS X kernel.
+
+  I couldn't find such a list in official documentation. There is a list for 32-bit[fn:4], but
+  unfortunately it doesn't work out of the box. Luckily someone on the internet wrote that a syscall
+  number for 64-bit assembly is =number-in-the-list= + =0x0200_0000=. Thus an =exit= syscall which
+  is number 1 in the list, will have number =0x0200_0001= in assembly.
+
+* A proper noop in assembly
+  Now we know how to do system calls, so we can properly trigger an exit, and return a meaningful
+  exit code of =42=.
+
+  #+BEGIN_SRC asm -n :tangle do-nothing-complete.asm
+            SECTION .text
+            GLOBAL start            ; start is the default name of the entry point
+    start:
+            mov     rdi, 42         ; first parameter "exit code" = 42
+            mov     rax, 0x0200_0001 ; exit syscall number in rax = 0x02000000 + 1
+            syscall
+  #+END_SRC
+  This time around we don't need to specify the name of the entry point to the linker, as we went
+  with the default. The code compiles and links without issues:
+  #+BEGIN_SRC shell -n :results none
+    nasm -f macho64 -o build64/do-nothing-complete.o do-nothing-complete.asm && \
+        ld -static -o bin/do-nothing-complete build64/do-nothing-complete.o
+  #+END_SRC
+  and the resulting binary produces the expected result:
+  #+BEGIN_SRC shell -n
+    bin/do-nothing-complete
+    echo $?
+  #+END_SRC
+
+  #+RESULTS:
+  : 42
+
+  Actually, we could omit explicitly providing an exit code and just invoke a system call with
+  whatever is in ~rdi~ at the moment. This way it's possible to make a "do-nothing" program even
+  smaller.
+  #+BEGIN_SRC asm -n :tangle do-nothing-minimal.asm
+            SECTION .text
+            GLOBAL start
+    start:
+            mov     rax, 0x0200_0001
+            syscall
+  #+END_SRC
+  #+BEGIN_SRC shell -n :results none
+    nasm -f macho64 -o build64/do-nothing-minimal.o do-nothing-minimal.asm && \
+        ld -static -o bin/do-nothing-minimal build64/do-nothing-minimal.o
+  #+END_SRC
+
+  And although SysV ABI states in Section 3.4.1 that the state of ~rdi~ is undefined, the kernel
+  zeroes it out, so we get a proper 0 exit code:
+  #+BEGIN_SRC shell -n
+    bin/do-nothing-minimal
+    echo $?
+  #+END_SRC
+
+  #+RESULTS:
+  : 0
+
+* What's next
+  So far, I've covered only statically linked self-contained executables. Although interesting, it's
+  not very practical (to the extent one can consider programming in assembly practical). So far, I
+  plan to write one more post and cover the following topics:
+  - dynamic linking with C runtime,
+  - using external symbols from linked libraries,
+  - 16-byte stack alignment, SSE instructions and segfaults,
+  - accessing ~argc~ and ~argv~,
+  - jumps, loops, etc.
+
+  But that's for 2019.
+
 * Footnotes
 
-[fn:1] That fact that it's 64-bit is important as the calling conventions for 32-bit code are quite different.
+[fn:1] That fact that it's 64-bit is important as the calling conventions for 32-bit code on MacOS
+are quite different.
+
+[fn:2] Latest SysV ABI PDFs can be found on [[https://github.com/hjl-tools/x86-psABI/wiki/X86-psABI][this page on Github]].
+
+[fn:3] In 64-bit assembly a syscall is triggered with a ~syscall~ instruction.
+
+[fn:4] Relevant lines from [[https://opensource.apple.com/source/xnu/xnu-1504.3.12/bsd/kern/syscalls.master][this source file]].

@@ -9,7 +9,9 @@
     Released under the GPL, version 2 or greater.
     ------------------------------------------------------------------------------
 */
-pre.example { border-left: 0.5rem solid #cecece; padding-left: 1rem; }
+/* pre.shell { background-color: #f8f8f8; padding: 0 1rem; } */
+/* pre.shell code { display: inline-block; overflow: scroll; width: 100%; } */
+pre.example { border-left: 0.5rem solid #cecece; padding-left: 1rem; overflow: auto; }
 a.sourceLine { display: inline-block; line-height: 1.25; }
 a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
 a.sourceLine { border-bottom: 0; }

@@ -1,3 +1,3 @@
 SECTION .text
         GLOBAL _main
-_main:
+_main:  nop
