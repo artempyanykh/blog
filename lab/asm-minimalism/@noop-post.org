@@ -1,0 +1,1 @@
+../../hakyll/posts/2018-12-31-assembling-noop.org
