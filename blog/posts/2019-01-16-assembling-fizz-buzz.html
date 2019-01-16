@@ -431,7 +431,7 @@ libsystem_c.dylib`printf:
 <p>Since our <code>main</code> is not an entry point but rather a regular function, we can expect <code>argc</code> and <code>argv</code> to be in <code>rdi</code> and <code>rsi</code> respectively. First pointer in <code>argv</code> points to the executable name, and the second pointer (if provided) should point to <code>n</code>. Parsing can be done with a function from C stdlib:</p>
 <div class="sourceCode" id="cb32" data-org-language="C"><pre class="sourceCode c"><code class="sourceCode c"><a class="sourceLine" id="cb32-1" title="1"><span class="dt">long</span> strtol(<span class="dt">const</span> <span class="dt">char</span> *<span class="dt">restrict</span> str, <span class="dt">char</span> **<span class="dt">restrict</span> endptr, <span class="dt">int</span> base)</a></code></pre></div>
 <p>With this in mind, let’s write an assembly program that echoes a number back to the console, or says that the provided value is not a number.</p>
-<div class="sourceCode" id="cb33" data-tangle="echo-num.asm"><pre class="sourceCode asm"><code class="sourceCode fasm"><a class="sourceLine" id="cb33-1" title="1">        GLOBAL _main</a>
+<div class="sourceCode" id="cb33" data-startFrom data-tangle="echo-num.asm"><pre class="sourceCode numberSource asm numberLines"><code class="sourceCode fasm"><a class="sourceLine" id="cb33-1" title="1">        GLOBAL _main</a>
 <a class="sourceLine" id="cb33-2" title="2">        EXTERN _printf</a>
 <a class="sourceLine" id="cb33-3" title="3">        EXTERN _strtol</a>
 <a class="sourceLine" id="cb33-4" title="4"></a>

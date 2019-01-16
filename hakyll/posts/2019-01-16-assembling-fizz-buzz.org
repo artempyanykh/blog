@@ -632,7 +632,7 @@ executable loading, lazy symbol binding, etc.
    number back to the console, or says that the provided value is not
    a number.
 
-   #+BEGIN_SRC asm :tangle echo-num.asm
+   #+BEGIN_SRC asm -n :tangle echo-num.asm
              GLOBAL _main
              EXTERN _printf
              EXTERN _strtol
