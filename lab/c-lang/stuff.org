@@ -1,0 +1,162 @@
+* C argenv
+  #+BEGIN_SRC C :results verbatim
+    #include <stdio.h>
+
+    int main(int argc, const char *argv[], const char *envp[])
+    {
+            for (int argn = 0; argv[argn] != NULL; argn++) {
+                    printf("argv[%d] = %s\n", argn, argv[argn]);
+            }
+
+            for (int envn = 0; envp[envn] != NULL; envn++) {
+                    printf("envp[%d] = %s\n", envn, envp[envn]);
+            }
+
+            return 0;
+    }
+  #+END_SRC
+
+  #+RESULTS:
+  #+begin_example
+  argv[0] = /var/folders/sq/xbx_tpmd34d9qvnhj_fsqhh80000gn/T/babel-OG2MQY/C-bin-ddxAIi
+  envp[0] = PWD=/Users/artempyanykh/@dev/artempyanykh.github.io/lab/c-lang
+  envp[1] = SECURITYSESSIONID=186a7
+  envp[2] = DISPLAY=Artems-MacBook-Pro.local
+  envp[3] = LOGNAME=artempyanykh
+  envp[4] = HOME=/Users/artempyanykh
+  envp[5] = SHLVL=11
+  envp[6] = XPC_SERVICE_NAME=0
+  envp[7] = XPC_FLAGS=0x0
+  envp[8] = LANG=en_RU.UTF-8
+  envp[9] = PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/artempyanykh/.local/bin:/Users/artempyanykh/flutter/bin:/Users/artempyanykh/Library/Android/sdk/platform-tools:/Users/artempyanykh/Library/Android/sdk:/Users/artempyanykh/.rbenv/shims:/Applications/Emacs.app/Contents/MacOS/bin-x86_64-10_10:/Applications/Emacs.app/Contents/MacOS/libexec-x86_64-10_10
+  envp[10] = __CF_USER_TEXT_ENCODING=0x1F5:0x0:0x0
+  envp[11] = SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.fdeTCTrQwG/Listeners
+  envp[12] = USER=artempyanykh
+  envp[13] = Apple_PubSub_Socket_Render=/private/tmp/com.apple.launchd.CTXn51iRZD/Render
+  envp[14] = TMPDIR=/var/folders/sq/xbx_tpmd34d9qvnhj_fsqhh80000gn/T/
+  envp[15] = TERM=dumb
+  envp[16] = SHELL=/bin/zsh
+  envp[17] = MANPATH=/usr/share/man:/usr/local/share/man
+  envp[18] = OLDPWD=/Users/artempyanykh/@dev/artempyanykh.github.io/lab/c-lang
+  envp[19] = _=/var/folders/sq/xbx_tpmd34d9qvnhj_fsqhh80000gn/T/babel-OG2MQY/C-bin-ddxAIi
+  #+end_example
+
+  #+BEGIN_SRC C :results verbatim :tangle cenv.c
+    #include <stdio.h>
+
+    extern char **environ;
+
+    int main(int argc, const char *argv[])
+    {
+            int envn = 0;
+
+            while (*(environ + envn) != NULL) {
+                    printf("envp[%d] = %s\n", envn, *(environ + envn));
+                    envn++;
+            }
+
+            return 0;
+    }
+  #+END_SRC
+
+  #+RESULTS:
+  #+begin_example
+  envp[0] = PWD=/Users/artempyanykh/@dev/artempyanykh.github.io/lab/c-lang
+  envp[1] = SECURITYSESSIONID=186a7
+  envp[2] = DISPLAY=Artems-MacBook-Pro.local
+  envp[3] = LOGNAME=artempyanykh
+  envp[4] = HOME=/Users/artempyanykh
+  envp[5] = SHLVL=11
+  envp[6] = XPC_SERVICE_NAME=0
+  envp[7] = XPC_FLAGS=0x0
+  envp[8] = LANG=en_RU.UTF-8
+  envp[9] = PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/artempyanykh/.local/bin:/Users/artempyanykh/flutter/bin:/Users/artempyanykh/Library/Android/sdk/platform-tools:/Users/artempyanykh/Library/Android/sdk:/Users/artempyanykh/.rbenv/shims:/Applications/Emacs.app/Contents/MacOS/bin-x86_64-10_10:/Applications/Emacs.app/Contents/MacOS/libexec-x86_64-10_10
+  envp[10] = __CF_USER_TEXT_ENCODING=0x1F5:0x0:0x0
+  envp[11] = SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.fdeTCTrQwG/Listeners
+  envp[12] = USER=artempyanykh
+  envp[13] = Apple_PubSub_Socket_Render=/private/tmp/com.apple.launchd.CTXn51iRZD/Render
+  envp[14] = TMPDIR=/var/folders/sq/xbx_tpmd34d9qvnhj_fsqhh80000gn/T/
+  envp[15] = TERM=dumb
+  envp[16] = SHELL=/bin/zsh
+  envp[17] = MANPATH=/usr/share/man:/usr/local/share/man
+  envp[18] = OLDPWD=/Users/artempyanykh/@dev/artempyanykh.github.io/lab/c-lang
+  envp[19] = _=/var/folders/sq/xbx_tpmd34d9qvnhj_fsqhh80000gn/T/babel-OG2MQY/C-bin-RugdgS
+  #+end_example
+
+  #+BEGIN_SRC C :tangle snooze.c
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <unistd.h>
+    #include <signal.h>
+
+    void sig_ign(int signum) {
+            printf("Caught sigint, going to sleep...");
+            sleep(2);
+            printf(" Done sleeping.\n");
+    }
+
+    int main(int argc, const char *argv[])
+    {
+            if (argc < 2) {
+                    printf("Not enough arguments\n");
+                    exit(0);
+            }
+            int to_sleep = atoi(argv[1]);
+
+            signal(SIGINT, &sig_ign);
+
+            int left = sleep(to_sleep);
+
+            printf("Slept for %d out of %d secs.\n", to_sleep - left, to_sleep);
+
+            return 0;
+    }
+  #+END_SRC
+* C version
+  #+BEGIN_SRC C :tangle c-ver.c
+    #include <stdio.h>
+
+    int main()
+    {
+            printf("%ld", __STDC_VERSION__);
+            return 0;
+    }
+  #+END_SRC
+
+  #+RESULTS:
+  : 201112
+* C shared obj file
+  #+BEGIN_SRC C :tangle inci.c :main no
+    extern int printf(const char *, ...);
+
+    int i = 0;
+
+    int inci(void)
+    {
+            printf("%d", i++);
+            return i;
+    }
+  #+END_SRC
+
+  #+BEGIN_SRC C :tangle t1.c
+    extern void inci(void);
+
+    int main()
+    {
+            inci();
+            return 0;
+    }
+  #+END_SRC
+
+  #+BEGIN_SRC C :tangle tsh1.c :main no
+  int i = 0;
+  #+END_SRC
+
+  #+BEGIN_SRC C :tangle tsh2.c :main no
+    extern int i;
+
+    void test(void)
+    {
+            i = 100;
+    }
+  #+END_SRC

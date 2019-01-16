@@ -102,7 +102,7 @@
      #+END_SRC
 
      #+RESULTS:
-     
+
      This is a 32-bit version of a hello world, that computes the lenth of a string to output in runtime.
      #+NAME: brave_new_world
      #+BEGIN_SRC asm :tangle bnw.asm
@@ -138,7 +138,7 @@
                jmp     calclen
      #+END_SRC
 
-  
+
      Let's move forward by making it 64-bit and move the length calculation into a subroutine.
      #+BEGIN_SRC asm :tangle subr.asm
                GLOBAL _main
@@ -358,7 +358,7 @@
      #+BEGIN_SRC asm
        0x7fff61b5fc56 <+0>: movdqa xmmword ptr [rsp], xmm0
      #+END_SRC
-     
+
      Funny enough, at program entry ~rsp~ and ~rbp~ are not aligned.
      #+BEGIN_EXAMPLE
      rbp = 0x00007ffeefbff550
@@ -603,7 +603,7 @@
                add     rsp, 8
                ret
      #+END_SRC
-     
+
 * C interrupts
   #+BEGIN_SRC C :tangle div0.c
     #include <stdio.h>
@@ -620,3 +620,52 @@
 
   #+RESULTS:
   : Result is -355530216
+* CPUID in ASM
+  #+BEGIN_SRC asm :tangle cpuid.asm
+            section .data
+            cpumanfmt       db      '%s', 0xA, 0
+            cpufeatfmt      db      '%d %d', 0xA, 0
+
+            section .text
+            global _main
+            extern _printf
+
+    _main:
+            push    rbp
+            mov     eax, 0
+            cpuid
+
+            mov     rbp, rsp
+            sub     rsp, 16
+
+            mov     [rsp], ebx
+            mov     [rsp + 4], edx
+            mov     [rsp + 8], ecx
+            mov     [rsp + 12], byte 0
+
+
+
+            mov     rdi, cpumanfmt
+            mov     rsi, rsp
+
+            xor     al, al
+            call    _printf
+
+            add     rsp, 16
+
+            mov     eax, 1
+            cpuid
+            mov     [rbp - 4], ecx
+            mov     [rbp - 8], ebx
+            sub     rsp, 16
+            mov     rdi, cpufeatfmt
+            mov     rsi, [rbp - 4]
+            mov     rdx, [rbp - 8]
+            xor     al, al
+            call    _printf
+            add     rsp, 16
+
+            pop     rbp
+
+            ret
+  #+END_SRC

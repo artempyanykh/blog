@@ -11,6 +11,26 @@
 */
 /* pre.shell { background-color: #f8f8f8; padding: 0 1rem; } */
 /* pre.shell code { display: inline-block; overflow: scroll; width: 100%; } */
+div.sourceCode[data-tangle] {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+div.sourceCode[data-tangle]::before {
+  content: "file: " attr(data-tangle);
+  display: inline-block;
+  text-align: left;
+  font-family: monospace;
+  text-decoration: overline dotted gray;
+}
+/* div.sourceCode:not([data-tangle=''])::before { */
+/*   content: "<pre>" attr(data-tangle) "</pre>"; */
+/*   display: inline-block; */
+/*   text-align: right; */
+/*   margin-left: auto; */
+/*   border: 0.1rem solid #cecece; */
+/*   color: darkmagenta; */
+/* } */
 pre.example { border-left: 0.5rem solid #cecece; padding-left: 1rem; overflow: auto; }
 a.sourceLine { display: inline-block; line-height: 1.25; }
 a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
@@ -40,10 +60,16 @@ pre.numberSource a.sourceLine::before
     -ms-user-select: none; user-select: none;
     padding: 0 4px; width: 4em;
     color: #aaaaaa;
+    background-color: #f8f8f8;
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  { background-color: #f8f8f8; }
+/* div.sourceCode */
+/*   { background-color: #f8f8f8; } */
+div.sourceCode pre {
+  background-color: #f8f8f8;
+  width: auto;
+  min-width: fit-content;
+}
 @media screen {
 a.sourceLine::before { text-decoration: underline; }
 }

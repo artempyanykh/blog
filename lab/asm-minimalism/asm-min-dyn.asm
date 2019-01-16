@@ -1,5 +1,5 @@
 SECTION .text
-        GLOBAL _main
+        GLOBAL _main            ; (1)
 _main:
-        mov     rax, 13         ; exit code
-        ret
+        mov     rax, 42         ; (2)
+        ret                     ; (3)

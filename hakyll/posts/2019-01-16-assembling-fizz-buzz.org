@@ -1,0 +1,1204 @@
+---
+title: Assembling FizzBuzz
+category: asm
+date: 2019-01-16
+---
+
+The [[https://artempyanykh.com/blog/posts/2018-12-31-assembling-noop.html][previous post]] covers preliminary topics that include toolchain,
+compiling assembly programs and turning them into executables, a bit
+about anatomy of Mach-O object files, and finally SysV ABI and system
+calls.
+
+With that out of the way, we are ready to get serious and solve some
+real problems... like FizzBuzz. This time around we'll be doing
+dynamic linking with C runtime, using library functions, accessing
+command line arguments, and, of course, fighting segfaults.
+
+This *is not* a post about how to solve a FizzBuzz (even though, it
+has 4 solutions --- in ASM, C, Haskell, and Python 🤔). The problems is
+used merely as a means to illustrate low-level aspects of linking,
+executable loading, lazy symbol binding, etc.
+
+#+BEGIN_EXPORT html
+<!--more-->
+#+END_EXPORT
+
+*Table of contents*:
+1. [[#problem][Problem statement]]
+2. [[#dynex][Dynamic executable]]
+3. [[#howto-libs][How to use library functions]]
+   1. [[#howto-print][How to print]]
+   2. [[#stack-align][(Aside) When is stack alignment really required?]]
+   3. [[#linker][(Aside) How =printf= is actually linked to the executable?]]
+   4. [[#howto-parse][How to parse command line args]]
+4. [[#asm-sol][Finally, a solution to FizzBuzz]]
+5. [[#other-lang-sols][(Bonus) FizzBuzz in other languages]]
+   1. [[#c-sol][Effectiveness of C]]
+   2. [[#haskell-sol][FP nirvana of Haskell]]
+   3. [[#python-sol][Whatever of Python =¯\_(ツ)_/¯=]]
+6. [[#footnotes][Footnotes]]
+
+* Problem statement
+  :PROPERTIES:
+  :CUSTOM_ID: problem
+  :END:
+  Below is the original FizzBuzz problem statement:
+  #+BEGIN_QUOTE
+  For each number from 1 to 100 print 'Fizz' if a number is divisible
+  by 3, print 'Buzz' if it is divisible by 5, and print 'FizzBuzz' if
+  it's divisible by both 3 and 5.
+  #+END_QUOTE
+  To make things a bit more interesting (kek) we will work with
+  numbers from ~1~ to ~n~ where ~n~ is a command line parameter.
+
+  Breaking down this problem further, we can identify specific
+  functionality needed to implement a solution:
+  1. Access command line arguments to read ~n~.
+  2. Parse a string representation of ~n~ into a number.
+  3. Print to stdout either a string or a number.
+  4. Arithmetic, logic and jumps to implement the meat of the method.
+
+  We could implement everything in pure assembly using only syscalls,
+  but it would get rather tedious very soon. Instead we'll use
+  familiar printing and parsing functions from C stdlib (which we will
+  link to dynamically), and use assembly only for main control flow.
+
+* Dynamic executable
+  :PROPERTIES:
+  :CUSTOM_ID: dynex
+  :END:
+
+  Previously we were building statically linked executables. Static
+  linking has its benefits as the resulting binary is self-contained and
+  there are no runtime overhead to method calls and variable references
+  from using the dynamic linker. However the final image size is larger
+  and since library code is not shared memory consumption is
+  higher. Depending on the use case, either static or dynamic linking
+  may be preferrable.
+
+  There are no practical differences between static and dynamic
+  linking for our case. So, let's take a look at the code of a dynamic
+  no-op executable that just return an exit code equal to 42, and then
+  move on the fun part:
+
+  #+BEGIN_SRC asm -n :tangle asm-min-dyn.asm
+            SECTION .text
+            GLOBAL _main            ; (1)
+    _main:
+            mov     rax, 42         ; (2)
+            ret                     ; (3)
+  #+END_SRC
+
+  To compile and link it we can use the following commands:
+  #+BEGIN_SRC shell -n :results none
+    nasm asm-min-dyn.asm -f macho64 -o build64/asm-min-dyn.o
+    ld build64/asm-min-dyn.o -lc -o bin/asm-min-dyn
+    #                         ^ (4)
+  #+END_SRC
+
+  There are several things to note here:
+  1. ~_main~ is no longer a real entry point in our program. When the
+     executable is loaded to control is passed to the dynamic linker,
+     which initializes C runtime among other things, and only after
+     that our code is called.
+  2. Since ~_main~ is called in a regular way, all calling conventions
+     apply to it, in particular its integer result (exit code) should
+     be returned in ~rax~.
+  3. We don't need to make an ~exit~ syscall. Instead we just return
+     control to the code that called ~_main~ which in turn will do a
+     proper termination.
+  4. The executable needs to be linked with ~libc~. Otherwise linking fails with an error.
+
+  Executing this binary produces the expected results:
+  #+BEGIN_SRC shell -n
+    bin/asm-min-dyn
+    echo $?
+  #+END_SRC
+
+  #+RESULTS:
+  : 42
+
+  Now that we know how to build dynamic executables and link with ~libc~ let's proceed to the next section.
+
+* How to use library functions
+  :PROPERTIES:
+  :CUSTOM_ID: howto-libs
+  :END:
+
+  We've identified 2 pieces of functionality that we need from ~libc~:
+  printing and parsing. For no particular reason we'll start with
+  printing, and implement a hello world.
+
+** How to print
+   :PROPERTIES:
+   :CUSTOM_ID: howto-print
+   :END:
+
+   Let's look at the code first, and then proceed with a commentary about highlighted parts:
+   #+BEGIN_SRC asm -n :tangle helloworld.asm
+             GLOBAL _main
+             EXTERN _printf          ; (1)
+
+             SECTION .data
+             helloworldstr   db      'Hello World!', `\n`, 0 ; (2)
+
+             SECTION .text
+     _main:
+             sub     rsp, 8                  ; (3.1)
+             mov     rdi, helloworldstr      ; (3.2)
+             xor     al, al                  ; (3.3)
+             call    _printf
+             add     rsp, 8                  ; (3.4)
+
+             mov     rax, 0
+             ret
+   #+END_SRC
+
+   Now to the highlights from the code:
+   1. Using library functions is pretty straightforward -- it only
+      requires and ~EXTERN~ declaration somewhere in the source
+      file. On MacOS symbol names need to be prefixed with an
+      underscore ~_~, so it's ~_printf~ instead of ~printf~.
+   2. ~.data~ section is used to declare initialized memory regions. In
+      this particular case we define a label ~helloworldstr~ that
+      points to the beginning of a byte array declared with ~db~ whose
+      contents correspond to a zero-terminated string "Hello World!"
+      ended by a line-feed.
+   3. This section of the assembly does necessary preparations and calls ~printf~.
+      1. According to the calling conventions, the stack should be
+         16-byte aligned before the ~call~ instruction. Since ~call~
+         itself places on the stack a return address (8 bytes on
+         64-bit machines), we need to subtract an additional 8 bytes
+         to align the stack.
+      2. First parameter of a printf is a pointer to format string. We
+         supply the address pointing to ~helloworlstr~ in ~rdi~
+         register according to the calling conventions.
+      3. ~printf~ is a variadic function. Such functions accept a
+         number of floating point arguments in ~al~ register, and
+         since we don't pass any, the register is zeroed out.
+      4. After the function call, we need to restore a previous value
+         of the stack pointer. Failure to do so will most likely
+         result in a segmentation fault when ~ret~ pops a bogus value
+         from the stack.
+
+   Commands to link and compile this program are the same as above. To
+   save the clutter, I wrote a Makefile to manage the build, and will
+   use ~make $target~ instead of full commands on this and future
+   occasions.
+
+   #+BEGIN_SRC bash -n :results verbatim
+     make helloworld > /dev/null
+     bin/helloworld
+     echo $?
+   #+END_SRC
+
+   #+RESULTS:
+   : Hello World!
+   : 0
+
+   Since we will need to print both strings and numbers, it makes
+   sense to write a macro for this. Macros will be stores in a
+   separate file and included in the main source file with a special
+   NASM directive.
+
+   #+NAME: printmacro
+   #+BEGIN_SRC asm -n :tangle printmacro.asm
+     ;;; Prints a string to stdout.
+     ;;; Parameter 1 -- a pointer to the string to print.
+     ;;; Parameter 2 -- a constant sub to align the stack.
+             %macro  print0 2
+             sub     rsp, %2
+             mov     rdi, %1
+             xor     al, al
+             call    _printf
+             add     rsp, %2
+             %endmacro
+
+     ;;; Prints a string with an integer pattern inside.
+     ;;; Parameter 1 -- a pointer to the format string.
+     ;;; Parameter 2 -- a number to print.
+     ;;; Parameter 3 -- a constant sub to align the stack.
+             %macro  print1 3
+             sub     rsp, %3
+             mov     rdi, %1
+             mov     rsi, %2
+             xor     al, al
+             call    _printf
+             add     rsp, %3
+             %endmacro
+   #+END_SRC
+
+   With this macros included, we can easily print both pure strings
+   and formatted strings with an integer argument:
+   #+BEGIN_SRC asm -n :tangle hw-macro.asm
+             GLOBAL _main
+             EXTERN _printf
+
+             %include "printmacro.asm"
+
+             SECTION .data
+             hellostr        db      'Hello, there!', `\n`, 0
+             todaynumstr     db      "Today's number is %d", `\n`, 0
+
+             SECTION .text
+     _main:
+             print0  hellostr, 8
+             print1  todaynumstr, 42, 8
+
+             mov     rax, 0
+             ret
+   #+END_SRC
+   #+BEGIN_SRC bash -n :results verbatim
+     make hw-macro > /dev/null
+     bin/hw-macro
+     echo $?
+   #+END_SRC
+
+   #+RESULTS:
+   : Hello, there!
+   : Today's number is 42
+   : 0
+
+** (Aside) When is stack alignment really required?
+   :PROPERTIES:
+   :CUSTOM_ID: stack-align
+   :END:
+
+   Suppose that we forgot aligning the stack. To simulate this, it's
+   enough to set to =0= second parameter to =print0=.
+   #+BEGIN_SRC asm -n :tangle unaligned-stack.asm
+             GLOBAL _main
+             EXTERN _printf
+
+             %include "printmacro.asm"
+
+             SECTION .data
+             hellostr        db      'Hello, there!', `\n`, 0
+
+             SECTION .text
+     _main:
+             print0  hellostr, 0
+
+             mov     rax, 0
+             ret
+   #+END_SRC
+   #+BEGIN_SRC bash -n :results none
+     make unaligned-stack > /dev/null
+     bin/unaligned-stack
+     echo $?
+   #+END_SRC
+
+   The program compiles just fine, but during execution fails with a
+   segmentation fault:
+   #+BEGIN_EXAMPLE
+   [1]    56909 segmentation fault  bin/unaligned-stack
+   139
+   #+END_EXAMPLE
+
+   A short session in debugger shows that it's not even =printf=
+   triggering this error, but it's rather an explicit check in dynamic linker:
+   #+BEGIN_EXAMPLE
+     libdyld.dylib`dyld_stub_binder:
+     ->  0x7fff6b5f5ac4 <+0>:  push   rbp
+         0x7fff6b5f5ac5 <+1>:  test   rsp, 0xf
+         0x7fff6b5f5acc <+8>:  jne    0x7fff6b5f5c56 ; stack_not_16_byte_aligned_error
+   #+END_EXAMPLE
+
+   A couple steps forward show exactly how this =stack_not_16_byte_aligned_error= is implemented:
+   #+BEGIN_EXAMPLE
+     libdyld.dylib`stack_not_16_byte_aligned_error:
+     ->  0x7fff6b5f5c56 <+0>: movdqa xmmword ptr [rsp], xmm0
+   #+END_EXAMPLE
+   =movdqa= instruction moves aligned 128 bits of memory into
+   =xmm0= register. When memory is not aligned the processor generates
+   a general protection exception that translates to the segmentation
+   fault.
+
+   Now consider a slightly modified example. The code is the same as before, except that:
+   - The first printf call has proper alignment to bypass the check in the dynamic linker.
+   - The second call to printf is added, but this time with incorrect alignment.
+
+   #+BEGIN_SRC asm -n :tangle unaligned-stack-2.asm
+             GLOBAL _main
+             EXTERN _printf
+
+             %include "printmacro.asm"
+
+             SECTION .data
+             hellostr        db      'Hello, there!', `\n`, 0
+
+             SECTION .text
+     _main:
+             print0  hellostr, 8     ; 1st call to printf with properly aligned stack
+             print0  hellostr, 0     ; (+) unaligned invocation of print0
+
+             mov     rax, 0
+             ret
+   #+END_SRC
+   It would be natural to expect this program to segfault on second
+   =print0=. However, the program runs just fine:
+   #+BEGIN_SRC bash -n :results verbatim
+     make unaligned-stack-2 > /dev/null
+     bin/unaligned-stack-2
+     echo $?
+   #+END_SRC
+
+   #+RESULTS:
+   : Hello, there!
+   : Hello, there!
+   : 0
+
+
+   So, what's going on here? A more detailed answer is provided in the
+   following aside where linker's work is explored in more detail. But
+   in short, control goes to dynamic linker only on the first call of
+   a function to do lazy symbol binding, for consecutive calls the
+   memory location of =printf= is already known, so control goes
+   directly there. Luckily, the following code path doesn't have any
+   instruction that require memory alignment, so the call to =printf=
+   finishes without issues, even though stack alignment is violated.
+
+   One thing to keep in mind is that stack alignment and other calling
+   convention are /just conventions/. Unless you need to call/use
+   external methods, you are free to do whatever you want with the
+   stack and the registers.
+
+** (Aside) How =printf= is actually linked to the executable?
+   :PROPERTIES:
+   :CUSTOM_ID: linker
+   :END:
+   The only thing we need to use =printf= in our code, is define it
+   with =EXTERN= keyword:
+   #+BEGIN_SRC asm -n :tangle helloworld.asm
+             GLOBAL _main
+             EXTERN _printf
+
+             SECTION .data
+             helloworldstr   db      'Hello World!', `\n`, 0
+
+             SECTION .text
+     _main:
+             sub     rsp, 8
+             mov     rdi, helloworldstr
+             xor     al, al
+             call    _printf
+             add     rsp, 8
+
+             mov     rax, 0
+             ret
+   #+END_SRC
+   The assembler doesn't know what =printf= is and where it will
+   eventually come from. So, when it compiles the source code into an
+   object file, it leaves a note in a form of a *relocation entry*[fn:2] to
+   the linker that will build a final executable object file.
+
+   We can peek into the assembly generated for =printf= call using =objdump= tool:
+   #+BEGIN_SRC bash -n :results verbatim
+     objdump -disassemble build64/helloworld.o | grep call
+   #+END_SRC
+
+   #+RESULTS:
+   :       10:	e8 00 00 00 00 	callq	0 <_main+0x15>
+
+   The address[fn:1] of =printf= is replaced with 0. This can't be it,
+   since ~call 0~ just passes control to the next instruction. The
+   missing part is the relocation table, generated by the
+   assembler. For =printf= the entry is the following:
+
+   #+BEGIN_SRC bash -n :results output
+     objdump -r build64/helloworld.o | grep printf
+   #+END_SRC
+
+   #+RESULTS:
+   : 0000000000000011 X86_64_RELOC_BRANCH _printf
+
+   First comes the address where the linker needs to do the
+   relocation, then the type of relocation, and finally the name of
+   the symbol.
+
+   Note above that =call= instruction start at address =10=: first byte is
+   the opcode, and bytes 11--14 need to be filled with =printf='s
+   address. This matches the address in the relocation entry for =printf=.
+
+   So far, so good. When the linker does it's job, we get an
+   executable object file which can be loaded by the kernel. Not all
+   relocations are done though. Because =libc= is linked dynamically
+   to the executable, loading and binding of =printf= will happen in
+   runtime.
+
+   To illustrate the mechanics, we will refer to the program from the
+   previous section: two calls to =printf= --- one with aligned stack,
+   and the other with misaligned:
+   #+BEGIN_SRC asm -n :tangle unaligned-stack-2.asm
+             GLOBAL _main
+             EXTERN _printf
+
+             %include "printmacro.asm"
+
+             SECTION .data
+             hellostr        db      'Hello, there!', `\n`, 0
+
+             SECTION .text
+     _main:
+             print0  hellostr, 8     ; 1st call to printf with properly aligned stack
+             print0  hellostr, 0     ; (+) unaligned invocation of print0
+
+             mov     rax, 0
+             ret
+   #+END_SRC
+
+   Now, this is a bit more involved as we need to look at and connect
+   several pieces of information. First part is the **resulting
+   assembly** in the linked executable:
+   #+BEGIN_SRC bash -n :results output
+     objdump -disassemble -no-show-raw-insn bin/unaligned-stack-2
+   #+END_SRC
+
+   #+RESULTS: unaligned-2-dis
+   #+begin_src asm -n
+     bin/unaligned-stack-2:	file format Mach-O 64-bit x86-64
+
+     Disassembly of section __TEXT,__text:
+     _main:
+         1fa6:	subq	$8, %rsp
+         1faa:	movabsq	$8216, %rdi
+         1fb4:	xorb	%al, %al
+         1fb6:	callq	35           ; (1) goto 0x1fde
+         1fbb:	addq	$8, %rsp
+         1fbf:	subq	$0, %rsp
+         1fc3:	movabsq	$8216, %rdi
+         1fcd:	xorb	%al, %al
+         1fcf:	callq	10           ; (1) goto 0x1fde
+         1fd4:	addq	$0, %rsp
+         1fd8:	movl	$0, %eax
+         1fdd:	retq
+     Disassembly of section __TEXT,__stubs:
+     __stubs:
+         1fde:	jmpq	*44(%rip)    ; (2) goto address stored at loc 0x2010
+     Disassembly of section __TEXT,__stub_helper:
+     __stub_helper:
+         1fe4:	leaq	29(%rip), %r11
+         1feb:	pushq	%r11
+         1fed:	jmpq	*13(%rip)      ; (3) goto address stored at loc 0x2000
+         1ff3:	nop
+         1ff4:	pushq	$0
+         1ff9:	jmp	-26 <__stub_helper>
+   #+end_src
+
+   Then, **contents of sections =__la_symbol_ptr= and =__nl_symbol_ptr=**[fn:3]:
+   #+BEGIN_SRC bash -n :results output
+     objdump -section=__la_symbol_ptr -section=__nl_symbol_ptr -s bin/unaligned-stack-2 | tail -n 4
+   #+END_SRC
+
+   #+RESULTS:
+   : Contents of section __nl_symbol_ptr:
+   :  2000 00000000 00000000 00000000 00000000  ................ ; (4)
+   : Contents of section __la_symbol_ptr:
+   :  2010 f41f0000 00000000                    ........         ; (5)
+
+   And finally, **bind and lazy bind tables**, which again are static
+   pieces of information encoded in the executable:
+   #+BEGIN_SRC bash -n :results verbatim
+     objdump -bind -lazy-bind bin/unaligned-stack-2
+   #+END_SRC
+
+   #+RESULTS:
+   #+BEGIN_EXAMPLE
+        : Bind table:
+        : segment  section            address    type       addend dylib            symbol
+     (6): __DATA   __nl_symbol_ptr    0x00002000 pointer         0 libSystem        dyld_stub_binder
+        :
+        : Lazy bind table:
+        : segment  section            address     dylib            symbol
+     (7): __DATA   __la_symbol_ptr    0x00002010 libSystem        _printf
+   #+END_EXAMPLE
+
+   The linker did necessary static relocations and prepared the object
+   file for handling by the dynamic linker. Note numbered highlights
+   in the outputs above:
+   1. From (1) we see that calls to =printf= transfer control to
+      address =0x1fde= where the stub is placed by the linker.
+   2. The instruction at =0x1fde= passes control to the address stored
+      at memory location =0x2010=. From (5) we can see that initially
+      =0x2010= stores address =0x1ff4=[fn:4] which pushes 0 onto the
+      stack and jumps to the beginning of =__stub_helper= in the
+      assembly above. From (7) we can see that =0x2010= is reserved
+      for =printf= binding.
+   3. Following =0x1fe4= there is another instruction at =0x1fed= that
+      transfers control to the address stored at memory location
+      =0x2000=. Bind entry (6) shows that =0x2000= will point to
+      =dyld_stub_binder= which is a part of the dynamic linker.
+      Initial value of =0x2000= is zero and is filled with a real
+      address at executable load time.
+   Dynamic linking and lazy binding requires a level of indirection:
+   function calls no longer point directly to the destination address,
+   but rather retrieve this address from a memory location that is
+   filled at execution time by the dynamic linker.
+
+   To get a better feel for how lazy binding works, let's fire up a
+   debugger and see it in action:
+   #+BEGIN_EXAMPLE
+     Current executable set to 'bin/unaligned-stack-2' (x86_64).
+
+     #
+     # Before the executable is loaded, 0x2000 holds 0s and 0x2010 points to 0x1ff4
+     #
+     (lldb) mem read 0x2000 --count 8
+     0x00002000: 00 00 00 00 00 00 00 00                          ........
+     (lldb) mem read 0x2010 --count 8
+     0x00002010: f4 1f 00 00 00 00 00 00                          .......
+
+     #
+     # Set breakpoint on main and run the program
+     #
+     (lldb) b main
+     Breakpoint 1: where = unaligned-stack-2`main, address = 0x0000000000001fa6
+     (lldb) r
+     Process 70864 launched: 'bin/unaligned-stack-2' (x86_64)
+     Process 70864 stopped
+     ,* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+         frame #0: 0x0000000000001fa6 unaligned-stack-2`main
+     unaligned-stack-2`main:
+     ->  0x1fa6 <+0>:  sub    rsp, 0x8
+         0x1faa <+4>:  movabs rdi, 0x2018
+         0x1fb4 <+14>: xor    al, al
+         0x1fb6 <+16>: call   0x1fde                    ; symbol stub for: printf
+     Target 0: (unaligned-stack-2) stopped.
+
+     #
+     # After the executable is loaded 0x2000 points to a real address
+     # to dynamic linker stub binder.
+     #
+     (lldb) mem read 0x2000 --count 8
+     0x00002000: c4 5a 5f 6b ff 7f 00 00                          Z_k...
+
+     #
+     # Set breakpoint after the first call to printf and continue execution
+     #
+     (lldb) b 0x1fbb
+     Breakpoint 2: where = unaligned-stack-2`main + 21, address = 0x0000000000001fbb
+     (lldb) c
+     Process 70864 resuming
+     Hello, there!
+     Process 70864 stopped
+     ,* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 2.1
+         frame #0: 0x0000000000001fbb unaligned-stack-2`main + 21
+     unaligned-stack-2`main:
+     ->  0x1fbb <+21>: add    rsp, 0x8
+         0x1fbf <+25>: sub    rsp, 0x0
+         0x1fc3 <+29>: movabs rdi, 0x2018
+         0x1fcd <+39>: xor    al, al
+     Target 0: (unaligned-stack-2) stopped.
+
+     #
+     # After the first call to printf, 0x2010 stores a memory address
+     # where printf was actually loaded to.
+     #
+     (lldb) mem read 0x2010 --count 8
+     0x00002010: ec 78 69 6b ff 7f 00 00                          xik...
+     (lldb) dis -s 0x7fff6b6978ec
+     libsystem_c.dylib`printf:
+         0x7fff6b6978ec <+0>:  push   rbp
+         0x7fff6b6978ed <+1>:  mov    rbp, rsp
+         0x7fff6b6978f0 <+4>:  sub    rsp, 0xd0
+         0x7fff6b6978f7 <+11>: mov    r10, rdi
+         0x7fff6b6978fa <+14>: test   al, al
+         0x7fff6b6978fc <+16>: je     0x7fff6b697924            ; <+56>
+         0x7fff6b6978fe <+18>: movaps xmmword ptr [rbp - 0xa0], xmm0
+         0x7fff6b697905 <+25>: movaps xmmword ptr [rbp - 0x90], xmm1
+   #+END_EXAMPLE
+
+** How to parse command line args
+   :PROPERTIES:
+   :CUSTOM_ID: howto-parse
+   :END:
+   Since our =main= is not an entry point but rather a regular
+   function, we can expect =argc= and =argv= to be in =rdi= and =rsi=
+   respectively. First pointer in =argv= points to executable name,
+   and the second pointer (if provided) should point to =n=. Parsing
+   can be done with a function from C stdlib:
+   #+BEGIN_SRC C
+     long strtol(const char *restrict str, char **restrict endptr, int base)
+   #+END_SRC
+
+   With this in mind, let's write an assembly program that echoes a
+   number back to the console, or says that the provided value is not
+   a number.
+
+   #+BEGIN_SRC asm :tangle echo-num.asm
+             GLOBAL _main
+             EXTERN _printf
+             EXTERN _strtol
+
+             %include "printmacro.asm"
+
+             SECTION .data
+             usestr  db      'Usage: echo-num <number>', `\n`, 0
+             nanstr  db      'Not a number', `\n`, 0
+             numstr  db      'Your number is %d', `\n`, 0
+
+             SECTION .text
+     _main:
+             cmp     rdi, 1
+             jle     .noargs
+
+             push    rbp             ; (1)
+             mov     rbp, rsp        ;
+
+             lea     rax, [rsi + 8]  ; (2)
+             mov     rdi, [rax]      ; rdi has an address of argv[1]
+             call    parsenum
+
+             cmp     rdx, 0
+             jne     .invalid
+
+             print1  numstr, rax, 0
+             jmp     .fin
+
+     .invalid:
+             print0  nanstr, 0
+
+     .fin:
+             pop     rbp
+             mov     rax, 0
+             ret
+
+     .noargs:
+             print0  usestr, 8
+             mov     rax, 1
+             ret
+
+     ;;; Parameter 1 - address of a string to parse
+     ;;; Returns:
+     ;;;     rax - parsed number
+     ;;;     rdx - 0 when OK, 1 when the string is not a number
+     parsenum:
+             cmp     byte [rdi], 0
+             je      .emptystr
+             sub     rsp, 8          ; align stack
+
+             mov     rsi, rsp        ; **endptr on top of stack
+             mov     rdx, 10         ; base 10 number
+             call    _strtol
+
+             mov     rdx, [rsp]      ; following 2 instructions dereference **endptr
+             cmp     byte [rdx], 0   ; and check that it points to 0 (end of string)
+             jne     .invalidstr     ; otherwise there is some non-digit character
+
+             mov     rdx, 0          ; rdx = 0 since parsing finished successfully
+             add     rsp, 8          ; restore rsp
+             ret
+
+     .invalidstr:                    ; invalidstr does the same as emptystr, but needs
+             add     rsp, 8          ; to restore the stack
+     .emptystr:
+             mov     rax, 0
+             mov     rdx, 1
+             ret
+   #+END_SRC
+
+   Compile, run, and enjoy the result:
+   #+BEGIN_SRC bash -n :results output
+     make echo-num > /dev/null
+     bin/echo-num
+     bin/echo-num wat
+     bin/echo-num 42
+   #+END_SRC
+
+   #+RESULTS:
+   : Usage: echo-num <number>
+   : Not a number
+   : Your number is 42
+
+   There are several things in the code that deserve further
+   elaboration:
+   1. This is what is usually called a /function
+      prologue/. Conventionally, =rbp= points to the beginning of a
+      stack frame. Instructions ~push rbp; mov rbp, rsp;~ enable access
+      to the current stack frame, previous call stack frame, and
+      recursively all stack frames up the call chain.
+
+      As a side effect, it also gets stack 16-byte aligned.
+
+   2. This ~lea rax, [rsi + 8]~ instruction is equivalent to ~rax =
+      rsi + 8~ which stores in =rax= address of a second item in
+      =argv= array. An alternative implementation could be ~mov rax,
+      rsi; add rax, 8;~ but apart from requiring less instructions, on
+      modern processors =lea= is also processed outside of ALU (in a
+      different part of the execution pipeline that deals with
+      addressing) and can happen in parallel with other arithmetic
+      instructions.
+
+   Similarly to =printmacro.asm= let's move =parsenum= to a separate
+   file, and proceed to the final part.
+
+   #+BEGIN_SRC asm -n :tangle parse.asm
+     ;;; Parameter 1 - address of a string to parse
+     ;;; Returns:
+     ;;;     rax - parsed number
+     ;;;     rdx - 0 when OK, 1 when the string is not a number
+     parsenum:
+             cmp     byte [rdi], 0
+             je      .emptystr
+             sub     rsp, 8          ; align stack
+
+             mov     rsi, rsp        ; **endptr on top of stack
+             mov     rdx, 10         ; base 10 number
+             call    _strtol
+
+             mov     rdx, [rsp]      ; following 2 instructions dereference **endptr
+             cmp     byte [rdx], 0   ; and check that it points to 0 (end of string)
+             jne     .invalidstr     ; otherwise there is some non-digit character
+
+             mov     rdx, 0          ; rdx = 0 since parsing finished successfully
+             add     rsp, 8          ; restore rsp
+             ret
+
+     .invalidstr:                    ; invalidstr does the same as emptystr, but needs
+             add     rsp, 8          ; to restore the stack
+     .emptystr:
+             mov     rax, 0
+             mov     rdx, 1
+             ret
+   #+END_SRC
+
+* Finally, a solution to FizzBuzz
+  :PROPERTIES:
+  :CUSTOM_ID: asm-sol
+  :END:
+
+  The code below implements a straightforward solution that doesn't
+  use the fact that 3 and 5 are prime numbers. It's also extensively
+  commented for reader's convenience.
+
+  #+BEGIN_SRC asm -n :tangle fizzbuzz.asm
+            GLOBAL _main
+            EXTERN  _printf
+            EXTERN  _strtol
+
+            %include "printmacro.asm"
+            %include "parse.asm"
+
+            SECTION .data
+            usestr  db      'Usage: fizzbuzz <number>', `\n`, 0
+            nanstr  db      'Not a number', `\n`, 0
+            numstr  db      '%d', 0
+            fizzstr db      'Fizz', 0
+            buzzstr db      'Buzz', 0
+            lf      db      `\n`, 0
+
+            SECTION .text
+    _main:
+            ;; The beginning is the same as in echo-num.asm
+            cmp     rdi, 1
+            jle     .noargs
+
+            push    rbp
+            mov     rbp, rsp
+
+            lea     rax, [rsi + 8]
+            mov     rdi, [rax]
+            call    parsenum
+
+            cmp     rdx, 0
+            jne     .invalid
+            ;; At this point n is parsed an is in rax register
+
+            ;; Here starts the main logic of the routine.
+            ;; Since registers r12 - r15 are calee-saved, they
+            ;; need to be pushed onto stack before used.
+            push    r13
+            mov     r13, rax        ; save n in r13
+
+            push    r12             ; r12 will serve as a counter
+            mov     r12, 1
+
+            push    r14             ; r14 will store r12 % 3
+
+    .checkStart:
+            cmp     r12, r13
+            jg      .fin
+
+            ;; div instruction does signed division
+            ;; when the divisor is in 64-bit register (rcx in our case)
+            ;; rdx:rax get divided by it with quotient stored in rax and
+            ;; remainder -- in rdx
+            mov     rax, r12
+            xor     rdx, rdx
+            mov     rcx, 3
+            div     rcx
+
+            mov     r14, rdx        ; save r13 % 3 in r14 for further check in .checkNum
+            cmp     rdx, 0
+            jne     .check5
+            print0  fizzstr, 8
+            ;; after .check3 we *need* to fall-through to .check5
+    .check5:
+            mov     rax, r12
+            xor     rdx, rdx
+            mov     rcx, 5
+            div     rcx
+            cmp     rdx, 0
+            jne     .checkNum
+            print0  buzzstr, 8
+            jmp     .checkEnd       ; check5 is successful, we can go to .checkEnd
+
+    .checkNum:
+            cmp     r14, 0          ; here r12 % 5 != 0, *but* r12 % 3 could be 0
+            je      .checkEnd       ; thus we need to check the result of div 3
+            print1  numstr, r12, 8
+
+    .checkEnd:
+            print0  lf, 8
+            inc     r12
+            jmp     .checkStart
+
+    .fin:
+            pop     r14
+            pop     r12
+            pop     r13
+            pop     rbp
+            mov     rax, 0
+            ret
+
+    .noargs:
+            print0  usestr, 8
+            mov     rax, 1
+            ret
+
+    .invalid:
+            print0  nanstr, 0
+            pop     rbp
+            mov     rax, 1
+            ret
+  #+END_SRC
+
+  Now, run it and stand back in amazement as the solution is being
+  printed onto the screen:
+  #+BEGIN_SRC bash -n :results output
+    make fizzbuzz > /dev/null
+    bin/fizzbuzz
+    bin/fizzbuzz wat
+    bin/fizzbuzz 15
+  #+END_SRC
+
+  #+RESULTS:
+  #+begin_example
+  Usage: fizzbuzz <number>
+  Not a number
+  1
+  2
+  Fizz
+  4
+  Buzz
+  Fizz
+  7
+  8
+  Fizz
+  Buzz
+  11
+  Fizz
+  13
+  14
+  FizzBuzz
+  #+end_example
+
+  To conclude, there are several things we covered in this post,
+  including:
+  - how to use library functions,
+  - how to link programs with shared libraries,
+  - what are static and dynamic linking, what is /relocation/ and how
+    lazy binding is happening at runtime,
+  - stack alignment and whether it's necessary at all times,
+  - more assembly tricks, macros and function definition.
+
+  Although, the low level mechanics are rather fiddly, understanding
+  how compilation, linking and loading work as well as being able to
+  read resulting assembly can help to debug some times baffling
+  issues.
+
+* (Bonus) FizzBuzz in other languages
+  :PROPERTIES:
+  :CUSTOM_ID: other-lang-sols
+  :END:
+
+  *Disclaimer*: this sections is written just for lulz, no hard
+  conclusions should be drawn from it.
+
+  Out of curiosity, let's calculate the execution time of a solution
+  in assembly for a modest =n = 10M=:
+  #+BEGIN_SRC bash -n :results output
+    bin/fizzbuzz 10000000 > /dev/null
+    times
+  #+END_SRC
+
+  #+RESULTS:
+  : 0m0.002s 0m0.003s
+  : 0m1.993s 0m0.004s
+
+  A bit less than 2s, which is not bad at all! After all, it's as
+  close to bare metal as possible, so it should be very performant,
+  right? Well, yes... maybe. Let's find out!
+
+** Effectiveness of C
+   :PROPERTIES:
+   :CUSTOM_ID: c-sol
+   :END:
+
+  Below is a pretty direct translation of the assembly solution to C:
+  #+BEGIN_SRC C -n :tangle c-fizzbuzz.c
+    #include <stdio.h>
+    #include <inttypes.h>
+    #include <stdlib.h>
+
+    int main(int argc, const char *argv[])
+    {
+            if (argc < 2) {
+                    printf("Usage: c-fizzbuzz <number>\n");
+                    return 0;
+            }
+
+            char *endptr;
+            long n = strtol(argv[1], &endptr, 10);
+            if (endptr[0] != '\0') {
+                    printf("Error: not a number\n");
+                    return 1;
+            }
+
+            for (long i = 1; i <= n; i++) {
+                    long mod3 = i % 3;
+                    long mod5 = i % 5;
+                    if (mod3 == 0) {
+                            printf("Fizz");
+                    }
+                    if (mod5 == 0) {
+                            printf("Buzz");
+                    } else {
+                            if (mod3 != 0) {
+                                    printf("%ld", i);
+                            }
+                    }
+                    printf("\n");
+            }
+
+            return 0;
+    }
+  #+END_SRC
+
+  Checking that it compiles and runs fine:
+  #+BEGIN_SRC bash -n :results output
+    cc c-fizzbuzz.c -o bin/c-fizzbuzz
+    bin/c-fizzbuzz
+    bin/c-fizzbuzz wat
+    bin/c-fizzbuzz 15
+  #+END_SRC
+
+  #+RESULTS:
+  #+begin_example
+  Usage: c-fizzbuzz <number>
+  Error: not a number
+  1
+  2
+  Fizz
+  4
+  Buzz
+  Fizz
+  7
+  8
+  Fizz
+  Buzz
+  11
+  Fizz
+  13
+  14
+  FizzBuzz
+  #+end_example
+
+  Good. In regard to the timings, we get a bit more than 2s, which
+  agrees with the intuition --- compilers generate great assembly, but
+  there is still small level of overhead:
+  #+BEGIN_SRC bash -n :results output
+    bin/c-fizzbuzz 10000000 > /dev/null
+    times
+  #+END_SRC
+
+  #+RESULTS:
+  : 0m0.002s 0m0.002s
+  : 0m2.075s 0m0.004s
+
+  Case solved? Not exactly. Let's compile the code with the maximum
+  optimization level, and time the execution again:
+  #+BEGIN_SRC bash -n :results output
+    cc c-fizzbuzz.c -o bin/c-fizzbuzz -O3
+    bin/c-fizzbuzz 10000000 > /dev/null
+    times
+  #+END_SRC
+
+  #+RESULTS:
+  : 0m0.002s 0m0.002s
+  : 0m1.621s 0m0.034s
+
+  Now we're at ~1.6s which is ~23% and ~28% faster than "pure
+  assembly" and "no-optimization C" solutions respectively. Compiler
+  developers try hard to improve the efficiency of the generated
+  assembly. Writing assembly by hand is cool, but C compilers apply
+  lots of non-trivial optimizations to the code without programmers
+  even knowing or understanding them all.
+
+  In this particular case, =clang= optimized remainder operation. In
+  general, division is a costly operation and can take 10s of CPU
+  cycles. But if the divisor is known, remainder can be found quicker
+  without using division[fn:5].
+
+** FP nirvana of Haskell
+   :PROPERTIES:
+   :CUSTOM_ID: haskell-sol
+   :END:
+
+  The M-word was used only once in the source code. It may not be the
+  most idiomatic Haskell, but it closely resembles other solutions and
+  is arguably easy to read.
+
+  #+BEGIN_SRC haskell -n :tangle hs-fizzbuzz.hs
+    import System.Environment
+    import Data.List (uncons)
+    import Control.Monad (forM_, when, unless)
+
+    main = do
+      args <- getArgs
+
+      case headMay args of
+        Nothing -> printUsage
+        Just nStr  -> case parseNum nStr of
+          Nothing -> printError
+          Just n -> solveFizzBuzz n
+
+    ----------------------------------------------------------
+    -- FizzBuzz solution
+    ----------------------------------------------------------
+    solveFizzBuzz nMax = forM_ [1..nMax] $ \n -> do
+      let rem3 = n `rem` 3
+          rem5 = n `rem` 5
+
+      when (rem3 == 0) $ putStr "Fizz"
+
+      if rem5 == 0
+         then putStr "Buzz"
+         else unless (rem3 == 0) $ putStr (show n)
+
+      putStrLn ""
+
+    ----------------------------------------------------------
+    -- Helper functions
+    ----------------------------------------------------------
+
+    printUsage = putStrLn "Usage: hs-fizzbuzz <number>"
+    printError = putStrLn "Error: Not a number"
+
+    headMay :: [a] -> Maybe a
+    headMay xs = fst <$> uncons xs
+
+    parseNum :: String -> Maybe Int
+    parseNum s = case reads s of
+      (n, "") : xs -> Just n
+      _ -> Nothing
+  #+END_SRC
+
+  Compiling with the maximum optimization level gives the execution
+  time of ~5.49s:
+  #+BEGIN_SRC bash -n :results output
+    ghc -o bin/hs-fizzbuzz -O2 hs-fizzbuzz.hs
+    bin/hs-fizzbuzz 10000000 > /dev/null
+    times
+  #+END_SRC
+
+  #+RESULTS:
+  : 0m0.002s 0m0.003s
+  : 0m5.486s 0m0.108s
+
+  I'm not an expert in Haskell performance tuning, so there might be
+  way to implement this more efficiently. But again, these numbers
+  should not be used to argue that FP is slow --- this is a degenerate
+  example where the overhead is noticeable. On a real project the
+  compiler will have many more optimization opportunities.
+
+** Whatever of Python =¯\_(ツ)_/¯=
+   :PROPERTIES:
+   :CUSTOM_ID: python-sol
+   :END:
+
+   I figured that the list would be incomplete without an interpreted
+   language, so here is a solution in Python:
+   #+BEGIN_SRC python -n :tangle py-fizzbuzz.py
+     import sys
+
+     def main():
+         if len(sys.argv) < 2:
+             print("Usage: py-fizzbuzz <number>")
+             sys.exit(0)
+
+         try:
+             n = int(sys.argv[1])
+         except ValueError:
+             print("Error: Not a number")
+             sys.exit(0)
+
+         solveFizzBuzz(n)
+
+     def solveFizzBuzz(n):
+         for i in range(1, n + 1):
+             rem3 = i % 3
+             rem5 = i % 5
+
+             if (rem3 == 0):
+                 print("Fizz", end="")
+
+             if (rem5 == 0):
+                 print("Buzz", end="")
+             else:
+                 if (rem3 != 0):
+                     print(i, end="")
+
+             print("")
+
+     if __name__ == "__main__":
+         main()
+   #+END_SRC
+
+   The code resembles Haskell's version a lot (minus type
+   annotations). The timings are not that bad --- about 3x slower than
+   Haskell's version and 10x slower then C:
+   #+BEGIN_SRC bash -n :results output
+     python3 py-fizzbuzz.py 10000000 > /dev/null
+     times
+   #+END_SRC
+
+   #+RESULTS:
+   : 0m0.002s 0m0.004s
+   : 0m14.858s 0m0.039s
+
+* Footnotes
+  :PROPERTIES:
+  :CUSTOM_ID: footnotes
+  :END:
+
+[fn:2] Loosely speaking, the assembler doesn't know the final address of a
+symbol in memory. So, it puts a placeholder in the object file, and
+instructs the linker to put the final address there when the linker
+builds an executable. This process is called *relocation*.
+
+[fn:1] Or more specifically, a program counter (PC) relative
+displacement.
+
+[fn:3] =__la_...= stands for lazy and =_nl_...= --- for non-lazy and
+describe the type of binding performed by the dynamic linker.
+
+[fn:4] The actual memory content is =f41f0000= but due to
+little-endianness byte order is reversed and the least significant
+byte comes first.
+
+[fn:5] Remainder from division by 3 or by 5 can be found more
+efficiently using a combination of multiplication and shifts. See
+[[https://www.hackersdelight.org/hdcodetxt/remuc.c.txt][Hacker's
+delight]] for more details. Looks like in this particular case
+=remu3m= and =remu5m= methods were used.

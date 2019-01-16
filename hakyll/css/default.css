@@ -124,6 +124,12 @@ ul.post-list .post-list-continue {
   padding-inline-start: 2rem;
 }
 
+blockquote {
+  border-left: 0.5rem solid #78C0A8;
+  padding: 0 1rem;
+  font-style: italic;
+}
+
 /* ////////////////////////////////// */
 /* Logo and header H1 related styles */
 /* ////////////////////////////////// */
@@ -261,6 +267,9 @@ ul.post-list .post-list-continue {
 @media (max-width: 414px) {
   html {
     font-size: 55%;
+  }
+  body {
+    width: auto;
   }
   .header-page {
     position: relative;

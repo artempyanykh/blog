@@ -1,5 +1,5 @@
 arch32Targets = bnw
-arch64Targets = helloworld64 subr hw-inc hw-inc-proper asmprint cmd-args fizzbuzz
+arch64Targets = helloworld64 subr hw-inc hw-inc-proper asmprint cmd-args fizzbuzz cpuid helloworld hw-macro unaligned-stack unaligned-stack-2 echo-num
 
 allBins = $(arch32Targets) $(arch64Targets)
 
