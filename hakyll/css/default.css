@@ -126,8 +126,8 @@ ul.post-list .post-list-continue {
 
 blockquote {
   border-left: 0.5rem solid #78C0A8;
-  padding: 0 1rem;
-  font-style: italic;
+  padding: 0.1rem 1rem;
+  font-style: normal;
 }
 
 /* ////////////////////////////////// */

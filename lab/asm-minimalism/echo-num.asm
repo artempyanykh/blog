@@ -18,7 +18,7 @@ _main:
         mov     rbp, rsp        ;
 
         lea     rax, [rsi + 8]  ; (2)
-        mov     rdi, [rax]      ; rdi has an address of argv[1]
+        mov     rdi, [rax]      ; rdi points to the first char of argv[1]
         call    parsenum
 
         cmp     rdx, 0
@@ -49,13 +49,13 @@ parsenum:
         je      .emptystr
         sub     rsp, 8          ; align stack
 
-        mov     rsi, rsp        ; **endptr on top of stack
+        mov     rsi, rsp        ; endptr on top of stack
         mov     rdx, 10         ; base 10 number
         call    _strtol
 
         mov     rdx, [rsp]      ; following 2 instructions dereference **endptr
         cmp     byte [rdx], 0   ; and check that it points to 0 (end of string)
-        jne     .invalidstr     ; otherwise there is some non-digit character
+        jne     .invalidstr     ; otherwise input had some non-digit character
 
         mov     rdx, 0          ; rdx = 0 since parsing finished successfully
         add     rsp, 8          ; restore rsp

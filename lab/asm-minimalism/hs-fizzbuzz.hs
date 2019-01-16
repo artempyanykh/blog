@@ -8,7 +8,7 @@ main = do
   case headMay args of
     Nothing -> printUsage
     Just nStr  -> case parseNum nStr of
-      Nothing -> printError
+      Nothing -> printNanError
       Just n -> solveFizzBuzz n
 
 ----------------------------------------------------------
@@ -31,7 +31,7 @@ solveFizzBuzz nMax = forM_ [1..nMax] $ \n -> do
 ----------------------------------------------------------
 
 printUsage = putStrLn "Usage: hs-fizzbuzz <number>"
-printError = putStrLn "Error: Not a number"
+printNanError = putStrLn "Error: Not a number"
 
 headMay :: [a] -> Maybe a
 headMay xs = fst <$> uncons xs

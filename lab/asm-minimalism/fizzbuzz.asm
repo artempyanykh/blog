@@ -28,11 +28,11 @@ _main:
 
         cmp     rdx, 0
         jne     .invalid
-        ;; At this point n is parsed an is in rax register
+        ;; At this point n is parsed and is in rax register
 
         ;; Here starts the main logic of the routine.
         ;; Since registers r12 - r15 are calee-saved, they
-        ;; need to be pushed onto stack before used.
+        ;; need to be pushed onto the stack before using.
         push    r13
         mov     r13, rax        ; save n in r13
 

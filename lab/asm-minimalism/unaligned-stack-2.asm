@@ -9,7 +9,7 @@ GLOBAL _main
         SECTION .text
 _main:
         print0  hellostr, 8     ; 1st call to printf with properly aligned stack
-        print0  hellostr, 0     ; (+) unaligned invocation of print0
+        print0  hellostr, 0     ; (+) unaligned call to print0
 
         mov     rax, 0
         ret

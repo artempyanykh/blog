@@ -4,7 +4,7 @@ category: asm
 date: 2019-01-16
 ---
 
-The [[https://artempyanykh.com/blog/posts/2018-12-31-assembling-noop.html][previous post]] covers preliminary topics that include toolchain,
+The [[https://artempyanykh.com/blog/posts/2018-12-31-assembling-noop.html][previous post]] covers preliminary topics that include tool-chain,
 compiling assembly programs and turning them into executables, a bit
 about anatomy of Mach-O object files, and finally SysV ABI and system
 calls.
@@ -14,8 +14,7 @@ real problems... like FizzBuzz. This time around we'll be doing
 dynamic linking with C runtime, using library functions, accessing
 command line arguments, and, of course, fighting segfaults.
 
-This *is not* a post about how to solve a FizzBuzz (even though, it
-has 4 solutions --- in ASM, C, Haskell, and Python 🤔). The problems is
+This *is not* a post about how to solve a FizzBuzz. The problems is
 used merely as a means to illustrate low-level aspects of linking,
 executable loading, lazy symbol binding, etc.
 
@@ -34,8 +33,8 @@ executable loading, lazy symbol binding, etc.
 4. [[#asm-sol][Finally, a solution to FizzBuzz]]
 5. [[#other-lang-sols][(Bonus) FizzBuzz in other languages]]
    1. [[#c-sol][Effectiveness of C]]
-   2. [[#haskell-sol][FP nirvana of Haskell]]
-   3. [[#python-sol][Whatever of Python =¯\_(ツ)_/¯=]]
+   2. [[#haskell-sol][Expressiveness of Haskell]]
+   3. [[#python-sol][Whatever of Python]]
 6. [[#footnotes][Footnotes]]
 
 * Problem statement
@@ -44,42 +43,43 @@ executable loading, lazy symbol binding, etc.
   :END:
   Below is the original FizzBuzz problem statement:
   #+BEGIN_QUOTE
-  For each number from 1 to 100 print 'Fizz' if a number is divisible
+  For each number from 1 to 100: print 'Fizz' if a number is divisible
   by 3, print 'Buzz' if it is divisible by 5, and print 'FizzBuzz' if
   it's divisible by both 3 and 5.
   #+END_QUOTE
   To make things a bit more interesting (kek) we will work with
   numbers from ~1~ to ~n~ where ~n~ is a command line parameter.
 
-  Breaking down this problem further, we can identify specific
-  functionality needed to implement a solution:
+  Breaking down this problem further, we can identify specific pieces
+  of functionality needed to implement a solution:
   1. Access command line arguments to read ~n~.
   2. Parse a string representation of ~n~ into a number.
   3. Print to stdout either a string or a number.
-  4. Arithmetic, logic and jumps to implement the meat of the method.
+  4. Arithmetic, logic and jumps to implement the logic of the method.
 
   We could implement everything in pure assembly using only syscalls,
   but it would get rather tedious very soon. Instead we'll use
   familiar printing and parsing functions from C stdlib (which we will
-  link to dynamically), and use assembly only for main control flow.
+  link to dynamically), and use assembly only for the main control
+  flow.
 
 * Dynamic executable
   :PROPERTIES:
   :CUSTOM_ID: dynex
   :END:
 
-  Previously we were building statically linked executables. Static
-  linking has its benefits as the resulting binary is self-contained and
-  there are no runtime overhead to method calls and variable references
-  from using the dynamic linker. However the final image size is larger
-  and since library code is not shared memory consumption is
-  higher. Depending on the use case, either static or dynamic linking
-  may be preferrable.
+  Previously, we were building statically linked executables. Static
+  linking has its benefits as the resulting binary is self-contained
+  and there are no runtime overhead to method calls and variable
+  references induced by the usage of the dynamic linker. However, the
+  final image size is larger and since library code is not shared
+  memory consumption is higher. Depending on the use case, either
+  static or dynamic linking may be preferable.
 
   There are no practical differences between static and dynamic
-  linking for our case. So, let's take a look at the code of a dynamic
-  no-op executable that just return an exit code equal to 42, and then
-  move on the fun part:
+  linking for our case though. So, let's take a look at the code of a
+  dynamic no-op executable that just return an exit code equal to 42,
+  and then move on to the fun part:
 
   #+BEGIN_SRC asm -n :tangle asm-min-dyn.asm
             SECTION .text
@@ -98,18 +98,19 @@ executable loading, lazy symbol binding, etc.
 
   There are several things to note here:
   1. ~_main~ is no longer a real entry point in our program. When the
-     executable is loaded to control is passed to the dynamic linker,
+     executable is loaded the control is passed to the dynamic linker,
      which initializes C runtime among other things, and only after
-     that our code is called.
+     that =_main= is called.
   2. Since ~_main~ is called in a regular way, all calling conventions
      apply to it, in particular its integer result (exit code) should
      be returned in ~rax~.
   3. We don't need to make an ~exit~ syscall. Instead we just return
      control to the code that called ~_main~ which in turn will do a
      proper termination.
-  4. The executable needs to be linked with ~libc~. Otherwise linking fails with an error.
+  4. The executable needs to be linked with ~libc~. Otherwise linking
+     fails with an error.
 
-  Executing this binary produces the expected results:
+  Running this binary produces the expected results:
   #+BEGIN_SRC shell -n
     bin/asm-min-dyn
     echo $?
@@ -118,7 +119,8 @@ executable loading, lazy symbol binding, etc.
   #+RESULTS:
   : 42
 
-  Now that we know how to build dynamic executables and link with ~libc~ let's proceed to the next section.
+  Now that we know how to build dynamic executables and link with
+  ~libc~ let's proceed to the next section.
 
 * How to use library functions
   :PROPERTIES:
@@ -156,23 +158,24 @@ executable loading, lazy symbol binding, etc.
 
    Now to the highlights from the code:
    1. Using library functions is pretty straightforward -- it only
-      requires and ~EXTERN~ declaration somewhere in the source
-      file. On MacOS symbol names need to be prefixed with an
+      requires an ~EXTERN~ declaration somewhere in the source
+      code. On MacOS symbol names need to be prefixed with an
       underscore ~_~, so it's ~_printf~ instead of ~printf~.
    2. ~.data~ section is used to declare initialized memory regions. In
       this particular case we define a label ~helloworldstr~ that
       points to the beginning of a byte array declared with ~db~ whose
       contents correspond to a zero-terminated string "Hello World!"
       ended by a line-feed.
-   3. This section of the assembly does necessary preparations and calls ~printf~.
+   3. This part of the assembly does necessary preparations and calls
+      ~printf~.
       1. According to the calling conventions, the stack should be
          16-byte aligned before the ~call~ instruction. Since ~call~
          itself places on the stack a return address (8 bytes on
          64-bit machines), we need to subtract an additional 8 bytes
          to align the stack.
-      2. First parameter of a printf is a pointer to format string. We
-         supply the address pointing to ~helloworlstr~ in ~rdi~
-         register according to the calling conventions.
+      2. First parameter of =printf= is a pointer to the format
+         string. We supply the address pointing to ~helloworlstr~ in
+         ~rdi~ register according to the calling conventions.
       3. ~printf~ is a variadic function. Such functions accept a
          number of floating point arguments in ~al~ register, and
          since we don't pass any, the register is zeroed out.
@@ -183,7 +186,7 @@ executable loading, lazy symbol binding, etc.
 
    Commands to link and compile this program are the same as above. To
    save the clutter, I wrote a Makefile to manage the build, and will
-   use ~make $target~ instead of full commands on this and future
+   use ~make <target>~ instead of full commands on this and future
    occasions.
 
    #+BEGIN_SRC bash -n :results verbatim
@@ -265,7 +268,7 @@ executable loading, lazy symbol binding, etc.
    :END:
 
    Suppose that we forgot aligning the stack. To simulate this, it's
-   enough to set to =0= second parameter to =print0=.
+   enough to set to =0= the second parameter to =print0=.
    #+BEGIN_SRC asm -n :tangle unaligned-stack.asm
              GLOBAL _main
              EXTERN _printf
@@ -296,7 +299,8 @@ executable loading, lazy symbol binding, etc.
    #+END_EXAMPLE
 
    A short session in debugger shows that it's not even =printf=
-   triggering this error, but it's rather an explicit check in dynamic linker:
+   triggering this error, but it's rather an explicit check in the
+   dynamic linker:
    #+BEGIN_EXAMPLE
      libdyld.dylib`dyld_stub_binder:
      ->  0x7fff6b5f5ac4 <+0>:  push   rbp
@@ -309,14 +313,15 @@ executable loading, lazy symbol binding, etc.
      libdyld.dylib`stack_not_16_byte_aligned_error:
      ->  0x7fff6b5f5c56 <+0>: movdqa xmmword ptr [rsp], xmm0
    #+END_EXAMPLE
-   =movdqa= instruction moves aligned 128 bits of memory into
-   =xmm0= register. When memory is not aligned the processor generates
-   a general protection exception that translates to the segmentation
+   =movdqa= instruction moves aligned 128 bits of memory into =xmm0=
+   register. When memory is not aligned the processor generates a
+   general protection exception that translates to a segmentation
    fault.
 
-   Now consider a slightly modified example. The code is the same as before, except that:
-   - The first printf call has proper alignment to bypass the check in the dynamic linker.
-   - The second call to printf is added, but this time with incorrect alignment.
+   Now consider a slightly modified example. The code is the same as
+   before, except that there is a second call to =printf= and:
+   - the first call has proper alignment,
+   - the second call doesn't have stack properly aligned.
 
    #+BEGIN_SRC asm -n :tangle unaligned-stack-2.asm
              GLOBAL _main
@@ -330,13 +335,13 @@ executable loading, lazy symbol binding, etc.
              SECTION .text
      _main:
              print0  hellostr, 8     ; 1st call to printf with properly aligned stack
-             print0  hellostr, 0     ; (+) unaligned invocation of print0
+             print0  hellostr, 0     ; (+) unaligned call to print0
 
              mov     rax, 0
              ret
    #+END_SRC
-   It would be natural to expect this program to segfault on second
-   =print0=. However, the program runs just fine:
+   It would be natural to expect this program to segfault on the
+   second =print0=. However, the program runs just fine:
    #+BEGIN_SRC bash -n :results verbatim
      make unaligned-stack-2 > /dev/null
      bin/unaligned-stack-2
@@ -348,15 +353,15 @@ executable loading, lazy symbol binding, etc.
    : Hello, there!
    : 0
 
-
    So, what's going on here? A more detailed answer is provided in the
    following aside where linker's work is explored in more detail. But
-   in short, control goes to dynamic linker only on the first call of
-   a function to do lazy symbol binding, for consecutive calls the
-   memory location of =printf= is already known, so control goes
-   directly there. Luckily, the following code path doesn't have any
-   instruction that require memory alignment, so the call to =printf=
-   finishes without issues, even though stack alignment is violated.
+   in short, control goes to the dynamic linker only on a first call
+   of a function when it does lazy symbol binding. For consecutive
+   calls the memory location of =printf= is already known, so control
+   goes directly there. Luckily, the code path in =printf= doesn't
+   have any instruction that require memory alignment[fn:6], so the
+   call to =printf= finishes without issues, even though stack
+   alignment is violated.
 
    One thing to keep in mind is that stack alignment and other calling
    convention are /just conventions/. Unless you need to call/use
@@ -389,8 +394,9 @@ executable loading, lazy symbol binding, etc.
    #+END_SRC
    The assembler doesn't know what =printf= is and where it will
    eventually come from. So, when it compiles the source code into an
-   object file, it leaves a note in a form of a *relocation entry*[fn:2] to
-   the linker that will build a final executable object file.
+   object file, it leaves a note in a form of a *relocation
+   entry*[fn:2] to the linker that later builds a final executable
+   object file.
 
    We can peek into the assembly generated for =printf= call using =objdump= tool:
    #+BEGIN_SRC bash -n :results verbatim
@@ -402,7 +408,7 @@ executable loading, lazy symbol binding, etc.
 
    The address[fn:1] of =printf= is replaced with 0. This can't be it,
    since ~call 0~ just passes control to the next instruction. The
-   missing part is the relocation table, generated by the
+   missing part is the relocation table also generated by the
    assembler. For =printf= the entry is the following:
 
    #+BEGIN_SRC bash -n :results output
@@ -416,19 +422,20 @@ executable loading, lazy symbol binding, etc.
    relocation, then the type of relocation, and finally the name of
    the symbol.
 
-   Note above that =call= instruction start at address =10=: first byte is
-   the opcode, and bytes 11--14 need to be filled with =printf='s
-   address. This matches the address in the relocation entry for =printf=.
+   Note above that =call= instruction start at address =10=: first
+   byte is the opcode, and bytes 11--14 need to be filled with
+   =printf='s displacement. This matches the address in the relocation
+   entry for =printf=.
 
    So far, so good. When the linker does it's job, we get an
-   executable object file which can be loaded by the kernel. Not all
-   relocations are done though. Because =libc= is linked dynamically
-   to the executable, loading and binding of =printf= will happen in
-   runtime.
+   executable object file which can be loaded by the kernel. However,
+   not all relocations are done yet. Because =libc= is linked
+   dynamically to the executable, loading and binding of =printf= will
+   happen at runtime.
 
-   To illustrate the mechanics, we will refer to the program from the
-   previous section: two calls to =printf= --- one with aligned stack,
-   and the other with misaligned:
+   To illustrate the mechanics, we will refer to =unaligned-stack-2=
+   program from the previous section: two calls to =printf= --- one
+   with aligned stack, and the other with incorrect alignment:
    #+BEGIN_SRC asm -n :tangle unaligned-stack-2.asm
              GLOBAL _main
              EXTERN _printf
@@ -524,8 +531,8 @@ executable loading, lazy symbol binding, etc.
       stack and jumps to the beginning of =__stub_helper= in the
       assembly above. From (7) we can see that =0x2010= is reserved
       for =printf= binding.
-   3. Following =0x1fe4= there is another instruction at =0x1fed= that
-      transfers control to the address stored at memory location
+   3. Following =0x1fe4=, there is another instruction at =0x1fed=
+      that transfers control to the address stored at memory location
       =0x2000=. Bind entry (6) shows that =0x2000= will point to
       =dyld_stub_binder= which is a part of the dynamic linker.
       Initial value of =0x2000= is zero and is filled with a real
@@ -567,13 +574,13 @@ executable loading, lazy symbol binding, etc.
 
      #
      # After the executable is loaded 0x2000 points to a real address
-     # to dynamic linker stub binder.
+     # to the dynamic linker stub binder.
      #
      (lldb) mem read 0x2000 --count 8
      0x00002000: c4 5a 5f 6b ff 7f 00 00                          Z_k...
 
      #
-     # Set breakpoint after the first call to printf and continue execution
+     # Set a breakpoint after the first call to printf and continue execution
      #
      (lldb) b 0x1fbb
      Breakpoint 2: where = unaligned-stack-2`main + 21, address = 0x0000000000001fbb
@@ -614,9 +621,9 @@ executable loading, lazy symbol binding, etc.
    :END:
    Since our =main= is not an entry point but rather a regular
    function, we can expect =argc= and =argv= to be in =rdi= and =rsi=
-   respectively. First pointer in =argv= points to executable name,
-   and the second pointer (if provided) should point to =n=. Parsing
-   can be done with a function from C stdlib:
+   respectively. First pointer in =argv= points to the executable
+   name, and the second pointer (if provided) should point to
+   =n=. Parsing can be done with a function from C stdlib:
    #+BEGIN_SRC C
      long strtol(const char *restrict str, char **restrict endptr, int base)
    #+END_SRC
@@ -646,7 +653,7 @@ executable loading, lazy symbol binding, etc.
              mov     rbp, rsp        ;
 
              lea     rax, [rsi + 8]  ; (2)
-             mov     rdi, [rax]      ; rdi has an address of argv[1]
+             mov     rdi, [rax]      ; rdi points to the first char of argv[1]
              call    parsenum
 
              cmp     rdx, 0
@@ -677,13 +684,13 @@ executable loading, lazy symbol binding, etc.
              je      .emptystr
              sub     rsp, 8          ; align stack
 
-             mov     rsi, rsp        ; **endptr on top of stack
+             mov     rsi, rsp        ; endptr on top of stack
              mov     rdx, 10         ; base 10 number
              call    _strtol
 
              mov     rdx, [rsp]      ; following 2 instructions dereference **endptr
              cmp     byte [rdx], 0   ; and check that it points to 0 (end of string)
-             jne     .invalidstr     ; otherwise there is some non-digit character
+             jne     .invalidstr     ; otherwise input had some non-digit character
 
              mov     rdx, 0          ; rdx = 0 since parsing finished successfully
              add     rsp, 8          ; restore rsp
@@ -729,7 +736,7 @@ executable loading, lazy symbol binding, etc.
       addressing) and can happen in parallel with other arithmetic
       instructions.
 
-   Similarly to =printmacro.asm= let's move =parsenum= to a separate
+   Similarly, to =printmacro.asm= let's move =parsenum= to a separate
    file, and proceed to the final part.
 
    #+BEGIN_SRC asm -n :tangle parse.asm
@@ -802,11 +809,11 @@ executable loading, lazy symbol binding, etc.
 
             cmp     rdx, 0
             jne     .invalid
-            ;; At this point n is parsed an is in rax register
+            ;; At this point n is parsed and is in rax register
 
             ;; Here starts the main logic of the routine.
             ;; Since registers r12 - r15 are calee-saved, they
-            ;; need to be pushed onto stack before used.
+            ;; need to be pushed onto the stack before using.
             push    r13
             mov     r13, rax        ; save n in r13
 
@@ -910,12 +917,12 @@ executable loading, lazy symbol binding, etc.
   - what are static and dynamic linking, what is /relocation/ and how
     lazy binding is happening at runtime,
   - stack alignment and whether it's necessary at all times,
-  - more assembly tricks, macros and function definition.
+  - more assembly tricks, macros and function definitions.
 
   Although, the low level mechanics are rather fiddly, understanding
   how compilation, linking and loading work as well as being able to
-  read resulting assembly can help to debug some times baffling
-  issues.
+  read resulting assembly can help in debugging some baffling
+  otherwise issues.
 
 * (Bonus) FizzBuzz in other languages
   :PROPERTIES:
@@ -937,120 +944,120 @@ executable loading, lazy symbol binding, etc.
   : 0m1.993s 0m0.004s
 
   A bit less than 2s, which is not bad at all! After all, it's as
-  close to bare metal as possible, so it should be very performant,
-  right? Well, yes... maybe. Let's find out!
+  close to the bare metal as possible, so it should be very
+  performant, right? Well, yes... maybe. Let's find out!
 
 ** Effectiveness of C
    :PROPERTIES:
    :CUSTOM_ID: c-sol
    :END:
 
-  Below is a pretty direct translation of the assembly solution to C:
-  #+BEGIN_SRC C -n :tangle c-fizzbuzz.c
-    #include <stdio.h>
-    #include <inttypes.h>
-    #include <stdlib.h>
+   Below is a pretty direct translation of the assembly solution to C:
+   #+BEGIN_SRC C -n :tangle c-fizzbuzz.c
+     #include <stdio.h>
+     #include <stdlib.h>
+     #include <inttypes.h>
 
-    int main(int argc, const char *argv[])
-    {
-            if (argc < 2) {
-                    printf("Usage: c-fizzbuzz <number>\n");
-                    return 0;
-            }
+     int main(int argc, const char *argv[])
+     {
+             if (argc < 2) {
+                     printf("Usage: c-fizzbuzz <number>\n");
+                     return 0;
+             }
 
-            char *endptr;
-            long n = strtol(argv[1], &endptr, 10);
-            if (endptr[0] != '\0') {
-                    printf("Error: not a number\n");
-                    return 1;
-            }
+             char *endptr;
+             long n = strtol(argv[1], &endptr, 10);
+             if (endptr[0] != '\0') {
+                     printf("Error: not a number\n");
+                     return 1;
+             }
 
-            for (long i = 1; i <= n; i++) {
-                    long mod3 = i % 3;
-                    long mod5 = i % 5;
-                    if (mod3 == 0) {
-                            printf("Fizz");
-                    }
-                    if (mod5 == 0) {
-                            printf("Buzz");
-                    } else {
-                            if (mod3 != 0) {
-                                    printf("%ld", i);
-                            }
-                    }
-                    printf("\n");
-            }
+             for (long i = 1; i <= n; i++) {
+                     long rem3 = i % 3;
+                     long rem5 = i % 5;
+                     if (rem3 == 0) {
+                             printf("Fizz");
+                     }
+                     if (rem5 == 0) {
+                             printf("Buzz");
+                     } else {
+                             if (rem3 != 0) {
+                                     printf("%ld", i);
+                             }
+                     }
+                     printf("\n");
+             }
 
-            return 0;
-    }
-  #+END_SRC
+             return 0;
+     }
+   #+END_SRC
 
-  Checking that it compiles and runs fine:
-  #+BEGIN_SRC bash -n :results output
-    cc c-fizzbuzz.c -o bin/c-fizzbuzz
-    bin/c-fizzbuzz
-    bin/c-fizzbuzz wat
-    bin/c-fizzbuzz 15
-  #+END_SRC
+   Checking that it compiles and runs fine:
+   #+BEGIN_SRC bash -n :results output
+     cc c-fizzbuzz.c -o bin/c-fizzbuzz
+     bin/c-fizzbuzz
+     bin/c-fizzbuzz wat
+     bin/c-fizzbuzz 15
+   #+END_SRC
 
-  #+RESULTS:
-  #+begin_example
-  Usage: c-fizzbuzz <number>
-  Error: not a number
-  1
-  2
-  Fizz
-  4
-  Buzz
-  Fizz
-  7
-  8
-  Fizz
-  Buzz
-  11
-  Fizz
-  13
-  14
-  FizzBuzz
-  #+end_example
+   #+RESULTS:
+   #+begin_example
+   Usage: c-fizzbuzz <number>
+   Error: not a number
+   1
+   2
+   Fizz
+   4
+   Buzz
+   Fizz
+   7
+   8
+   Fizz
+   Buzz
+   11
+   Fizz
+   13
+   14
+   FizzBuzz
+   #+end_example
 
-  Good. In regard to the timings, we get a bit more than 2s, which
-  agrees with the intuition --- compilers generate great assembly, but
-  there is still small level of overhead:
-  #+BEGIN_SRC bash -n :results output
-    bin/c-fizzbuzz 10000000 > /dev/null
-    times
-  #+END_SRC
+   Good. In regard to the timings, we get a bit more than 2s, which
+   agrees with the intuition --- compilers generate great assembly, but
+   there is still small level of overhead:
+   #+BEGIN_SRC bash -n :results output
+     bin/c-fizzbuzz 10000000 > /dev/null
+     times
+   #+END_SRC
 
-  #+RESULTS:
-  : 0m0.002s 0m0.002s
-  : 0m2.075s 0m0.004s
+   #+RESULTS:
+   : 0m0.002s 0m0.002s
+   : 0m2.075s 0m0.004s
 
-  Case solved? Not exactly. Let's compile the code with the maximum
-  optimization level, and time the execution again:
-  #+BEGIN_SRC bash -n :results output
-    cc c-fizzbuzz.c -o bin/c-fizzbuzz -O3
-    bin/c-fizzbuzz 10000000 > /dev/null
-    times
-  #+END_SRC
+   Case solved? Not exactly. Let's compile the code with the maximum
+   optimization level, and time the execution again:
+   #+BEGIN_SRC bash -n :results output
+     cc c-fizzbuzz.c -o bin/c-fizzbuzz -O3
+     bin/c-fizzbuzz 10000000 > /dev/null
+     times
+   #+END_SRC
 
-  #+RESULTS:
-  : 0m0.002s 0m0.002s
-  : 0m1.621s 0m0.034s
+   #+RESULTS:
+   : 0m0.002s 0m0.002s
+   : 0m1.621s 0m0.034s
 
-  Now we're at ~1.6s which is ~23% and ~28% faster than "pure
-  assembly" and "no-optimization C" solutions respectively. Compiler
-  developers try hard to improve the efficiency of the generated
-  assembly. Writing assembly by hand is cool, but C compilers apply
-  lots of non-trivial optimizations to the code without programmers
-  even knowing or understanding them all.
+   Now we're at ~1.6s which is ~23% and ~28% faster than "pure
+   assembly" and "no-optimization C" solutions respectively. Compiler
+   developers try hard to improve the efficiency of the generated
+   assembly. Writing assembly by hand is cool, but C compilers apply
+   lots of non-trivial optimizations to the code without programmers
+   even knowing or understanding this optimizations.
 
-  In this particular case, =clang= optimized remainder operation. In
-  general, division is a costly operation and can take 10s of CPU
-  cycles. But if the divisor is known, remainder can be found quicker
-  without using division[fn:5].
+   In this particular case, =clang= optimized remainder operation. In
+   general, division is a costly operation and can take 10s of CPU
+   cycles. But if the divisor is known, remainder can be found quicker
+   without using division[fn:5].
 
-** FP nirvana of Haskell
+** Expressiveness of Haskell
    :PROPERTIES:
    :CUSTOM_ID: haskell-sol
    :END:
@@ -1070,7 +1077,7 @@ executable loading, lazy symbol binding, etc.
       case headMay args of
         Nothing -> printUsage
         Just nStr  -> case parseNum nStr of
-          Nothing -> printError
+          Nothing -> printNanError
           Just n -> solveFizzBuzz n
 
     ----------------------------------------------------------
@@ -1093,7 +1100,7 @@ executable loading, lazy symbol binding, etc.
     ----------------------------------------------------------
 
     printUsage = putStrLn "Usage: hs-fizzbuzz <number>"
-    printError = putStrLn "Error: Not a number"
+    printNanError = putStrLn "Error: Not a number"
 
     headMay :: [a] -> Maybe a
     headMay xs = fst <$> uncons xs
@@ -1116,13 +1123,13 @@ executable loading, lazy symbol binding, etc.
   : 0m0.002s 0m0.003s
   : 0m5.486s 0m0.108s
 
-  I'm not an expert in Haskell performance tuning, so there might be
+  I'm not an expert in Haskell performance tuning, so there might be a
   way to implement this more efficiently. But again, these numbers
   should not be used to argue that FP is slow --- this is a degenerate
   example where the overhead is noticeable. On a real project the
   compiler will have many more optimization opportunities.
 
-** Whatever of Python =¯\_(ツ)_/¯=
+** Whatever of Python
    :PROPERTIES:
    :CUSTOM_ID: python-sol
    :END:
@@ -1181,6 +1188,10 @@ executable loading, lazy symbol binding, etc.
   :PROPERTIES:
   :CUSTOM_ID: footnotes
   :END:
+
+[fn:6] There *are* instructions in =printf= that require memory
+alignment, but this code path is not taken during execution due to
+absence of floating point arguments.
 
 [fn:2] Loosely speaking, the assembler doesn't know the final address of a
 symbol in memory. So, it puts a placeholder in the object file, and

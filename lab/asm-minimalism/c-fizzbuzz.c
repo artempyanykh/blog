@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <inttypes.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 int main(int argc, const char *argv[])
 {
@@ -17,15 +17,15 @@ int main(int argc, const char *argv[])
         }
 
         for (long i = 1; i <= n; i++) {
-                long mod3 = i % 3;
-                long mod5 = i % 5;
-                if (mod3 == 0) {
+                long rem3 = i % 3;
+                long rem5 = i % 5;
+                if (rem3 == 0) {
                         printf("Fizz");
                 }
-                if (mod5 == 0) {
+                if (rem5 == 0) {
                         printf("Buzz");
                 } else {
-                        if (mod3 != 0) {
+                        if (rem3 != 0) {
                                 printf("%ld", i);
                         }
                 }
