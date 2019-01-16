@@ -44,6 +44,16 @@
 <ul class="post-list">
   
   <li>
+    <a href="./posts/2019-01-16-assembling-fizz-buzz.html"><h2>Assembling FizzBuzz</h2></a>
+    <span class="post-list-date">January 16, 2019</span>
+    <div class="post-list-teaser"><p>The <a href="https://artempyanykh.com/blog/posts/2018-12-31-assembling-noop.html">previous post</a> covers preliminary topics that include tool-chain, compiling assembly programs and turning them into executables, a bit about anatomy of Mach-O object files, and finally SysV ABI and system calls.</p>
+<p>With that out of the way, we are ready to get serious and solve some real problems… like FizzBuzz. This time around we’ll be doing dynamic linking with C runtime, using library functions, accessing command line arguments, and, of course, fighting segfaults.</p>
+<p>This <strong>is not</strong> a post about how to solve a FizzBuzz. The problems is used merely as a means to illustrate low-level aspects of linking, executable loading, lazy symbol binding, etc.</p>
+</div>
+    <p class="post-list-continue"><a href="./posts/2019-01-16-assembling-fizz-buzz.html">&hellip;continue reading&hellip;</a></p>
+  </li>
+  
+  <li>
     <a href="./posts/2018-12-31-assembling-noop.html"><h2>Assembling a no-op</h2></a>
     <span class="post-list-date">December 31, 2018</span>
     <div class="post-list-teaser"><p>When I hear <code>hello-world</code> I imagine a trivial one-line program. However, things that are actually happening under the hood are far from being trivial: memory allocation, register and stack manipulation, and interop with an OS kernel among others. So I figured that going a couple layers down the stack to the bare assembly in order to build a minimal working program (and a couple more complex ones) might be a fun excercise.</p>
