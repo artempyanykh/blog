@@ -1052,10 +1052,13 @@ executable loading, lazy symbol binding, etc.
    lots of non-trivial optimizations to the code without programmers
    even knowing or understanding this optimizations.
 
-   In this particular case, =clang= optimized remainder operation. In
-   general, division is a costly operation and can take 10s of CPU
-   cycles. But if the divisor is known, remainder can be found quicker
-   without using division[fn:5].
+   In this particular case, =clang= optimized a couple things:
+   - Replaced calls to =printf= without parameters with =puts=, thus
+     avoiding the overhead of needlessly parsing a format string.
+   - Used an optimized remainder calculation. In general, division is
+     a costly operation and can take 10s of CPU cycles. But if the
+     divisor is known, remainder can be found quicker without using
+     division[fn:5].
 
 ** Expressiveness of Haskell
    :PROPERTIES:
