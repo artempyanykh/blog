@@ -1,0 +1,429 @@
+* Mach-O
+** Todo
+*** DONE Free segment space
+** Issues
+*** TODO =jump_island= is created for every occurrence of GOT relocation, not just once for a symbol
+*** TODO Unexpected passes in TH tests
+    Unexpected passes:
+    T13366.run  T13366 [unexpected] (normal)
+    T13366.run  T13366 [unexpected] (ext-interp)
+*** TODO Misalignment logic won't be needed for Darwin after the change
+*** DONE Linker unload segfaults (not every time, but can be repeated)
+    Unexpected failures:
+    linker_unload.run  linker_unload [bad exit code] (normal)
+*** DONE ghci/scripts/ghci063.run fails, but it doesn't seem to be related to relocations
+*** DONE S_GB_ZEROFILL, can only be in a segment with sections of this type
+    ... These segments are then placed after all other segments.
+    Might require more than 2 segments after all. Not sure if strictly
+    necessary for MH_OBJECT files.
+*** DONE Initial image mapping is not done with mmapForLinker
+    This may be problematic for host/arch combination where no further image relocation is happening.
+    But it doesn't matter if we further mmap segments.
+*** DONE Failing test after adding segments
+    [1 of 1] Compiling LinkerUnload     ( LinkerUnload.hs, LinkerUnload.o )
+    Linking linker_unload ...
+    Stderr ( linker_unload ):
+    linker_unload: internal error: relocateSection: target location 0x7f9f0 in image before target section start address 0x80648
+
+    (GHC version 8.7.20190108 for x86_64_apple_darwin)
+    Please report this as a GHC bug:  https://www.haskell.org/ghc/reportabug
+** Notes
+*** MachOSection.offset is a section offset in a file
+    Rewriting this offset in =getNames= is a hack.
+*** !! =oc->info->macho_sections= IS an array, with each element having an offset to the section contents in the object file
+*** Internal =Section= has both memory offset and info about =mmap= ed block
+    Particularly, we have
+    - =start= - actual memory address,
+    - =size= - actual memory size,
+    - =mapped_offset= - offset from image of *a block*,
+    - =mapped_start= - actual memory address of *the block*,
+    - =mapped_size= - actual size of the mmaped *block*.
+*** Section symbol relocation
+    The calculation is:
+
+    ~section.start - macho_section.addr + nlist->n_value~
+
+    which is odd, since the address *should* (validate!) depend only
+    on section start address.
+
+    Scratch that! For such symbols =n_value= is actually an offset in
+    the image, and (=-addr + n_value= is an offset relative to the
+    section).
+    See [[What does =nlist.n_value= mean?]]
+*** Symbol type flags
+**** N_EXT + N_SECT = global exported symbol defined in object file's section
+**** N_EXT + N_UNDF = /common/ symbol
+**** N_SECT = local symbol
+*** What is =USE_CONTIGUOUS_MMAP=?
+    =mmap + (powerpc or arm) + linux=
+*** What is =RTS_LINKER_USE_MMAP=?
+    Actually all hosts are automatically configured to use =mmap=
+    except Windows.
+    *However*, it seems that the hosts can actually be
+    configured to use non-mmap linker anyway.
+*** What is =NEED_SYMBOL_EXTRAS=?
+    Defined in =LinerInternals= and set to 1 for powerpc and x86_64.
+*** What does =image= provide?
+**** MachO
+     In addition to sections it also stores:
+     + symbol table (symtab),
+     + name table (stroff),
+     + relocation info (reloff).
+*** How object file loading actually happens
+**** =loadObj=
+     + Fist, it checks whether the object file is already loaded.
+     + Then it runs =preloadObjectFile= file, followed by =loadOc=.
+     + If =loadOc= fails we call =removeOcSymbols= and =freeObjectCode=
+***** =preloadObjectFile=
+****** Read file contents into =image= with either =mmap= or =stgAlloc=
+       Interestingly, the image is just regularly =mmapped=, not with
+       =mmapForLinker= here.
+****** Allocate space for =oc= with =mkOc=. Just barebones of the structure and path/names.
+****** Verify the image with =ocVerifyImage_FORMAT= which is format specific
+       For MachO it just check the magic in the header.
+****** Do image pre-processing in format specific =ocInit_MachO=
+******* MachO
+        + It allocates space for =ObjectCodeFormatInfo= and sets
+          pointers to segcmd, symtab, nametab, first section.
+        + It allocates space for an array of =MachoSymbol=
+***** =loadOc=
+      + First it calls =ocVerifyImage_FORMAT= on in-memory image (probably a
+        useful check).
+      + Then it calls format dependant =ocGetNames_FORMAT=.
+      + And lastly, it calls format dependant =ocAllocateSymbolExtras_FORMAT=.
+****** =ocAllocateSymbolExtras_MachO=
+       Just calls general =ocAllocateSymbolExtras= with =(oc, nsyms, 0)=.
+****** =ocAllocateSymbolExtras=
+** Open questions
+*** What does ~ghciInsertSymbolTable~ do?
+*** What does ~resolveImports~ do?
+    It is referenced from the code that works with dynamic load
+    command (=dynLC=).
+** Closed questions
+*** How can we (and can we at all) get GOT in a regular object file?
+    Assembler makes a GOT relocation entry for extern data access.
+    *Note*: extern function symbols go under *UND* with =RELOC_BRANCH= relocation type.
+*** Is =macho_section.addr == 0= on image load?
+    No. It's actually an aligned address within a single segment of
+    =MH_OBJECT= object file.
+*** What does =nlist.n_value= mean?
+    Looks like it's an address within the image (similar to
+    =macho_section.addr=) for =N_SECT= symbols.
+
+    =N_UNDF & N_EXT= (common symbols) actually have datatype length in
+    =n_value=.
+
+    Oh, and for /indirect/ symbols, =n_value= is an index into string
+    table where the name of a referenced symbol is located.
+
+    So, the meaning of =n_value= is dependent on symbol's type.
+*** What is =misalignment= in object code?
+    Looks like a hack to make the first section 16 byte aligned based
+    on header and load command compound size.
+*** What are /scattered/ relocations?
+*** What does =resolveAddress= do in =MachO.c=?
+    It duplicates in a sense the second part of =ocGetNames_MachO=
+    where final symbol addresses are calculated.
+*** How section is related to mmapped block
+    Since section has info on its start/size and containing mmapped
+    block start/size, does it mean that it was provided that there
+    might be several sections in a single mmapped block?
+
+    Seems so. mmaping data is used in =freeObjectCode= where depending
+    on the alloc type of the section, it either frees or munmaps.
+** Tests related to linker
+   hp2ps/T15904
+   ghc-api/T4891
+   ghc-api/T10052
+   rts/T11223 (only static GHC)
+   rts/T2615 (ELF-specific, link scripts)
+   rts/T5435 (_fails predictably_)
+   ghci/linking
+   th/TH_linker
+   dynlibs
+** i386-darwin support
+   Support was dropped with 7.6.3
+   (https://trac.macports.org/ticket/52550). Furthermore, Apple drops
+   support for running 32bit code with MacOS 10.15.
+** Broken tests
+** Examples
+   #+BEGIN_SRC asm :tangle unsigned-reloc.s
+             .text
+             .globl _getAnswer
+
+     _getAnswer:
+             mov     L2(%rip), %rdx
+             movq    (%rdx), %rax
+             ret
+
+             .data
+     L1:     .quad 42
+     L2:     .quad L1
+   #+END_SRC
+
+   #+BEGIN_SRC bash
+     as unsigned-reloc.s -o unsigned-reloc.o
+   #+END_SRC
+
+   #+RESULTS:
+
+   #+BEGIN_SRC bash :results output
+     objdump -r -macho unsigned-reloc.o
+     objdump -D -macho unsigned-reloc.o
+     objdump -section=__data -s unsigned-reloc.o
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+   unsigned-reloc.o:
+   Relocation information (__TEXT,__text) 1 entries
+   address  pcrel length extern type    scattered symbolnum/value
+   00000003 True  long   False  SIGNED  False     2 (__DATA,__data)
+   Relocation information (__DATA,__data) 1 entries
+   address  pcrel length extern type    scattered symbolnum/value
+   00000008 False quad   False  UNSIGND False     2 (__DATA,__data)
+   unsigned-reloc.o:
+   (__TEXT,__text) section
+   _getSome:
+          0:	48 8b 15 0c 00 00 00 	movq	12(%rip), %rdx
+          7:	48 8b 02 	movq	_getSome(%rdx), %rax
+          a:	c3 	retq
+
+   unsigned-reloc.o:	file format Mach-O 64-bit x86-64
+
+   Contents of section __data:
+    000b 2a000000 00000000 0b000000 00000000  *...............
+   #+end_example
+
+   #+BEGIN_SRC C :tangle asm-ureloc-test.c :main no
+     #include <stdio.h>
+
+     extern long getAnswer(void);
+
+     int main()
+     {
+             printf("%ld", getAnswer());
+             return 0;
+     }
+   #+END_SRC
+
+   #+BEGIN_SRC bash
+     cc -o asm-ureloc-test asm-ureloc-test.c unsigned-reloc.o
+     ./asm-ureloc-test
+   #+END_SRC
+
+   #+RESULTS:
+   : 42
+
+   #+BEGIN_SRC C :tangle c-unsigned-reloc.c :main no
+     static int answer = 42;
+     static int * pAnswer = &answer;
+
+     int getAnswer(void)
+     {
+             return *pAnswer;
+     }
+   #+END_SRC
+
+   #+BEGIN_SRC bash
+     cc -c -o c-unsigned-reloc.o c-unsigned-reloc.c
+   #+END_SRC
+
+   #+RESULTS:
+
+   #+BEGIN_SRC bash :results output
+     objdump -r -macho c-unsigned-reloc.o
+     objdump -D -macho c-unsigned-reloc.o
+     objdump -section=__data -s c-unsigned-reloc.o
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+   c-unsigned-reloc.o:
+   Relocation information (__TEXT,__text) 1 entries
+   address  pcrel length extern type    scattered symbolnum/value
+   00000007 True  long   True   SIGNED  False     _pAnswer
+
+   Relocation information (__DATA,__data) 1 entries
+   address  pcrel length extern type    scattered symbolnum/value
+   00000000 False quad   True   UNSIGND False     _answer
+
+   c-unsigned-reloc.o:
+   (__TEXT,__text) section
+   _getAnswer:
+          0:	55 	pushq	%rbp
+          1:	48 89 e5 	movq	%rsp, %rbp
+          4:	48 8b 05 00 00 00 00 	movq	_pAnswer(%rip), %rax
+          b:	8b 00 	movl	_getAnswer(%rax), %eax
+          d:	5d 	popq	%rbp
+          e:	c3 	retq
+
+   c-unsigned-reloc.o:	file format Mach-O 64-bit x86-64
+
+   Contents of section __data:
+    0010 00000000 00000000 2a000000           ........*...
+   #+end_example
+
+   Now we need an example ASM function that uses aligned:
+
+   #+BEGIN_SRC C :tangle c-aligned-access.c :main no
+     #include <stdio.h>
+     #include <immintrin.h>
+
+     __m128 mvec   = {1.0, 2.0, 3.0, 42.0};
+     float  fvec[] = {.0, .0, .0, .0};
+
+     float f(void)
+     {
+             _mm_store_ps(&fvec, mvec);
+             return fvec[3];
+     }
+   #+END_SRC
+
+   #+RESULTS:
+
+   #+BEGIN_SRC bash :results output
+     cc -c -O2 -o c-aligned-access.o c-aligned-access.c
+     objdump -d -macho c-aligned-access.o
+     objdump -r -macho c-aligned-access.o
+     objdump -t -macho c-aligned-access.o
+     otool -l c-aligned-access.o
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+   c-aligned-access.o:
+   (__TEXT,__text) section
+   _f:
+          0:	55 	pushq	%rbp
+          1:	48 89 e5 	movq	%rsp, %rbp
+          4:	0f 28 05 00 00 00 00 	movaps	_mvec(%rip), %xmm0
+          b:	0f 29 05 00 00 00 00 	movaps	%xmm0, _fvec(%rip)
+         12:	0f c6 c0 e7 	shufps	$231, %xmm0, %xmm0
+         16:	5d 	popq	%rbp
+         17:	c3 	retq
+   c-aligned-access.o:
+   Relocation information (__TEXT,__text) 2 entries
+   address  pcrel length extern type    scattered symbolnum/value
+   0000000e True  long   True   SIGNED  False     _fvec
+   00000007 True  long   True   SIGNED  False     _mvec
+   Relocation information (__LD,__compact_unwind) 1 entries
+   address  pcrel length extern type    scattered symbolnum/value
+   00000000 False quad   False  UNSIGND False     1 (__TEXT,__text)
+   c-aligned-access.o:
+   SYMBOL TABLE:
+   0000000000000000 g     F __TEXT,__text	_f
+   0000000000000090 g       __DATA,__common	_fvec
+   0000000000000020 g       __DATA,__data	_mvec
+   c-aligned-access.o:
+   Mach header
+         magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+    0xfeedfacf 16777223          3  0x00           1     4        600 0x00002000
+   Load command 0
+         cmd LC_SEGMENT_64
+     cmdsize 472
+     segname
+      vmaddr 0x0000000000000000
+      vmsize 0x00000000000000a0
+     fileoff 632
+    filesize 144
+     maxprot 0x00000007
+    initprot 0x00000007
+      nsects 5
+       flags 0x0
+   Section
+     sectname __text
+      segname __TEXT
+         addr 0x0000000000000000
+         size 0x0000000000000018
+       offset 632
+        align 2^4 (16)
+       reloff 776
+       nreloc 2
+        flags 0x80000400
+    reserved1 0
+    reserved2 0
+   Section
+     sectname __data
+      segname __DATA
+         addr 0x0000000000000020
+         size 0x0000000000000010
+       offset 664
+        align 2^4 (16)
+       reloff 0
+       nreloc 0
+        flags 0x00000000
+    reserved1 0
+    reserved2 0
+   Section
+     sectname __common
+      segname __DATA
+         addr 0x0000000000000090
+         size 0x0000000000000010
+       offset 0
+        align 2^4 (16)
+       reloff 0
+       nreloc 0
+        flags 0x00000001
+    reserved1 0
+    reserved2 0
+   Section
+     sectname __compact_unwind
+      segname __LD
+         addr 0x0000000000000030
+         size 0x0000000000000020
+       offset 680
+        align 2^3 (8)
+       reloff 792
+       nreloc 1
+        flags 0x02000000
+    reserved1 0
+    reserved2 0
+   Section
+     sectname __eh_frame
+      segname __TEXT
+         addr 0x0000000000000050
+         size 0x0000000000000040
+       offset 712
+        align 2^3 (8)
+       reloff 0
+       nreloc 0
+        flags 0x6800000b
+    reserved1 0
+    reserved2 0
+   Load command 1
+          cmd LC_BUILD_VERSION
+      cmdsize 24
+     platform macos
+          sdk n/a
+        minos 10.14
+       ntools 0
+   Load command 2
+        cmd LC_SYMTAB
+    cmdsize 24
+     symoff 800
+      nsyms 3
+     stroff 848
+    strsize 16
+   Load command 3
+               cmd LC_DYSYMTAB
+           cmdsize 80
+         ilocalsym 0
+         nlocalsym 0
+        iextdefsym 0
+        nextdefsym 3
+         iundefsym 3
+         nundefsym 0
+            tocoff 0
+              ntoc 0
+         modtaboff 0
+           nmodtab 0
+      extrefsymoff 0
+       nextrefsyms 0
+    indirectsymoff 0
+     nindirectsyms 0
+         extreloff 0
+           nextrel 0
+         locreloff 0
+           nlocrel 0
+   #+end_example

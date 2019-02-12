@@ -152,11 +152,84 @@
   int i = 0;
   #+END_SRC
 
+  Put =i= into *UND*, generate GOT_LOAD relocation
   #+BEGIN_SRC C :tangle tsh2.c :main no
     extern int i;
 
     void test(void)
     {
             i = 100;
+    }
+  #+END_SRC
+
+  Put =i= into *common*, generate GOT_LOAD relocation
+  #+BEGIN_SRC C :tangle tsh3.c :main no
+    int i;
+
+    int test(void)
+    {
+            i += 1;
+            return i;
+    }
+  #+END_SRC
+
+  Put =i= into =__data=, =j= into =__common= and generate =SIGNED= relocations
+  #+BEGIN_SRC C :tangle tsh4.c :main no
+    int i = 10;
+    int j = 0;
+
+    int inc(void)
+    {
+            return i++ + j++;
+    }
+  #+END_SRC
+
+  #+BEGIN_SRC C :tangle tsh5.c :main no
+    int j = 1;
+  #+END_SRC
+
+  Interestingly, although ~int j = 0;~ puts the symbol in =common=,
+  it's not the same as ~int j;~ from the linker point of view.
+
+  #+BEGIN_SRC C :tangle tsh6.c :main no
+    int j = 0;
+  #+END_SRC
+
+  #+BEGIN_SRC C :tangle tsh7.c :main no
+    int j;
+  #+END_SRC
+
+  #+BEGIN_SRC C :tangle tsh8.c :main no
+    extern int greatNum(void);
+
+    int getNum(void)
+    {
+            return greatNum();
+    }
+  #+END_SRC
+
+  #+BEGIN_SRC C :tangle tsh9.c :main no
+    int i = 0;
+    int j;
+
+    int sum(void)
+    {
+            return i + j;
+    }
+  #+END_SRC
+
+  #+BEGIN_SRC C :tangle tsh10.c :main no
+    int i = 10;
+    int j = 0;
+    int k;
+    extern int n;
+    static int m = 0;
+
+    int sum(void)
+    {
+            static int nCall;
+            nCall++;
+            m++;
+            return i + j;
     }
   #+END_SRC
