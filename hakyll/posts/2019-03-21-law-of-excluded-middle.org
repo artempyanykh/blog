@@ -1,0 +1,13 @@
+---
+title:  (╯°□°）╯ ¬(¬(A∨¬A))
+category: logic
+date: 2019-03-21
+---
+
+... or "*what's up with the Law of Excluded Middle*".
+
+#+BEGIN_EXPORT html
+<!--more-->
+#+END_EXPORT
+
+TODO
