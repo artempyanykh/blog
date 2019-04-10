@@ -1,0 +1,7 @@
+#include "Cmm.h"
+
+callMemset2 (W_ dst)
+{
+  prim %memset(dst + 3, 0, 14, 1);
+  return ();
+}

@@ -1,0 +1,29 @@
+
+==================== Output Cmm ====================
+[callMemset2() //  [R1]
+         { info_tbls: []
+           stack_info: arg_space: 8 updfr_space: Just 8
+         }
+     {offset
+       c5: // global
+           //tick src<memset-test.cmm:(4,1)-(7,1)>
+           call MO_Memset 1(R1 + 3, 0, 14);
+           call (P64[Sp])() args: 8, res: 0, upd: 8;
+     }
+ }]
+
+
+
+==================== Optimised Cmm ====================
+callMemset2() //  [R1]
+        { []
+        }
+    {offset
+      c5: // global
+          //tick src<memset-test.cmm:(4,1)-(7,1)>
+          call MO_Memset 1(R1 + 3, 0, 14);
+          call (P64[Sp])() args: 8, res: 0, upd: 8;
+    }
+}
+
+

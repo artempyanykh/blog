@@ -1,0 +1,268 @@
+
+==================== Optimised Cmm ====================
+FillArray.fill1_entry() //  []
+        { [(c1j9,
+            FillArray.fill1_info:
+                const 4294967299;
+                const 0;
+                const 14 :: W32;
+                const 0 :: W32;)]
+        }
+    {offset
+      c1j9: // global
+          Hp = Hp + 56;
+          if (Hp > I64[BaseReg + 856]) (likely: False) goto c1jd; else goto c1jc;
+      c1jd: // global
+          I64[BaseReg + 904] = 56;
+          R1 = FillArray.fill1_closure;
+          call (I64[BaseReg - 8])(R1) args: 8, res: 0, upd: 8;
+      c1jc: // global
+          I64[Hp - 48] = stg_ARR_WORDS_info;
+          I64[Hp - 40] = 24;
+          _s1iU::P64 = Hp - 48;
+          call MO_Memset 1(_s1iU::P64 + 19, 2, 21);
+          I64[Hp - 8] = FillArray.ByteArray_con_info;
+          P64[Hp] = _s1iU::P64;
+          R1 = Hp - 7;
+          call (P64[Sp])(R1) args: 8, res: 0, upd: 8;
+    }
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.fill1_closure" {
+    FillArray.fill1_closure:
+        const FillArray.fill1_info;
+}
+
+
+
+==================== Optimised Cmm ====================
+FillArray.fill_entry() //  []
+        { [(c1jl,
+            FillArray.fill_info:
+                const 4294967299;
+                const 0;
+                const 14 :: W32;
+                const 0 :: W32;)]
+        }
+    {offset
+      c1jl: // global
+          call FillArray.fill1_info() args: 8, res: 0, upd: 8;
+    }
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.fill_closure" {
+    FillArray.fill_closure:
+        const FillArray.fill_info;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""cstring" . FillArray.$trModule4_bytes" {
+    FillArray.$trModule4_bytes:
+        I8[] [109,97,105,110]
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.$trModule3_closure" {
+    FillArray.$trModule3_closure:
+        const GHC.Types.TrNameS_con_info;
+        const FillArray.$trModule4_bytes;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""cstring" . FillArray.$trModule2_bytes" {
+    FillArray.$trModule2_bytes:
+        I8[] [70,105,108,108,65,114,114,97,121]
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.$trModule1_closure" {
+    FillArray.$trModule1_closure:
+        const GHC.Types.TrNameS_con_info;
+        const FillArray.$trModule2_bytes;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.$trModule_closure" {
+    FillArray.$trModule_closure:
+        const GHC.Types.Module_con_info;
+        const FillArray.$trModule3_closure+1;
+        const FillArray.$trModule1_closure+1;
+        const 3;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . $krep_r14C_closure" {
+    $krep_r14C_closure:
+        const GHC.Types.KindRepTyConApp_con_info;
+        const GHC.Types.$tcByteArray#_closure;
+        const GHC.Types.[]_closure+1;
+        const 3;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""cstring" . FillArray.$tcByteArray2_bytes" {
+    FillArray.$tcByteArray2_bytes:
+        I8[] [66,121,116,101,65,114,114,97,121]
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.$tcByteArray1_closure" {
+    FillArray.$tcByteArray1_closure:
+        const GHC.Types.TrNameS_con_info;
+        const FillArray.$tcByteArray2_bytes;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.$tcByteArray_closure" {
+    FillArray.$tcByteArray_closure:
+        const GHC.Types.TyCon_con_info;
+        const FillArray.$trModule_closure+1;
+        const FillArray.$tcByteArray1_closure+1;
+        const GHC.Types.krep$*_closure;
+        const 2259128497697328232;
+        const 5148548832201804444;
+        const 0;
+        const 3;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . $krep1_r16k_closure" {
+    $krep1_r16k_closure:
+        const GHC.Types.KindRepTyConApp_con_info;
+        const FillArray.$tcByteArray_closure+1;
+        const GHC.Types.[]_closure+1;
+        const 3;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.$tc'ByteArray1_closure" {
+    FillArray.$tc'ByteArray1_closure:
+        const GHC.Types.KindRepFun_con_info;
+        const $krep_r14C_closure+1;
+        const $krep1_r16k_closure+1;
+        const 3;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""cstring" . FillArray.$tc'ByteArray3_bytes" {
+    FillArray.$tc'ByteArray3_bytes:
+        I8[] [39,66,121,116,101,65,114,114,97,121]
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.$tc'ByteArray2_closure" {
+    FillArray.$tc'ByteArray2_closure:
+        const GHC.Types.TrNameS_con_info;
+        const FillArray.$tc'ByteArray3_bytes;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.$tc'ByteArray_closure" {
+    FillArray.$tc'ByteArray_closure:
+        const GHC.Types.TyCon_con_info;
+        const FillArray.$trModule_closure+1;
+        const FillArray.$tc'ByteArray2_closure+1;
+        const FillArray.$tc'ByteArray1_closure+4;
+        const 15445918328071049923;
+        const 14223517814696052676;
+        const 0;
+        const 3;
+}
+
+
+
+==================== Optimised Cmm ====================
+FillArray.ByteArray_entry() //  [R2]
+        { [(c1jK,
+            FillArray.ByteArray_info:
+                const 4294967301;
+                const 0;
+                const 14 :: W32;
+                const 0 :: W32;)]
+        }
+    {offset
+      c1jK: // global
+          Hp = Hp + 16;
+          if (Hp > I64[BaseReg + 856]) (likely: False) goto c1jO; else goto c1jN;
+      c1jO: // global
+          I64[BaseReg + 904] = 16;
+          // nop
+          R1 = FillArray.ByteArray_closure;
+          call (I64[BaseReg - 8])(R2, R1) args: 8, res: 0, upd: 8;
+      c1jN: // global
+          I64[Hp - 8] = FillArray.ByteArray_con_info;
+          P64[Hp] = R2;
+          R1 = Hp - 7;
+          call (P64[Sp])(R1) args: 8, res: 0, upd: 8;
+    }
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""data" . FillArray.ByteArray_closure" {
+    FillArray.ByteArray_closure:
+        const FillArray.ByteArray_info;
+}
+
+
+
+==================== Optimised Cmm ====================
+section ""cstring" . i1jT_str" {
+    i1jT_str:
+        I8[] [109,97,105,110,58,70,105,108,108,65,114,114,97,121,46,66,121,116,101,65,114,114,97,121]
+}
+
+
+
+==================== Optimised Cmm ====================
+FillArray.ByteArray_con_entry() //  []
+        { [(c1jS,
+            FillArray.ByteArray_con_info:
+                const i1jT_str-FillArray.ByteArray_con_info;
+                const 1;
+                const 2 :: W32;
+                const 0 :: W32;)]
+        }
+    {offset
+      c1jS: // global
+          R1 = R1 + 1;
+          call (P64[Sp])(R1) args: 8, res: 0, upd: 8;
+    }
+}
+
+

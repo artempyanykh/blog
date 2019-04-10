@@ -1,0 +1,139 @@
+* Memset/cpy/move optimizations for ByteArray#
+** The commit that introduced memset/... MachOps: 6c7d2a946a96ed74799cf353f3f62c875f56639b
+   The alignment actually was specified to be of the word size back then:
+   #+BEGIN_EXAMPLE
+   (CmmLit (mkIntCLit wORD_SIZE))
+   #+END_EXAMPLE
+
+** The commit that introduced memset/... unrolling (it's 2011!): 790063769da85adefa9ad9194e00f69e6ca6fd5c
+   #+BEGIN_QUOTE
+   -- Unroll memcpy calls if the source and destination pointers are at
+   -- least DWORD aligned and the number of bytes to copy isn't too
+   -- large.  Otherwise, call C's memcpy.
+   #+END_QUOTE
+* Memset optimizations
+** C
+   #+BEGIN_SRC C :includes <stdio.h> :tangle cmemset.c :results output
+     unsigned char a[32];
+     int sum = 1;
+     memset(a+1, 1, 31);
+     printf("%s", a);
+     return sum;
+   #+END_SRC
+
+   #+RESULTS:
+
+   #+BEGIN_SRC bash :results output
+     cc --version
+     cc -O -S cmemset.c -o cmemset.s
+     cc -O cmemset.c -o cmemset
+   #+END_SRC
+
+   #+RESULTS:
+   : cc (GCC) 8.2.1 20181127
+   : Copyright (C) 2018 Free Software Foundation, Inc.
+   : This is free software; see the source for copying conditions.  There is NO
+   : warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+   :
+
+   #+BEGIN_SRC bash :results none
+     clang --version
+     clang -O -S cmemset.c -o clang-cmemset.s
+     clang -O cmemset.c -o clang-cmemset
+   #+END_SRC
+** Haskell
+   #+BEGIN_SRC haskell :tangle hmemset.hs
+     {-# language MagicHash #-}
+     {-# language UnboxedTuples #-}
+
+     module FillArray
+       ( fill
+       ) where
+
+     import GHC.Exts
+     import GHC.IO
+
+     data ByteArray = ByteArray ByteArray#
+
+     fill :: IO ByteArray
+     fill = IO $ \s0 -> case newByteArray# 24# s0 of
+       (# s1, m #) -> case setByteArray# m 0# 23# 1# s1 of
+         s2 -> case unsafeFreezeByteArray# m s2 of
+               (# s3, r #) -> (# s3, ByteArray r #)
+   #+END_SRC
+
+   #+RESULTS:
+   : <interactive>:36:23-24: error: parse error on input ‘->’
+
+   #+BEGIN_SRC bash :results output
+     ghc -O2 -S hmemset.hs
+     rm orig-hmemset.cmm
+     ghc -O2 -S -ddump-opt-cmm hmemset.hs > orig-hmemset.cmm
+   #+END_SRC
+
+   #+RESULTS:
+
+   #+BEGIN_SRC bash :result verbatim
+     rm hmemset.cmm
+     ~/dev/ghc/inplace/bin/ghc-stage2 -O2 -S hmemset.hs
+   #+END_SRC
+
+   #+RESULTS:
+
+   #+BEGIN_SRC cmm :tangle memset-test.cmm
+     #include "Cmm.h"
+
+     callMemset2 (W_ dst)
+     {
+       prim %memset(dst + 3, 0, 14, 1);
+       return ();
+     }
+   #+END_SRC
+
+   #+BEGIN_SRC bash
+     rm opt-memset-test.cmm
+     ~/dev/ghc/inplace/bin/ghc-stage2 -O2 -S -ddump-cmm -ddump-opt-cmm memset-test.cmm > opt-memset-test.cmm
+   #+END_SRC
+
+   #+RESULTS:
+* Memcpy optimizations
+** C
+   #+BEGIN_SRC C :includes <string.h> :tangle cmemcpy.c :results output :main no
+     void smallcpy(char *src, char *dest)
+     {
+             memcpy(src, dest, 31);
+             return;
+     }
+   #+END_SRC
+
+   #+BEGIN_SRC bash
+     cc -S -O -mno-ssec memcpy.c -o cmemcpy.s
+   #+END_SRC
+
+   #+RESULTS:
+** Haskell
+   #+BEGIN_SRC haskell :tangle hmemcpy.hs
+     {-# language MagicHash #-}
+     {-# language UnboxedTuples #-}
+
+     module CopyArray
+       ( smallCpy
+       ) where
+
+     import GHC.Exts
+     import GHC.IO
+
+     data ByteArray = ByteArray ByteArray#
+
+     smallCpy :: ByteArray -> IO ByteArray
+     smallCpy (ByteArray ba) = IO $ \s0 -> case newByteArray# 32# s0 of
+       (# s1, mut #) -> case copyByteArray# ba 0# mut 0# 32# s1 of
+         s2 -> case unsafeFreezeByteArray# mut s2 of
+               (# s3, frozen #) -> (# s3, ByteArray frozen #)
+   #+END_SRC
+
+   #+BEGIN_SRC bash
+     ghc -O2 -S hmemcpy.hs -o orig-hmemcpy.s
+   #+END_SRC
+
+   #+RESULTS:
