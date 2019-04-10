@@ -1,13 +1,59 @@
 ---
-title:  (╯°□°）╯ ¬(¬(A∨¬A))
+title:  (╯°□°）╯ ¬¬(A∨¬A)
 category: logic
 date: 2019-03-21
 ---
 
-... or "*what's up with the Law of Excluded Middle*".
+... or "the missing Law of Excluded Middle".
+
+First things first, Law of Excluded Middle or LEM is an axiom of logic
+that states that a proposition is either true or false, there is no
+third choice. LEM is one of the core tenets of formal reasoning in
+"classical" branches of mathematics, and for me as a classically
+trained mathematician this is indeed a very natural way of thinking.
+
+Recently, however, I got interested in the theory of programming
+languages. The discipline differs a great deal from functional
+analysis, probability theory or other familiar branches of
+mathematics, and learning required starting from the very basics,
+including proof theory and intuitionistic logic.
+
+The latter at first seemed rather bizarre and required (and still
+requires) significant un-learning on my side, in part due to absense
+of LEM.
 
 #+BEGIN_EXPORT html
 <!--more-->
 #+END_EXPORT
 
 TODO
+
+#+BEGIN_SRC coq -n
+  Lemma or_impl: forall (A B C: Prop),
+      ((A \/ B) -> C) -> ((A -> C) /\ (B -> C)).
+  Proof.
+    intros A B C Habc.
+    split.
+    - intro Ha.
+      pose (pf_AorB := or_introl Ha : A \/ B).
+      apply Habc in pf_AorB as pf_C.
+      apply pf_C.
+    - intro Hb.
+      pose (pf_AorB := or_intror Hb : A \/ B).
+      apply Habc in pf_AorB as pf_C.
+      apply pf_C.
+  Qed.
+#+END_SRC
+
+#+BEGIN_SRC coq -n
+  Theorem not_refuting_LEM: forall (A: Prop), ~~(A \/ ~A).
+  Proof.
+    intro A.
+    unfold not.
+    intro H_refuteLEM.
+    apply or_impl in H_refuteLEM.
+    destruct H_refuteLEM as [H_refuteA H_refuteAContradictory].
+    apply H_refuteAContradictory in H_refuteA as Contradiction.
+    apply Contradiction.
+  Qed.
+#+END_SRC
