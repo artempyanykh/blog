@@ -1,0 +1,64 @@
+* Example
+  #+BEGIN_SRC haskell :tangle foo-no-compile.hs
+    {-# LANGUAGE FlexibleContexts #-}
+    {-# LANGUAGE FlexibleInstances #-}
+    {-# LANGUAGE MultiParamTypeClasses #-}
+    {-# LANGUAGE QuantifiedConstraints #-}
+    {-# LANGUAGE ScopedTypeVariables #-}
+    {-# LANGUAGE TypeFamilies #-}
+    {-# LANGUAGE UndecidableInstances #-}
+    {-# LANGUAGE InstanceSigs #-}
+    module Foo where
+
+    class    (forall c. c ~ T a => Show (c b)) => ShowT a b
+    instance Show (T a b) => ShowT a b
+
+    class (forall b. Show b => ShowT a b) => C a where
+      type family T a :: * -> *
+
+    data D a = MkD (T a Int)
+
+    instance C a => Show (D a) where
+      show (MkD x) = show x
+  #+END_SRC
+
+  #+BEGIN_SRC bash
+    ~/dev/ghc/inplace/bin/ghc-stage2 -c\
+                                     -ddump-tc-trace\
+        foo-no-compile.hs -o foo-no-compile.o
+  #+END_SRC
+
+  #+RESULTS:
+
+  #+BEGIN_SRC haskell :tangle test-nested.hs
+    {-# LANGUAGE FlexibleContexts #-}
+    {-# LANGUAGE FlexibleInstances #-}
+    {-# LANGUAGE MultiParamTypeClasses #-}
+    {-# LANGUAGE QuantifiedConstraints #-}
+    {-# LANGUAGE TypeFamilies #-}
+    {-# LANGUAGE UndecidableInstances #-}
+
+    module Foo where
+
+    data Pair a b = MkPair a b
+
+    class (forall c. c ~ Pair a => Show (c b)) => ShowPairlike a b
+    instance Show (Pair a b) => ShowPairlike a b
+
+    class (forall b. Show b => ShowPairlike a b) => ShowFst a
+
+    data PairWithInt a = MkPairWithInt (Pair a Int)
+
+    instance ShowFst a => Show (PairWithInt a) where
+      show (MkPairWithInt x) = show x
+  #+END_SRC
+
+  #+BEGIN_SRC bash
+    rm dump-test-nested.hs
+
+    ~/dev/ghc/inplace/bin/ghc-stage2 -c \
+    -ddump-tc-trace \
+    test-nested.hs > dump-test-nested.hs
+  #+END_SRC
+
+  #+RESULTS:

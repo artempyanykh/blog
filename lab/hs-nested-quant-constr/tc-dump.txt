@@ -1,0 +1,3232 @@
+Prelude> :{
+Prelude|     instance C a => Show (D a) where
+Prelude|       show (MkD x) = show x
+Prelude| :}
+setInteractiveContext
+  ic_tythings: Identifier ‘interactive:Ghci5.$trModule’
+               Identifier ‘interactive:Ghci5.$tcShowT’
+               Identifier ‘interactive:Ghci5.$tcC’
+               Identifier ‘interactive:Ghci5.$tcD’
+               Type constructor ‘interactive:Ghci5.D’
+               Class ‘interactive:Ghci5.C’
+               Class ‘interactive:Ghci5.ShowT’
+               Identifier ‘interactive:Ghci4.tt’
+               Identifier ‘interactive:Ghci3.t’
+               Type constructor ‘interactive:Ghci1.D’
+               Class ‘interactive:Ghci1.C’
+               Class ‘interactive:Ghci1.ShowT’
+  ic_insts: interactive:Ghci5.$fShowTab [InlPrag=INLINE (sat-args=0)]
+              :: forall a b.
+                 GHC.Show.Show (interactive:Ghci5.T a b) =>
+                 interactive:Ghci5.ShowT a b
+            [GblId[DFunId(nt)], Arity=2, Caf=NoCafRefs, Unf=OtherCon []]
+            interactive:Ghci1.$fShowTab [InlPrag=INLINE (sat-args=0)]
+              :: forall a b.
+                 GHC.Show.Show (interactive:Ghci1.T a b) =>
+                 interactive:Ghci1.ShowT a b
+            [GblId[DFunId(nt)], Arity=2, Caf=NoCafRefs, Unf=OtherCon []]
+  ic_rn_gbl_env (LocalDef) [interactive:Ghci5.D
+                              defined at <interactive>:171:5]
+                           [interactive:Ghci5.C defined at <interactive>:168:5]
+                           [interactive:Ghci5.T parent:interactive:Ghci5.C
+                              defined at <interactive>:169:7]
+                           [interactive:Ghci5.ShowT defined at <interactive>:165:5]
+                           [interactive:Ghci5.MkD parent:interactive:Ghci5.D
+                              defined at <interactive>:171:16]
+                           [interactive:Ghci5.$trModule defined at <interactive>:1:1]
+                           [interactive:Ghci3.t defined at <interactive>:150:5]
+                           [interactive:Ghci5.$tcC defined at <no location info>]
+                           [interactive:Ghci5.$tcShowT defined at <no location info>]
+                           [interactive:Ghci5.$tcD defined at <no location info>]
+                           [interactive:Ghci4.tt defined at <interactive>:158:1]
+Tc2 (src)
+Tc3
+tcExtendKindEnvList []
+tcExtendKindEnvList []
+---- tcTyClGroup ---- {
+Decls for []
+tcExtendKindEnv []
+---- kcTyClGroup ---- { module interactive:Ghci6
+kcTyClGroup: initial kinds
+tcExtendKindEnvList []
+solveEqualities { wanted =  WC {}
+newNoTcEvBinds unique = a3n4
+solveWanteds { WC {}
+solveSimpleWanteds { {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveWanteds }
+  final wc = WC {}
+  current evbinds  = {}
+unflattenGivens []
+End solveEqualities }
+reportAllUnsolved {
+newNoTcEvBinds unique = a3n5
+reportAllUnsolved }
+---- kcTyClGroup end ---- }
+tcTyAndCl generalized kinds
+tcExtendKindEnvList []
+Starting synonym cycle check []
+Done synonym cycle check []
+Starting validity check []
+Done validity check []
+---- end tcTyClGroup ---- }
+tcAddTyCons
+  tycons []
+  implicits []
+tcExtendKindEnvList []
+env2 []
+solveLocalEqualities {
+newMetaKindVar k_a3n6[tau:1]
+env2
+  [(a_a3n2, Type variable ‘a_a3n2’ = a_a3n2[sk:1] :: k_a3n6[tau:1])]
+tcExtendBinderStack [a_a3n2 a_a3n2[sk:1]]
+lk1 C
+tcTyVar2a
+  C
+  * -> Constraint
+tcInferApps {
+  C
+  [a_a3n2]
+  * -> Constraint
+tcInferApps (vis)
+  [anon] *
+  a_a3n2
+  *
+  [TCvSubst In scope: InScope {} Type env: [] Co env: []]
+lk1 a_a3n2
+checkExpectedKind
+  a_a3n2
+  act_kind: k_a3n6[tau:1]
+  act_kind': k_a3n6[tau:1]
+  exp_kind: *
+u_tys
+  tclvl 1
+  k_a3n6[tau:1] ~ *
+  arising from a type equality k_a3n6[tau:1] ~ *
+u_tys
+  tclvl 1
+  * ~ *
+  arising from a kind equality arising from k_a3n6[tau:1] ~ *
+u_tys
+  tclvl 1
+  'GHC.Types.LiftedRep ~ 'GHC.Types.LiftedRep
+  arising from a kind equality arising from k_a3n6[tau:1] ~ *
+u_tys yields no coercion
+u_tys yields no coercion
+writeMetaTyVar k_a3n6[tau:1] :: * := *
+u_tys yields no coercion
+checkExpectedKind
+  k_a3n6[tau:1]
+  *
+  <*>_N
+tcInferApps (vis 1) *
+tcInferApps }
+checkExpectedKind
+  C a_a3n2
+  act_kind: Constraint
+  act_kind': Constraint
+  exp_kind: Constraint
+lk1 Show
+tcTyVar2a
+  Show
+  * -> Constraint
+tcInferApps {
+  Show
+  [(D a_a3n2)]
+  * -> Constraint
+tcInferApps (vis)
+  [anon] *
+  (D a_a3n2)
+  *
+  [TCvSubst In scope: InScope {} Type env: [] Co env: []]
+lk1 D
+tcTyVar2a
+  D
+  * -> *
+tcInferApps {
+  D
+  [a_a3n2]
+  * -> *
+tcInferApps (vis)
+  [anon] *
+  a_a3n2
+  *
+  [TCvSubst In scope: InScope {} Type env: [] Co env: []]
+lk1 a_a3n2
+checkExpectedKind
+  a_a3n2
+  act_kind: *
+  act_kind': *
+  exp_kind: *
+tcInferApps (vis 1) *
+tcInferApps }
+checkExpectedKind
+  D a_a3n2
+  act_kind: *
+  act_kind': *
+  exp_kind: *
+tcInferApps (vis 1) *
+tcInferApps }
+checkExpectedKind
+  Show (D a_a3n2)
+  act_kind: Constraint
+  act_kind': Constraint
+  exp_kind: Constraint
+solveLocalEqualities: running solver { WC {}
+newNoTcEvBinds unique = a3n7
+solveWanteds { WC {}
+solveSimpleWanteds { {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveWanteds }
+  final wc = WC {}
+  current evbinds  = {}
+unflattenGivens []
+solveLocalEqualities: running solver } WC {}
+solveLocalEqualities end }
+tcImplicitTKBndrs
+  [a_a3n2]
+  [a_a3n2[sk:1]]
+solveEqualities { wanted =  WC {}
+newNoTcEvBinds unique = a3n8
+solveWanteds { WC {}
+solveSimpleWanteds { {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveWanteds }
+  final wc = WC {}
+  current evbinds  = {}
+unflattenGivens []
+End solveEqualities }
+reportAllUnsolved {
+newNoTcEvBinds unique = a3n9
+reportAllUnsolved }
+quantifyTyVars
+  DV {dv_kvs = [] dv_tvs = []}
+  []
+quantifyTyVars
+  globals: []
+  nondep:
+  dep:
+  dep_kvs'
+  nondep_tvs'
+checkValidInstance { forall a. C a => Show (D a)
+check_valid_theta [C a_a3n2]
+Ambiguity check for forall a. C a => Show (D a)
+tcSubType_NC
+  an instance declaration
+  forall a. C a => Show (D a)
+  forall a. C a => Show (D a)
+tc_sub_tc_type (general case)
+  ty_actual   = forall a. C a => Show (D a)
+  ty_expected = forall a. C a => Show (D a)
+tcSkolemise
+tc_sub_type_ds
+  ty_actual   = forall a. C a => Show (D a)
+  ty_expected = Show (D a_a3nb[sk:1])
+cloneAnonMetaTyVar a_a3nd[tau:1]
+instCallConstraints [$dC_a3ne]
+Instantiating
+  all tyvars? True
+  origin arising from a type equality forall a. C a => Show (D a)
+                                      ~
+                                      forall a. C a => Show (D a)
+  type forall @a_a3n2. C a_a3n2 => Show (D a_a3n2)
+  theta [C a_a3n2]
+  leave_bndrs []
+  with a_a3nd[tau:1]
+  theta: [C a_a3nd[tau:1]]
+tc_sub_type_ds
+  ty_actual   = Show (D a_a3nd[tau:1])
+  ty_expected = Show (D a_a3nb[sk:1])
+deeply_instantiate final subst
+  origin: arising from a type equality forall a. C a => Show (D a)
+                                       ~
+                                       forall a. C a => Show (D a)
+  type: Show (D a_a3nd[tau:1])
+  new type: Show (D a_a3nd[tau:1])
+  subst: [TCvSubst
+            In scope: InScope {a_a3nd}
+            Type env: []
+            Co env: []]
+u_tys
+  tclvl 1
+  Show (D a_a3nd[tau:1]) ~ Show (D a_a3nb[sk:1])
+  arising from a type equality Show (D a_a3nd[tau:1])
+                               ~
+                               Show (D a_a3nb[sk:1])
+u_tys
+  tclvl 1
+  D a_a3nd[tau:1] ~ D a_a3nb[sk:1]
+  arising from a type equality Show (D a_a3nd[tau:1])
+                               ~
+                               Show (D a_a3nb[sk:1])
+u_tys
+  tclvl 1
+  a_a3nd[tau:1] ~ a_a3nb[sk:1]
+  arising from a type equality Show (D a_a3nd[tau:1])
+                               ~
+                               Show (D a_a3nb[sk:1])
+u_tys
+  tclvl 1
+  * ~ *
+  arising from a kind equality arising from
+    a_a3nd[tau:1] ~ a_a3nb[sk:1]
+u_tys
+  tclvl 1
+  'GHC.Types.LiftedRep ~ 'GHC.Types.LiftedRep
+  arising from a kind equality arising from
+    a_a3nd[tau:1] ~ a_a3nb[sk:1]
+u_tys yields no coercion
+u_tys yields no coercion
+writeMetaTyVar a_a3nd[tau:1] :: * := a_a3nb[sk:1]
+u_tys yields no coercion
+u_tys yields no coercion
+u_tys yields no coercion
+newTcEvBinds unique = a3nf
+checkConstraints
+  1
+  [a_a3nb[sk:1]]
+simplifyAmbiguityCheck {
+  type =  forall a. C a => Show (D a)
+  wanted =  WC {wc_impl =
+                  Implic {
+                    TcLevel = 1
+                    Skolems = a_a3nb[sk:1]
+                    No-eqs = False
+                    Status = Unsolved
+                    Given = $dC_a3nc :: C a_a3nb[sk:1]
+                    Wanted =
+                      WC {wc_simple =
+                            [WD] $dC_a3ne {0}:: C a_a3nd[tau:1] (CNonCanonical)}
+                    Binds = EvBindsVar<a3nf>
+                    an instance declaration:
+                      forall a. C a => Show (D a) }}
+newTcEvBinds unique = a3ng
+solveWanteds {
+  WC {wc_impl =
+        Implic {
+          TcLevel = 1
+          Skolems = a_a3nb[sk:1]
+          No-eqs = False
+          Status = Unsolved
+          Given = $dC_a3nc :: C a_a3nb[sk:1]
+          Wanted =
+            WC {wc_simple =
+                  [WD] $dC_a3ne {0}:: C a_a3nd[tau:1] (CNonCanonical)}
+          Binds = EvBindsVar<a3nf>
+          an instance declaration:
+            forall a. C a => Show (D a) }}
+solveSimpleWanteds { {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveNestedImplications starting {
+solveImplication {
+  Implic {
+    TcLevel = 1
+    Skolems = a_a3nb[sk:1]
+    No-eqs = False
+    Status = Unsolved
+    Given = $dC_a3nc :: C a_a3nb[sk:1]
+    Wanted =
+      WC {wc_simple =
+            [WD] $dC_a3ne {0}:: C a_a3nd[tau:1] (CNonCanonical)}
+    Binds = EvBindsVar<a3nf>
+    an instance declaration:
+      forall a. C a => Show (D a) }
+  Inerts {Unsolved goals = 0}
+         Inert fsks = []
+solveSimpleGivens {
+  [[G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CNonCanonical)]
+-----------------------------
+Start solver pipeline {
+  tclevel = 1
+  work item = [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CNonCanonical)
+  inerts = {Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CNonCanonical)
+canEvNC:cls C [a_a3nb[sk:1]]
+addTcEvBind
+  a3nf
+  [G] df_a3nh = interactive:Ghci5.$p1C @ a_a3nb[sk:1] $dC_a3nc
+Emitting fresh work
+  [G] df_a3nh {0}:: forall b.
+                    Show b =>
+                    ShowT a_a3nb[sk:1] b (CNonCanonical)
+flatten_args { a_a3nb[sk:1]
+Unfilled tyvar a_a3nb[sk:1]
+flatten } a_a3nb[sk:1]
+canClass
+  [G] $dC_a3nc {0}:: C a_a3nb[sk:1]
+  C a_a3nb[sk:1]
+  ContinueWith [G] $dC_a3nc {0}:: C a_a3nb[sk:1]
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CDictCan)
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CDictCan)
+doTopReact [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CDictCan)
+try_fundeps [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CDictCan)
+end stage top-level reactions }
+insertInertCan {
+  Trying to insert new inert item: [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CDictCan)
+addInertCan }
+Step 1[l:1,d:0] Kept as inert: [G] $dC_a3nc {0}:: C a_a3nb[sk:1]
+End solver pipeline (kept as inert) }
+  final_item = [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CDictCan)
+-----------------------------
+Start solver pipeline {
+  tclevel = 1
+  work item = [G] df_a3nh {0}:: forall b.
+                                Show b =>
+                                ShowT a_a3nb[sk:1] b (CNonCanonical)
+  inerts = {Dictionaries = [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CDictCan)
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [G] df_a3nh {0}:: forall b.
+                                  Show b =>
+                                  ShowT a_a3nb[sk:1] b (CNonCanonical)
+canEvNC:forall ShowT a_a3nb[sk:1] b_a3it
+flatten { FM_SubstOnly forall b. Show b => ShowT a_a3nb[sk:1] b
+Unfilled tyvar b_a3it
+Unfilled tyvar a_a3nb[sk:1]
+Unfilled tyvar b_a3it
+flatten } forall b. Show b => ShowT a_a3nb[sk:1] b
+end stage canonicalization }
+Step 2[l:1,d:0] Given forall-constraint:
+    [G] df_a3nh {0}:: forall b. Show b => ShowT a_a3nb[sk:1] b
+End solver pipeline (discharged) }
+End solveSimpleGivens }
+solveWanteds {
+  WC {wc_simple =
+        [WD] $dC_a3ne {0}:: C a_a3nd[tau:1] (CNonCanonical)}
+solveSimpleWanteds {
+  {[WD] $dC_a3ne {0}:: C a_a3nd[tau:1] (CNonCanonical)}
+-----------------------------
+Start solver pipeline {
+  tclevel = 1
+  work item = [WD] $dC_a3ne {0}:: C a_a3nd[tau:1] (CNonCanonical)
+  inerts = {Dictionaries = [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CDictCan)
+            Given instances = [G] df_a3nh {0}:: forall b.
+                                                Show b =>
+                                                ShowT a_a3nb[sk:1] b
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [WD] $dC_a3ne {0}:: C a_a3nd[tau:1] (CNonCanonical)
+canEvNC:cls C [a_a3nd[tau:1]]
+flatten_args { a_a3nd[tau:1]
+Following filled tyvar a_a3nd[tau:1] = a_a3nb[sk:1]
+Unfilled tyvar a_a3nb[sk:1]
+flatten } a_a3nb[sk:1]
+canClass
+  [WD] $dC_a3ne {0}:: C a_a3nd[tau:1]
+  C a_a3nb[sk:1]
+  ContinueWith [WD] $dC_a3ne {0}:: C a_a3nb[sk:1]
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] $dC_a3ne {0}:: C a_a3nb[sk:1] (CDictCan(psc))
+lookupInertDict keep inert
+addTcEvBind
+  a3nf
+  [W] $dC_a3ne = $dC_a3nc
+end stage interact with inerts }
+Step 3[l:1,d:0] Dict equal (keep inert):
+    [WD] $dC_a3ne {0}:: C a_a3nb[sk:1]
+End solver pipeline (discharged) }
+getUnsolvedInerts
+   tv eqs = {}
+  fun eqs = {}
+  others = {}
+  implics = {}
+Unflattening
+  {Funeqs =
+   Tv eqs =}
+Unflattening 1 {}
+Unflattening 2 {}
+Unflattening 3 {}
+Unflattening done {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveWanteds }
+  final wc = WC {}
+  current evbinds  = {[G] df_a3nh
+                        = interactive:Ghci5.$p1C @ a_a3nb[sk:1] $dC_a3nc,
+                      [W] $dC_a3ne = $dC_a3nc}
+getNoGivenEqs
+  No given equalities
+  Skols: [a_a3nb[sk:1]]
+  Inerts: {Dictionaries = [G] $dC_a3nc {0}:: C a_a3nb[sk:1] (CDictCan)
+           Given instances = [G] df_a3nh {0}:: forall b.
+                                               Show b =>
+                                               ShowT a_a3nb[sk:1] b
+           Unsolved goals = 0}
+  Insols: {}
+unflattenGivens []
+zonkSimples done: {}
+floatEqualities
+  Skols = [a_a3nb[sk:1]]
+  Extended skols = [a3nb :-> a_a3nb[sk:1], a3nc :-> $dC_a3nc,
+                    a3ne :-> $dC_a3ne, a3nh :-> df_a3nh]
+  Simples = {}
+  Eqs = {}
+  Floated eqs = {}
+solveImplication 2
+  {}
+  WC {}
+setImplicationStatus(all-solved) {
+  Implic {
+    TcLevel = 1
+    Skolems = a_a3nb[sk:1]
+    No-eqs = True
+    Status = Unsolved
+    Given = $dC_a3nc :: C a_a3nb[sk:1]
+    Wanted = WC {}
+    Binds = EvBindsVar<a3nf>
+    an instance declaration:
+      forall a. C a => Show (D a) }
+neededEvVars
+  old_needs: []
+  seeds3: [a3nc :-> $dC_a3nc]
+  ev_binds: [a3nh :-> [G] df_a3nh
+                        = interactive:Ghci5.$p1C @ a_a3nb[sk:1] $dC_a3nc,
+             a3ne :-> [W] $dC_a3ne = $dC_a3nc]
+  live_ev_binds: [a3ne :-> [W] $dC_a3ne = $dC_a3nc]
+setImplicationStatus(all-solved) }
+  discard: True
+  new_implic: Implic {
+                TcLevel = 1
+                Skolems = a_a3nb[sk:1]
+                No-eqs = True
+                Status = Solved {Dead givens = []}
+                Given = $dC_a3nc :: C a_a3nb[sk:1]
+                Wanted = WC {}
+                Binds = EvBindsVar<a3nf>
+                an instance declaration:
+                  forall a. C a => Show (D a) }
+solveImplication end }
+  no_given_eqs = True
+  floated_eqs = {}
+  res_implic = Nothing
+  implication evbinds = {[W] $dC_a3ne = $dC_a3nc}
+  implication tvcs = []
+solveNestedImplications end }
+  all floated_eqs = {}
+  unsolved_implics = {Nothing}
+solveWanteds }
+  final wc = WC {}
+  current evbinds  = {}
+Constraint solver steps = 3
+unflattenGivens []
+End simplifyAmbiguityCheck }
+reportUnsolved(ambig) {
+reportUnsolved(ambig) }
+Done ambiguity check for forall a. C a => Show (D a)
+cvi 2 forall a. C a => Show (D a)
+End checkValidInstance }
+tcLocalInstDecl C a_a3n2 => Show (D a_a3n2)
+env2 [(a_a3n2, Type variable ‘a_a3n2’ = a_a3n2 :: *)]
+tcExtendBinderStack [a_a3n2 a_a3n2]
+checkConstraints
+  1
+  [a_a3n2]
+env2 [(a_a3n2, Type variable ‘a_a3n2’ = a_a3n2 :: *)]
+tcExtendBinderStack [a_a3n2 a_a3n2]
+checkConstraints
+  1
+  [a_a3n2]
+doClsInstErrorChecks
+  instance C a => Show (D a) -- Defined at <interactive>:210:14
+Adding instances:
+  interactive:Ghci6.$fShowD :
+    instance C a => Show (D a) -- Defined at <interactive>:210:14
+addFamInsts
+tcAddTyCons
+  tycons []
+  implicits []
+tcExtendKindEnvList []
+env2 []
+tcDeriving False
+tcDeriving 1 []
+rnd
+Adding instances:
+Tc3b
+Tc3c
+tcSemigroupWarnings
+Tc4
+Tc4a
+Tc5
+tcExtendKindEnvList []
+env2 []
+complete_matches
+  []
+  []
+complete_matches []
+tcExtendKindEnvList []
+env2 []
+complete_matches
+  []
+  []
+complete_matches []
+Tc6
+tcInstDecl2
+  [a_a3nj[ssk:1]]
+  [D a_a3nj[ssk:1]]
+  [C a_a3nj[ssk:1]]
+  []
+newTcEvBinds unique = a3nl
+env2 [(a_a3n2, Type variable ‘a_a3n2’ = a_a3nj[ssk:1] :: *)]
+tcExtendBinderStack [a_a3n2 a_a3nj[ssk:1]]
+tcInstMeth
+  []
+  {show (MkD x_a3n3) = show x_a3n3}
+tc_def showsPrec
+tcMethodBody
+  showsPrec forall a. Show a => Int -> a -> ShowS
+  <interactive>:210:14-30
+tcPolyCheck
+  showsPrec_a3no
+  <interactive>:210:14-30
+tcExtendBinderStack [showsPrec_a3np[<NotTopLevel>]]
+env2 []
+tcExtendBinderStack []
+tcMatchesFun
+  showsPrec_a3np
+  Check{Int -> D a_a3nj[ssk:1] -> ShowS}
+tcSkolemise
+tcBody Check{Int -> D a_a3nj[ssk:1] -> ShowS}
+tcInferId
+  GHC.Show.$dmshowsPrec :: forall a. Show a => Int -> a -> ShowS
+Instantiating
+  all tyvars? False
+  origin arising from a use of ‘GHC.Show.$dmshowsPrec’
+  type forall @a_a3nm. Show a_a3nm => Int -> a_a3nm -> ShowS
+  theta [Show a_a3nm]
+  leave_bndrs [@a_a3nm]
+  with
+  theta: []
+solveLocalEqualities {
+env2 []
+tcExtendBinderStack []
+checkExpectedKind
+  D a_a3nj[ssk:1]
+  act_kind: *
+  act_kind': *
+  exp_kind: *
+solveLocalEqualities: running solver { WC {}
+newNoTcEvBinds unique = a3nq
+solveWanteds { WC {}
+solveSimpleWanteds { {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveWanteds }
+  final wc = WC {}
+  current evbinds  = {}
+unflattenGivens []
+solveLocalEqualities: running solver } WC {}
+solveLocalEqualities end }
+checkValidType D a_a3nj[ssk:1] :: *
+checkValidType done D a_a3nj[ssk:1] :: *
+VTA
+  a_a3nm
+  TYPE 'GHC.Types.LiftedRep
+  D a_a3nj[ssk:1]
+  TYPE 'GHC.Types.LiftedRep
+  Show (D a_a3nj[ssk:1]) -> Int -> D a_a3nj[ssk:1] -> ShowS
+tc_sub_type_ds
+  ty_actual   = Show (D a_a3nj[ssk:1]) =>
+                Int -> D a_a3nj[ssk:1] -> ShowS
+  ty_expected = Int -> D a_a3nj[ssk:1] -> ShowS
+instCallConstraints [$dShow_a3nr]
+Instantiating
+  all tyvars? True
+  origin arising from a use of ‘GHC.Show.$dmshowsPrec’
+  type Show (D a_a3nj[ssk:1]) -> Int -> D a_a3nj[ssk:1] -> ShowS
+  theta [Show (D a_a3nj[ssk:1])]
+  leave_bndrs []
+  with
+  theta: [Show (D a_a3nj[ssk:1])]
+tc_sub_type_ds
+  ty_actual   = Int -> D a_a3nj[ssk:1] -> ShowS
+  ty_expected = Int -> D a_a3nj[ssk:1] -> ShowS
+tc_sub_type_ds
+  ty_actual   = D a_a3nj[ssk:1] -> ShowS
+  ty_expected = D a_a3nj[ssk:1] -> ShowS
+tc_sub_type_ds
+  ty_actual   = ShowS
+  ty_expected = ShowS
+tc_sub_type_ds
+  ty_actual   = String
+  ty_expected = String
+deeply_instantiate final subst
+  origin: arising from a use of ‘GHC.Show.$dmshowsPrec’
+  type: String
+  new type: String
+  subst: [TCvSubst In scope: InScope {} Type env: [] Co env: []]
+u_tys
+  tclvl 2
+  String ~ String
+  arising from a type equality Int -> D a_a3nj[ssk:1] -> ShowS
+                               ~
+                               Int -> D a_a3nj[ssk:1] -> ShowS
+u_tys yields no coercion
+tc_sub_tc_type (general case)
+  ty_actual   = String
+  ty_expected = String
+tcSkolemise
+tc_sub_type_ds
+  ty_actual   = String
+  ty_expected = String
+deeply_instantiate final subst
+  origin: arising from a type expected by the context:
+                         String
+  type: String
+  new type: String
+  subst: [TCvSubst In scope: InScope {} Type env: [] Co env: []]
+u_tys
+  tclvl 2
+  String ~ String
+  arising from a type equality Int -> D a_a3nj[ssk:1] -> ShowS
+                               ~
+                               Int -> D a_a3nj[ssk:1] -> ShowS
+u_tys yields no coercion
+tc_sub_tc_type (general case)
+  ty_actual   = D a_a3nj[ssk:1]
+  ty_expected = D a_a3nj[ssk:1]
+tcSkolemise
+tc_sub_type_ds
+  ty_actual   = D a_a3nj[ssk:1]
+  ty_expected = D a_a3nj[ssk:1]
+deeply_instantiate final subst
+  origin: arising from a type expected by the context:
+                         D a_a3nj[ssk:1]
+  type: D a_a3nj[ssk:1]
+  new type: D a_a3nj[ssk:1]
+  subst: [TCvSubst
+            In scope: InScope {a_a3nj}
+            Type env: []
+            Co env: []]
+u_tys
+  tclvl 2
+  D a_a3nj[ssk:1] ~ D a_a3nj[ssk:1]
+  arising from a type equality Int -> D a_a3nj[ssk:1] -> ShowS
+                               ~
+                               Int -> D a_a3nj[ssk:1] -> ShowS
+u_tys
+  tclvl 2
+  a_a3nj[ssk:1] ~ a_a3nj[ssk:1]
+  arising from a type equality Int -> D a_a3nj[ssk:1] -> ShowS
+                               ~
+                               Int -> D a_a3nj[ssk:1] -> ShowS
+u_tys yields no coercion
+u_tys yields no coercion
+tc_sub_tc_type (general case)
+  ty_actual   = Int
+  ty_expected = Int
+tcSkolemise
+tc_sub_type_ds
+  ty_actual   = Int
+  ty_expected = Int
+deeply_instantiate final subst
+  origin: arising from a type expected by the context:
+                         Int
+  type: Int
+  new type: Int
+  subst: [TCvSubst In scope: InScope {} Type env: [] Co env: []]
+u_tys
+  tclvl 2
+  Int ~ Int
+  arising from a type equality Int -> D a_a3nj[ssk:1] -> ShowS
+                               ~
+                               Int -> D a_a3nj[ssk:1] -> ShowS
+u_tys yields no coercion
+tcSpecPrags showsPrec_a3no []
+newTcEvBinds unique = a3ns
+tcSpecPrags $cshowsPrec_a3nn []
+tcMethodBody
+  show forall a. Show a => a -> String
+  <interactive>:211:7-10
+tcPolyCheck
+  show_a3nu
+  <interactive>:211:7-10
+tcExtendBinderStack [show_a3nv[<NotTopLevel>]]
+env2 []
+tcExtendBinderStack []
+tcMatchesFun
+  show_a3nv
+  Check{D a_a3nj[ssk:1] -> String}
+tcSkolemise
+tcConPat
+  MkD
+  a_a3ir
+  []
+  []
+  [a_a3nj[ssk:1]]
+  [T a_a3nj[ssk:1] Int]
+  PrefixCon [x_a3n3]
+tcPatBndr(not let)
+  x_a3n3
+  T a_a3nj[ssk:1] Int
+tcExtendBinderStack [x_a3n3[<NotTopLevel>]]
+env2
+  [(x_a3n3, Identifier[x_a3n3::T a_a3nj[ssk:1] Int, NotLetBound])]
+tcBody Check{String}
+tcInferId show :: forall a. Show a => a -> String
+cloneAnonMetaTyVar a_a3nw[tau:2]
+instCallConstraints [$dShow_a3nx]
+Instantiating
+  all tyvars? True
+  origin arising from a use of ‘show’
+  type forall @a_a1Q8. Show a_a1Q8 => a_a1Q8 -> String
+  theta [Show a_a1Q8]
+  leave_bndrs []
+  with a_a3nw[tau:2]
+  theta: [Show a_a3nw[tau:2]]
+tcPolyExprNC Check{a_a3nw[tau:2]}
+tcSkolemise
+tcInferId x_a3n3 :: T a_a3nj[ssk:1] Int
+tcCheckId
+  x_a3n3
+  T a_a3nj[ssk:1] Int
+  Check{a_a3nw[tau:2]}
+tcWrapResult
+  Actual:   T a_a3nj[ssk:1] Int
+  Expected: Check{a_a3nw[tau:2]}
+tc_sub_type_ds
+  ty_actual   = T a_a3nj[ssk:1] Int
+  ty_expected = a_a3nw[tau:2]
+deeply_instantiate final subst
+  origin: arising from a use of ‘x_a3n3’
+  type: T a_a3nj[ssk:1] Int
+  new type: T a_a3nj[ssk:1] Int
+  subst: [TCvSubst
+            In scope: InScope {a_a3nj}
+            Type env: []
+            Co env: []]
+u_tys
+  tclvl 2
+  T a_a3nj[ssk:1] Int ~ a_a3nw[tau:2]
+  arising from a type equality T a_a3nj[ssk:1] Int ~ a_a3nw[tau:2]
+New coercion hole: co_a3ny
+utype_defer
+  T a_a3nj[ssk:1] Int
+  a_a3nw[tau:2]
+  arising from a type equality T a_a3nj[ssk:1] Int ~ a_a3nw[tau:2]
+  In the first argument of ‘show’, namely ‘x_a3n3’
+  In the expression: show x_a3n3
+  In an equation for ‘show’: show (MkD x_a3n3) = show x_a3n3
+utype_defer2 {co_a3ny}
+u_tys yields coercion: {co_a3ny}
+tc_sub_type_ds
+  ty_actual   = String
+  ty_expected = String
+deeply_instantiate final subst
+  origin: arising from a use of ‘show’
+  type: String
+  new type: String
+  subst: [TCvSubst In scope: InScope {} Type env: [] Co env: []]
+u_tys
+  tclvl 2
+  String ~ String
+  arising from a type equality String ~ String
+u_tys yields no coercion
+tcSpecPrags show_a3nu []
+newTcEvBinds unique = a3nz
+tcSpecPrags $cshow_a3nt []
+tc_def showList
+tcMethodBody
+  showList forall a. Show a => [a] -> ShowS
+  <interactive>:210:14-30
+tcPolyCheck
+  showList_a3nB
+  <interactive>:210:14-30
+tcExtendBinderStack [showList_a3nC[<NotTopLevel>]]
+env2 []
+tcExtendBinderStack []
+tcMatchesFun
+  showList_a3nC
+  Check{[D a_a3nj[ssk:1]] -> ShowS}
+tcSkolemise
+tcBody Check{[D a_a3nj[ssk:1]] -> ShowS}
+tcInferId GHC.Show.$dmshowList :: forall a. Show a => [a] -> ShowS
+Instantiating
+  all tyvars? False
+  origin arising from a use of ‘GHC.Show.$dmshowList’
+  type forall @a_a36P. Show a_a36P => [a_a36P] -> ShowS
+  theta [Show a_a36P]
+  leave_bndrs [@a_a36P]
+  with
+  theta: []
+solveLocalEqualities {
+env2 []
+tcExtendBinderStack []
+checkExpectedKind
+  D a_a3nj[ssk:1]
+  act_kind: *
+  act_kind': *
+  exp_kind: *
+solveLocalEqualities: running solver { WC {}
+newNoTcEvBinds unique = a3nD
+solveWanteds { WC {}
+solveSimpleWanteds { {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveWanteds }
+  final wc = WC {}
+  current evbinds  = {}
+unflattenGivens []
+solveLocalEqualities: running solver } WC {}
+solveLocalEqualities end }
+checkValidType D a_a3nj[ssk:1] :: *
+checkValidType done D a_a3nj[ssk:1] :: *
+VTA
+  a_a36P
+  TYPE 'GHC.Types.LiftedRep
+  D a_a3nj[ssk:1]
+  TYPE 'GHC.Types.LiftedRep
+  Show (D a_a3nj[ssk:1]) -> [] (D a_a3nj[ssk:1]) -> ShowS
+tc_sub_type_ds
+  ty_actual   = Show (D a_a3nj[ssk:1]) => [D a_a3nj[ssk:1]] -> ShowS
+  ty_expected = [D a_a3nj[ssk:1]] -> ShowS
+instCallConstraints [$dShow_a3nE]
+Instantiating
+  all tyvars? True
+  origin arising from a use of ‘GHC.Show.$dmshowList’
+  type Show (D a_a3nj[ssk:1]) -> [] (D a_a3nj[ssk:1]) -> ShowS
+  theta [Show (D a_a3nj[ssk:1])]
+  leave_bndrs []
+  with
+  theta: [Show (D a_a3nj[ssk:1])]
+tc_sub_type_ds
+  ty_actual   = [D a_a3nj[ssk:1]] -> ShowS
+  ty_expected = [D a_a3nj[ssk:1]] -> ShowS
+tc_sub_type_ds
+  ty_actual   = ShowS
+  ty_expected = ShowS
+tc_sub_type_ds
+  ty_actual   = String
+  ty_expected = String
+deeply_instantiate final subst
+  origin: arising from a use of ‘GHC.Show.$dmshowList’
+  type: String
+  new type: String
+  subst: [TCvSubst In scope: InScope {} Type env: [] Co env: []]
+u_tys
+  tclvl 2
+  String ~ String
+  arising from a type equality [D a_a3nj[ssk:1]] -> ShowS
+                               ~
+                               [D a_a3nj[ssk:1]] -> ShowS
+u_tys yields no coercion
+tc_sub_tc_type (general case)
+  ty_actual   = String
+  ty_expected = String
+tcSkolemise
+tc_sub_type_ds
+  ty_actual   = String
+  ty_expected = String
+deeply_instantiate final subst
+  origin: arising from a type expected by the context:
+                         String
+  type: String
+  new type: String
+  subst: [TCvSubst In scope: InScope {} Type env: [] Co env: []]
+u_tys
+  tclvl 2
+  String ~ String
+  arising from a type equality [D a_a3nj[ssk:1]] -> ShowS
+                               ~
+                               [D a_a3nj[ssk:1]] -> ShowS
+u_tys yields no coercion
+tc_sub_tc_type (general case)
+  ty_actual   = [D a_a3nj[ssk:1]]
+  ty_expected = [D a_a3nj[ssk:1]]
+tcSkolemise
+tc_sub_type_ds
+  ty_actual   = [D a_a3nj[ssk:1]]
+  ty_expected = [D a_a3nj[ssk:1]]
+deeply_instantiate final subst
+  origin: arising from a type expected by the context:
+                         [D a_a3nj[ssk:1]]
+  type: [D a_a3nj[ssk:1]]
+  new type: [D a_a3nj[ssk:1]]
+  subst: [TCvSubst
+            In scope: InScope {a_a3nj}
+            Type env: []
+            Co env: []]
+u_tys
+  tclvl 2
+  [D a_a3nj[ssk:1]] ~ [D a_a3nj[ssk:1]]
+  arising from a type equality [D a_a3nj[ssk:1]] -> ShowS
+                               ~
+                               [D a_a3nj[ssk:1]] -> ShowS
+u_tys
+  tclvl 2
+  D a_a3nj[ssk:1] ~ D a_a3nj[ssk:1]
+  arising from a type equality [D a_a3nj[ssk:1]] -> ShowS
+                               ~
+                               [D a_a3nj[ssk:1]] -> ShowS
+u_tys
+  tclvl 2
+  a_a3nj[ssk:1] ~ a_a3nj[ssk:1]
+  arising from a type equality [D a_a3nj[ssk:1]] -> ShowS
+                               ~
+                               [D a_a3nj[ssk:1]] -> ShowS
+u_tys yields no coercion
+u_tys yields no coercion
+u_tys yields no coercion
+tcSpecPrags showList_a3nB []
+newTcEvBinds unique = a3nF
+tcSpecPrags $cshowList_a3nA []
+Tc7
+Tc7a
+checkMain not Main interactive:Ghci6
+simplifyTop {
+  wanted =  WC {wc_impl =
+                  Implic {
+                    TcLevel = 1
+                    Skolems = a_a3nj[ssk:1]
+                    No-eqs = False
+                    Status = Unsolved
+                    Given = $dC_a3nk :: C a_a3nj[ssk:1]
+                    Wanted =
+                      WC {wc_impl =
+                            Implic {
+                              TcLevel = 2
+                              Skolems =
+                              No-eqs = False
+                              Status = Unsolved
+                              Given =
+                              Wanted =
+                                WC {wc_simple =
+                                      [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+                              Binds = EvBindsVar<a3ns>
+                              the instance declaration }
+                            Implic {
+                              TcLevel = 2
+                              Skolems =
+                              No-eqs = False
+                              Status = Unsolved
+                              Given =
+                              Wanted =
+                                WC {wc_simple =
+                                      [WD] $dShow_a3nx {0}:: Show a_a3nw[tau:2] (CNonCanonical)
+                                      [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                                                               GHC.Prim.~# a_a3nw[tau:2] (CNonCanonical)}
+                              Binds = EvBindsVar<a3nz>
+                              the instance declaration }
+                            Implic {
+                              TcLevel = 2
+                              Skolems =
+                              No-eqs = False
+                              Status = Unsolved
+                              Given =
+                              Wanted =
+                                WC {wc_simple =
+                                      [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+                              Binds = EvBindsVar<a3nF>
+                              the instance declaration }}
+                    Binds = EvBindsVar<a3nl>
+                    the instance declaration }}
+newTcEvBinds unique = a3nH
+solveWanteds {
+  WC {wc_impl =
+        Implic {
+          TcLevel = 1
+          Skolems = a_a3nj[ssk:1]
+          No-eqs = False
+          Status = Unsolved
+          Given = $dC_a3nk :: C a_a3nj[ssk:1]
+          Wanted =
+            WC {wc_impl =
+                  Implic {
+                    TcLevel = 2
+                    Skolems =
+                    No-eqs = False
+                    Status = Unsolved
+                    Given =
+                    Wanted =
+                      WC {wc_simple =
+                            [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+                    Binds = EvBindsVar<a3ns>
+                    the instance declaration }
+                  Implic {
+                    TcLevel = 2
+                    Skolems =
+                    No-eqs = False
+                    Status = Unsolved
+                    Given =
+                    Wanted =
+                      WC {wc_simple =
+                            [WD] $dShow_a3nx {0}:: Show a_a3nw[tau:2] (CNonCanonical)
+                            [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                                                     GHC.Prim.~# a_a3nw[tau:2] (CNonCanonical)}
+                    Binds = EvBindsVar<a3nz>
+                    the instance declaration }
+                  Implic {
+                    TcLevel = 2
+                    Skolems =
+                    No-eqs = False
+                    Status = Unsolved
+                    Given =
+                    Wanted =
+                      WC {wc_simple =
+                            [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+                    Binds = EvBindsVar<a3nF>
+                    the instance declaration }}
+          Binds = EvBindsVar<a3nl>
+          the instance declaration }}
+solveSimpleWanteds { {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveNestedImplications starting {
+solveImplication {
+  Implic {
+    TcLevel = 1
+    Skolems = a_a3nj[ssk:1]
+    No-eqs = False
+    Status = Unsolved
+    Given = $dC_a3nk :: C a_a3nj[ssk:1]
+    Wanted =
+      WC {wc_impl =
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = False
+              Status = Unsolved
+              Given =
+              Wanted =
+                WC {wc_simple =
+                      [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+              Binds = EvBindsVar<a3ns>
+              the instance declaration }
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = False
+              Status = Unsolved
+              Given =
+              Wanted =
+                WC {wc_simple =
+                      [WD] $dShow_a3nx {0}:: Show a_a3nw[tau:2] (CNonCanonical)
+                      [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                                               GHC.Prim.~# a_a3nw[tau:2] (CNonCanonical)}
+              Binds = EvBindsVar<a3nz>
+              the instance declaration }
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = False
+              Status = Unsolved
+              Given =
+              Wanted =
+                WC {wc_simple =
+                      [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+              Binds = EvBindsVar<a3nF>
+              the instance declaration }}
+    Binds = EvBindsVar<a3nl>
+    the instance declaration }
+  Inerts {Unsolved goals = 0}
+         Inert fsks = []
+solveSimpleGivens {
+  [[G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CNonCanonical)]
+-----------------------------
+Start solver pipeline {
+  tclevel = 1
+  work item = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CNonCanonical)
+  inerts = {Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CNonCanonical)
+canEvNC:cls C [a_a3nj[ssk:1]]
+addTcEvBind
+  a3nl
+  [G] df_a3nI = interactive:Ghci5.$p1C @ a_a3nj[ssk:1] $dC_a3nk
+Emitting fresh work
+  [G] df_a3nI {0}:: forall b.
+                    Show b =>
+                    ShowT a_a3nj[ssk:1] b (CNonCanonical)
+flatten_args { a_a3nj[ssk:1]
+Unfilled tyvar a_a3nj[ssk:1]
+flatten } a_a3nj[ssk:1]
+canClass
+  [G] $dC_a3nk {0}:: C a_a3nj[ssk:1]
+  C a_a3nj[ssk:1]
+  ContinueWith [G] $dC_a3nk {0}:: C a_a3nj[ssk:1]
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+doTopReact [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+try_fundeps [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+end stage top-level reactions }
+insertInertCan {
+  Trying to insert new inert item: [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+addInertCan }
+Step 1[l:1,d:0] Kept as inert: [G] $dC_a3nk {0}:: C a_a3nj[ssk:1]
+End solver pipeline (kept as inert) }
+  final_item = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+-----------------------------
+Start solver pipeline {
+  tclevel = 1
+  work item = [G] df_a3nI {0}:: forall b.
+                                Show b =>
+                                ShowT a_a3nj[ssk:1] b (CNonCanonical)
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [G] df_a3nI {0}:: forall b.
+                                  Show b =>
+                                  ShowT a_a3nj[ssk:1] b (CNonCanonical)
+canEvNC:forall ShowT a_a3nj[ssk:1] b_a3it
+flatten { FM_SubstOnly forall b. Show b => ShowT a_a3nj[ssk:1] b
+Unfilled tyvar b_a3it
+Unfilled tyvar a_a3nj[ssk:1]
+Unfilled tyvar b_a3it
+flatten } forall b. Show b => ShowT a_a3nj[ssk:1] b
+end stage canonicalization }
+Step 2[l:1,d:0] Given forall-constraint:
+    [G] df_a3nI {0}:: forall b. Show b => ShowT a_a3nj[ssk:1] b
+End solver pipeline (discharged) }
+End solveSimpleGivens }
+solveWanteds {
+  WC {wc_impl =
+        Implic {
+          TcLevel = 2
+          Skolems =
+          No-eqs = False
+          Status = Unsolved
+          Given =
+          Wanted =
+            WC {wc_simple =
+                  [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+          Binds = EvBindsVar<a3ns>
+          the instance declaration }
+        Implic {
+          TcLevel = 2
+          Skolems =
+          No-eqs = False
+          Status = Unsolved
+          Given =
+          Wanted =
+            WC {wc_simple =
+                  [WD] $dShow_a3nx {0}:: Show a_a3nw[tau:2] (CNonCanonical)
+                  [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                                           GHC.Prim.~# a_a3nw[tau:2] (CNonCanonical)}
+          Binds = EvBindsVar<a3nz>
+          the instance declaration }
+        Implic {
+          TcLevel = 2
+          Skolems =
+          No-eqs = False
+          Status = Unsolved
+          Given =
+          Wanted =
+            WC {wc_simple =
+                  [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+          Binds = EvBindsVar<a3nF>
+          the instance declaration }}
+solveSimpleWanteds { {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveNestedImplications starting {
+solveImplication {
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = False
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+    Binds = EvBindsVar<a3ns>
+    the instance declaration }
+  Inerts {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+          Given instances = [G] df_a3nI {0}:: forall b.
+                                              Show b =>
+                                              ShowT a_a3nj[ssk:1] b
+          Unsolved goals = 0}
+         Inert fsks = []
+solveWanteds {
+  WC {wc_simple =
+        [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+solveSimpleWanteds {
+  {[WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+-----------------------------
+Start solver pipeline {
+  tclevel = 2
+  work item = [WD] $dShow_a3nr {0}:: Show
+                                       (D a_a3nj[ssk:1]) (CNonCanonical)
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+            Given instances = [G] df_a3nI {0}:: forall b.
+                                                Show b =>
+                                                ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [WD] $dShow_a3nr {0}:: Show
+                                         (D a_a3nj[ssk:1]) (CNonCanonical)
+canEvNC:cls Show [D a_a3nj[ssk:1]]
+flatten_args { D a_a3nj[ssk:1]
+Unfilled tyvar a_a3nj[ssk:1]
+flatten } D a_a3nj[ssk:1]
+canClass
+  [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1])
+  Show (D a_a3nj[ssk:1])
+  ContinueWith [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1])
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] $dShow_a3nr {0}:: Show
+                                         (D a_a3nj[ssk:1]) (CDictCan)
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [WD] $dShow_a3nr {0}:: Show
+                                         (D a_a3nj[ssk:1]) (CDictCan)
+doTopReact [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1]) (CDictCan)
+matchClassInst pred = Show (D a_a3nj[ssk:1]) {
+matchInstEnv
+  goal: Show [D a_a3nj[ssk:1]]
+  matches: [(instance C a => Show (D a)
+               -- Defined at <interactive>:210:14,
+             [Just a_a3nj[ssk:1]])]
+  unify: []
+matchClass success
+  dict Show (D a_a3nj[ssk:1])
+  witness interactive:Ghci6.$fShowD forall a. C a => Show (D a)
+match_one
+  interactive:Ghci6.$fShowD
+  [Just a_a3nj[ssk:1]]
+match_one 2
+  interactive:Ghci6.$fShowD
+  [a_a3nj[ssk:1]]
+  [C a_a3nj[ssk:1]]
+} matchClassInst global result
+  OneInst [C a_a3nj[ssk:1]]
+          [safe]
+updSolvedSetTcs: [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1])
+doTopReact/found instance for
+  [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1])
+newWantedEvVar/cache hit [G] $dC_a3nk {0}:: C a_a3nj[ssk:1]
+addTcEvBind
+  a3ns
+  [W] $dShow_a3nr
+    = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk
+end stage top-level reactions }
+Step 3[l:2,d:0] Dict/Top (solved wanted):
+    [WD] $dShow_a3nr {0}:: Show (D a_a3nj[ssk:1])
+End solver pipeline (discharged) }
+getUnsolvedInerts
+   tv eqs = {}
+  fun eqs = {}
+  others = {}
+  implics = {}
+Unflattening
+  {Funeqs =
+   Tv eqs =}
+Unflattening 1 {}
+Unflattening 2 {}
+Unflattening 3 {}
+Unflattening done {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveWanteds }
+  final wc = WC {}
+  current evbinds  = {[W] $dShow_a3nr
+                        = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk}
+getNoGivenEqs
+  No given equalities
+  Skols: []
+  Inerts: {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+           Given instances = [G] df_a3nI {0}:: forall b.
+                                               Show b =>
+                                               ShowT a_a3nj[ssk:1] b
+           Unsolved goals = 0}
+  Insols: {}
+unflattenGivens []
+zonkSimples done: {}
+floatEqualities
+  Skols = []
+  Extended skols = [a3nr :-> $dShow_a3nr]
+  Simples = {}
+  Eqs = {}
+  Floated eqs = {}
+solveImplication 2
+  {}
+  WC {}
+setImplicationStatus(all-solved) {
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted = WC {}
+    Binds = EvBindsVar<a3ns>
+    the instance declaration }
+neededEvVars
+  old_needs: []
+  seeds3: [a3nk :-> $dC_a3nk, r3kR :-> interactive:Ghci6.$fShowD]
+  ev_binds: [a3nr :-> [W] $dShow_a3nr
+                        = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk]
+  live_ev_binds: [a3nr :-> [W] $dShow_a3nr
+                             = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk]
+setImplicationStatus(all-solved) }
+  discard: False
+  new_implic: Implic {
+                TcLevel = 2
+                Skolems =
+                No-eqs = True
+                Status = Solved {Dead givens = []}
+                Given =
+                Wanted = WC {}
+                Binds = EvBindsVar<a3ns>
+                the instance declaration }
+solveImplication end }
+  no_given_eqs = True
+  floated_eqs = {}
+  res_implic = Just Implic {
+                      TcLevel = 2
+                      Skolems =
+                      No-eqs = True
+                      Status = Solved {Dead givens = []}
+                      Given =
+                      Wanted = WC {}
+                      Binds = EvBindsVar<a3ns>
+                      the instance declaration }
+  implication evbinds = {[W] $dShow_a3nr
+                           = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk}
+  implication tvcs = []
+solveImplication {
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = False
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nx {0}:: Show a_a3nw[tau:2] (CNonCanonical)
+            [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                                     GHC.Prim.~# a_a3nw[tau:2] (CNonCanonical)}
+    Binds = EvBindsVar<a3nz>
+    the instance declaration }
+  Inerts {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+          Given instances = [G] df_a3nI {0}:: forall b.
+                                              Show b =>
+                                              ShowT a_a3nj[ssk:1] b
+          Unsolved goals = 0}
+         Inert fsks = []
+solveWanteds {
+  WC {wc_simple =
+        [WD] $dShow_a3nx {0}:: Show a_a3nw[tau:2] (CNonCanonical)
+        [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                                 GHC.Prim.~# a_a3nw[tau:2] (CNonCanonical)}
+solveSimpleWanteds {
+  {[WD] $dShow_a3nx {0}:: Show a_a3nw[tau:2] (CNonCanonical),
+   [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                            GHC.Prim.~# a_a3nw[tau:2] (CNonCanonical)}
+-----------------------------
+Start solver pipeline {
+  tclevel = 2
+  work item = [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                                       GHC.Prim.~# a_a3nw[tau:2] (CNonCanonical)
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+            Given instances = [G] df_a3nI {0}:: forall b.
+                                                Show b =>
+                                                ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {Non-eqs = [WD] $dShow_a3nx {0}:: Show
+                                                            a_a3nw[tau:2] (CNonCanonical)}
+runStage canonicalization {
+  workitem   =  [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                                         GHC.Prim.~# a_a3nw[tau:2] (CNonCanonical)
+canEvNC:eq
+  T a_a3nj[ssk:1] Int
+  a_a3nw[tau:2]
+can_eq_nc
+  False
+  [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                           GHC.Prim.~# a_a3nw[tau:2]
+  nominal equality
+  T a_a3nj[ssk:1] Int
+  T a_a3nj[ssk:1] Int
+  a_a3nw[tau:2]
+  a_a3nw[tau:2]
+flatten { FM_FlattenAll T a_a3nj[ssk:1] Int
+matchFamTcM
+  Matching: T a_a3nj[ssk:1]
+  Match failed
+Unfilled tyvar a_a3nj[ssk:1]
+matchFamTcM
+  Matching: T a_a3nj[ssk:1]
+  Match failed
+New coercion hole: co_a3nK
+Emitting new coercion hole
+  {co_a3nK} :: T a_a3nj[ssk:1] GHC.Prim.~# s_a3nJ[fmv:2]
+extendFlatCache
+  T [a_a3nj[ssk:1]]
+  [WD]
+  s_a3nJ[fmv:2]
+flatten/flat-cache miss
+  T [a_a3nj[ssk:1]]
+  s_a3nJ[fmv:2]
+  [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1] GHC.Prim.~# s_a3nJ[fmv:2]
+flatten } s_a3nJ[fmv:2] Int
+flatten { FM_FlattenAll a_a3nw[tau:2]
+Unfilled tyvar a_a3nw[tau:2]
+flatten } a_a3nw[tau:2]
+New coercion hole: co_a3nL
+Emitting new coercion hole
+  {co_a3nL} :: s_a3nJ[fmv:2] Int GHC.Prim.~# a_a3nw[tau:2]
+Filling coercion hole
+  co_a3ny := Sym (Sym {co_a3nK} <Int>_N) ; {co_a3nL}
+rewriteEqEvidence
+  [WD] hole{co_a3ny} {0}:: T a_a3nj[ssk:1] Int
+                           GHC.Prim.~# a_a3nw[tau:2]
+  s_a3nJ[fmv:2] Int
+  a_a3nw[tau:2]
+  Sym (Sym {co_a3nK} <Int>_N) ; {co_a3nL}
+New coercion hole: co_a3nM
+Emitting new coercion hole
+  {co_a3nM} :: a_a3nw[tau:2] GHC.Prim.~# s_a3nJ[fmv:2] Int
+Filling coercion hole co_a3nL := Sym {co_a3nM}
+rewriteEqEvidence
+  [WD] hole{co_a3nL} {1}:: s_a3nJ[fmv:2] Int
+                           GHC.Prim.~# a_a3nw[tau:2]
+  a_a3nw[tau:2]
+  s_a3nJ[fmv:2] Int
+  Sym {co_a3nM}
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] hole{co_a3nM} {2}:: a_a3nw[tau:2]
+                                         GHC.Prim.~# s_a3nJ[fmv:2] Int (CTyEqCan)
+Sneaky unification:
+  Unifies: a_a3nw[tau:2] := s_a3nJ[fmv:2] Int
+  Coercion: a_a3nw[tau:2] ~ (s_a3nJ[fmv:2] Int)
+  Left Kind is: *
+  Right Kind is: *
+unifyTyVar a_a3nw[tau:2] := s_a3nJ[fmv:2] Int
+writeMetaTyVar a_a3nw[tau:2] :: * := s_a3nJ[fmv:2] Int
+Filling coercion hole co_a3nM := <s_a3nJ[fmv:2] Int>_N
+end stage interact with inerts }
+Step 4[l:2,d:2] Solved by unification:
+    [WD] hole{co_a3nM} {2}:: a_a3nw[tau:2]
+                             GHC.Prim.~# s_a3nJ[fmv:2] Int
+End solver pipeline (discharged) }
+-----------------------------
+Start solver pipeline {
+  tclevel = 2
+  work item = [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                                       GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+            Given instances = [G] df_a3nI {0}:: forall b.
+                                                Show b =>
+                                                ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {Non-eqs = [WD] $dShow_a3nx {0}:: Show
+                                                            a_a3nw[tau:2] (CNonCanonical)}
+runStage canonicalization {
+  workitem   =  [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                                         GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)
+flatten_args { a_a3nj[ssk:1]
+Unfilled tyvar a_a3nj[ssk:1]
+flatten } a_a3nj[ssk:1]
+canCFunEqCan: refl
+  T a_a3nj[ssk:1]
+  <T a_a3nj[ssk:1]>_N
+extendFlatCache
+  T [a_a3nj[ssk:1]]
+  [WD]
+  s_a3nJ[fmv:2]
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                                         GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                                         GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)
+doTopReact
+  [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                           GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)
+matchFamTcM
+  Matching: T a_a3nj[ssk:1]
+  Match failed
+improveTopFunEqs
+  T [a_a3nj[ssk:1]] s_a3nJ[fmv:2]
+  []
+end stage top-level reactions }
+insertInertCan {
+  Trying to insert new inert item: [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                                                            GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)
+addInertCan }
+Step 5[l:2,d:0] Kept as inert:
+    [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1] GHC.Prim.~# s_a3nJ[fmv:2]
+End solver pipeline (kept as inert) }
+  final_item = [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                                        GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)
+-----------------------------
+Start solver pipeline {
+  tclevel = 2
+  work item = [WD] $dShow_a3nx {0}:: Show
+                                       a_a3nw[tau:2] (CNonCanonical)
+  inerts = {Type-function equalities = [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                                                                GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)
+            Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+            Given instances = [G] df_a3nI {0}:: forall b.
+                                                Show b =>
+                                                ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [WD] $dShow_a3nx {0}:: Show
+                                         a_a3nw[tau:2] (CNonCanonical)
+canEvNC:cls Show [a_a3nw[tau:2]]
+flatten_args { a_a3nw[tau:2]
+Following filled tyvar a_a3nw[tau:2] = s_a3nJ[fmv:2] Int
+Unfilled tyvar s_a3nJ[fmv:2]
+flatten } s_a3nJ[fmv:2] Int
+canClass
+  [WD] $dShow_a3nx {0}:: Show a_a3nw[tau:2]
+  Show (s_a3nJ[fmv:2] Int)
+  ContinueWith [WD] $dShow_a3nx {0}:: Show (s_a3nJ[fmv:2] Int)
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] $dShow_a3nx {0}:: Show
+                                         (s_a3nJ[fmv:2] Int) (CDictCan)
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [WD] $dShow_a3nx {0}:: Show
+                                         (s_a3nJ[fmv:2] Int) (CDictCan)
+doTopReact
+  [WD] $dShow_a3nx {0}:: Show (s_a3nJ[fmv:2] Int) (CDictCan)
+matchClassInst pred = Show (s_a3nJ[fmv:2] Int) {
+matchInstEnv
+  goal: Show [s_a3nJ[fmv:2] Int]
+  matches: []
+  unify: [instance C a => Show (D a)
+            -- Defined at <interactive>:210:14,
+          instance (Show a, Show b) => Show (a, b) -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c) => Show (a, b, c)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d) => Show (a, b, c, d)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e) =>
+                   Show (a, b, c, d, e)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f) =>
+                   Show (a, b, c, d, e, f)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f,
+                    Show g) =>
+                   Show (a, b, c, d, e, f, g)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h) =>
+                   Show (a, b, c, d, e, f, g, h)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i) =>
+                   Show (a, b, c, d, e, f, g, h, i)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j) =>
+                   Show (a, b, c, d, e, f, g, h, i, j)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l, Show m) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l, m)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l, Show m, Show n) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l, m, n)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l, Show m, Show n, Show o) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)
+            -- Defined in ‘GHC.Show’,
+          instance Show a => Show (Maybe a) -- Defined in ‘GHC.Show’,
+          instance Show a => Show (GHC.Base.NonEmpty a)
+            -- Defined in ‘GHC.Show’,
+          instance Show a => Show [a] -- Defined in ‘GHC.Show’,
+          instance forall k (a :: k) (b :: k).
+                   Show (a Data.Type.Equality.:~: b)
+            -- Defined in ‘Data.Type.Equality’,
+          instance forall k2 k1 (a :: k1) (b :: k2).
+                   Show (a Data.Type.Equality.:~~: b)
+            -- Defined in ‘Data.Type.Equality’]
+matchClass multiple matches, deferring choice
+  dict Show (s_a3nJ[fmv:2] Int)
+  matches []
+} matchClassInst global result NotSure
+try_fundeps
+  [WD] $dShow_a3nx {0}:: Show (s_a3nJ[fmv:2] Int) (CDictCan)
+end stage top-level reactions }
+insertInertCan {
+  Trying to insert new inert item: [WD] $dShow_a3nx {0}:: Show
+                                                            (s_a3nJ[fmv:2] Int) (CDictCan)
+addInertCan }
+Step 6[l:2,d:0] Kept as inert:
+    [WD] $dShow_a3nx {0}:: Show (s_a3nJ[fmv:2] Int)
+End solver pipeline (kept as inert) }
+  final_item = [WD] $dShow_a3nx {0}:: Show
+                                        (s_a3nJ[fmv:2] Int) (CDictCan)
+getUnsolvedInerts
+   tv eqs = {}
+  fun eqs = {[WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                                      GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)}
+  others = {[WD] $dShow_a3nx {0}:: Show
+                                     (s_a3nJ[fmv:2] Int) (CDictCan)}
+  implics = {}
+Unflattening
+  {Funeqs = [WD] hole{co_a3nK} {0}:: T a_a3nj[ssk:1]
+                                     GHC.Prim.~# s_a3nJ[fmv:2] (CFunEqCan)
+   Tv eqs =}
+Filling coercion hole co_a3nK := <T a_a3nj[ssk:1]>_N
+unflattenFmv s_a3nJ[fmv:2] := T a_a3nj[ssk:1]
+writeMetaTyVar s_a3nJ[fmv:2] :: * -> * := T a_a3nj[ssk:1]
+Unflattening 1 {}
+Unflattening 2 {}
+Unflattening 3 {}
+Unflattening done {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {wc_simple =
+                   [WD] $dShow_a3nx {0}:: Show (s_a3nJ[fmv:2] Int) (CDictCan)}
+solveWanteds }
+  final wc = WC {wc_simple =
+                   [WD] $dShow_a3nx {0}:: Show (s_a3nJ[fmv:2] Int) (CDictCan)}
+  current evbinds  = {}
+getNoGivenEqs
+  No given equalities
+  Skols: []
+  Inerts: {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+           Given instances = [G] df_a3nI {0}:: forall b.
+                                               Show b =>
+                                               ShowT a_a3nj[ssk:1] b
+           Unsolved goals = 0}
+  Insols: {}
+unflattenGivens []
+zonkSimples done:
+  {[WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan)}
+floatEqualities
+  Skols = []
+  Extended skols = []
+  Simples = {[WD] $dShow_a3nx {0}:: Show
+                                      (T a_a3nj[ssk:1] Int) (CDictCan)}
+  Eqs = {}
+  Floated eqs = {}
+solveImplication 2
+  {}
+  WC {wc_simple =
+        [WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan)}
+setImplicationStatus(not-all-solved) {
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan)}
+    Binds = EvBindsVar<a3nz>
+    the instance declaration }
+neededEvVars
+  old_needs: []
+  seeds3: [a3nK :-> co_a3nK, a3nL :-> co_a3nL, a3nM :-> co_a3nM]
+  ev_binds: []
+  live_ev_binds: []
+setImplicationStatus(not-all-solved) }
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+    Binds = EvBindsVar<a3nz>
+    the instance declaration }
+solveImplication end }
+  no_given_eqs = True
+  floated_eqs = {}
+  res_implic = Just Implic {
+                      TcLevel = 2
+                      Skolems =
+                      No-eqs = True
+                      Status = Unsolved
+                      Given =
+                      Wanted =
+                        WC {wc_simple =
+                              [WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+                      Binds = EvBindsVar<a3nz>
+                      the instance declaration }
+  implication evbinds = {}
+  implication tvcs = [a3nK :-> co_a3nK, a3nL :-> co_a3nL,
+                      a3nM :-> co_a3nM]
+solveImplication {
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = False
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+    Binds = EvBindsVar<a3nF>
+    the instance declaration }
+  Inerts {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+          Given instances = [G] df_a3nI {0}:: forall b.
+                                              Show b =>
+                                              ShowT a_a3nj[ssk:1] b
+          Unsolved goals = 0}
+         Inert fsks = []
+solveWanteds {
+  WC {wc_simple =
+        [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+solveSimpleWanteds {
+  {[WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1]) (CNonCanonical)}
+-----------------------------
+Start solver pipeline {
+  tclevel = 2
+  work item = [WD] $dShow_a3nE {0}:: Show
+                                       (D a_a3nj[ssk:1]) (CNonCanonical)
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+            Given instances = [G] df_a3nI {0}:: forall b.
+                                                Show b =>
+                                                ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [WD] $dShow_a3nE {0}:: Show
+                                         (D a_a3nj[ssk:1]) (CNonCanonical)
+canEvNC:cls Show [D a_a3nj[ssk:1]]
+flatten_args { D a_a3nj[ssk:1]
+Unfilled tyvar a_a3nj[ssk:1]
+flatten } D a_a3nj[ssk:1]
+canClass
+  [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1])
+  Show (D a_a3nj[ssk:1])
+  ContinueWith [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1])
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] $dShow_a3nE {0}:: Show
+                                         (D a_a3nj[ssk:1]) (CDictCan)
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [WD] $dShow_a3nE {0}:: Show
+                                         (D a_a3nj[ssk:1]) (CDictCan)
+doTopReact [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1]) (CDictCan)
+matchClassInst pred = Show (D a_a3nj[ssk:1]) {
+matchInstEnv
+  goal: Show [D a_a3nj[ssk:1]]
+  matches: [(instance C a => Show (D a)
+               -- Defined at <interactive>:210:14,
+             [Just a_a3nj[ssk:1]])]
+  unify: []
+matchClass success
+  dict Show (D a_a3nj[ssk:1])
+  witness interactive:Ghci6.$fShowD forall a. C a => Show (D a)
+match_one
+  interactive:Ghci6.$fShowD
+  [Just a_a3nj[ssk:1]]
+match_one 2
+  interactive:Ghci6.$fShowD
+  [a_a3nj[ssk:1]]
+  [C a_a3nj[ssk:1]]
+} matchClassInst global result
+  OneInst [C a_a3nj[ssk:1]]
+          [safe]
+updSolvedSetTcs: [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1])
+doTopReact/found instance for
+  [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1])
+newWantedEvVar/cache hit [G] $dC_a3nk {0}:: C a_a3nj[ssk:1]
+addTcEvBind
+  a3nF
+  [W] $dShow_a3nE
+    = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk
+end stage top-level reactions }
+Step 7[l:2,d:0] Dict/Top (solved wanted):
+    [WD] $dShow_a3nE {0}:: Show (D a_a3nj[ssk:1])
+End solver pipeline (discharged) }
+getUnsolvedInerts
+   tv eqs = {}
+  fun eqs = {}
+  others = {}
+  implics = {}
+Unflattening
+  {Funeqs =
+   Tv eqs =}
+Unflattening 1 {}
+Unflattening 2 {}
+Unflattening 3 {}
+Unflattening done {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveWanteds }
+  final wc = WC {}
+  current evbinds  = {[W] $dShow_a3nE
+                        = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk}
+getNoGivenEqs
+  No given equalities
+  Skols: []
+  Inerts: {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+           Given instances = [G] df_a3nI {0}:: forall b.
+                                               Show b =>
+                                               ShowT a_a3nj[ssk:1] b
+           Unsolved goals = 0}
+  Insols: {}
+unflattenGivens []
+zonkSimples done: {}
+floatEqualities
+  Skols = []
+  Extended skols = [a3nE :-> $dShow_a3nE]
+  Simples = {}
+  Eqs = {}
+  Floated eqs = {}
+solveImplication 2
+  {}
+  WC {}
+setImplicationStatus(all-solved) {
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted = WC {}
+    Binds = EvBindsVar<a3nF>
+    the instance declaration }
+neededEvVars
+  old_needs: []
+  seeds3: [a3nk :-> $dC_a3nk, r3kR :-> interactive:Ghci6.$fShowD]
+  ev_binds: [a3nE :-> [W] $dShow_a3nE
+                        = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk]
+  live_ev_binds: [a3nE :-> [W] $dShow_a3nE
+                             = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk]
+setImplicationStatus(all-solved) }
+  discard: False
+  new_implic: Implic {
+                TcLevel = 2
+                Skolems =
+                No-eqs = True
+                Status = Solved {Dead givens = []}
+                Given =
+                Wanted = WC {}
+                Binds = EvBindsVar<a3nF>
+                the instance declaration }
+solveImplication end }
+  no_given_eqs = True
+  floated_eqs = {}
+  res_implic = Just Implic {
+                      TcLevel = 2
+                      Skolems =
+                      No-eqs = True
+                      Status = Solved {Dead givens = []}
+                      Given =
+                      Wanted = WC {}
+                      Binds = EvBindsVar<a3nF>
+                      the instance declaration }
+  implication evbinds = {[W] $dShow_a3nE
+                           = interactive:Ghci6.$fShowD @ a_a3nj[ssk:1] $dC_a3nk}
+  implication tvcs = []
+solveNestedImplications end }
+  all floated_eqs = {}
+  unsolved_implics = {Just Implic {
+                             TcLevel = 2
+                             Skolems =
+                             No-eqs = True
+                             Status = Solved {Dead givens = []}
+                             Given =
+                             Wanted = WC {}
+                             Binds = EvBindsVar<a3ns>
+                             the instance declaration },
+                      Just Implic {
+                             TcLevel = 2
+                             Skolems =
+                             No-eqs = True
+                             Status = Unsolved
+                             Given =
+                             Wanted =
+                               WC {wc_simple =
+                                     [WD] $dShow_a3nx {0}:: Show
+                                                              (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+                             Binds = EvBindsVar<a3nz>
+                             the instance declaration },
+                      Just Implic {
+                             TcLevel = 2
+                             Skolems =
+                             No-eqs = True
+                             Status = Solved {Dead givens = []}
+                             Given =
+                             Wanted = WC {}
+                             Binds = EvBindsVar<a3nF>
+                             the instance declaration }}
+addTcEvBind
+  a3nl
+  [G] df_a3nN
+    = \ (@ b_a3it) (v_B1 :: Show b_a3it) ->
+        interactive:Ghci5.$p1ShowT
+          @ a_a3nj[ssk:1] @ b_a3it (df_a3nI @ b_a3it v_B1)
+solveSimpleGivens {
+  [[G] df_a3nN {0}:: forall b (c :: * -> *).
+                     (Show b, c ~ T a_a3nj[ssk:1]) =>
+                     Show (c b) (CNonCanonical)]
+-----------------------------
+Start solver pipeline {
+  tclevel = 1
+  work item = [G] df_a3nN {0}:: forall b (c :: * -> *).
+                                (Show b, c ~ T a_a3nj[ssk:1]) =>
+                                Show (c b) (CNonCanonical)
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+            Given instances = [G] df_a3nI {0}:: forall b.
+                                                Show b =>
+                                                ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [G] df_a3nN {0}:: forall b (c :: * -> *).
+                                  (Show b, c ~ T a_a3nj[ssk:1]) =>
+                                  Show (c b) (CNonCanonical)
+canEvNC:forall
+  forall (c :: * -> *). (c ~ T a_a3nj[ssk:1]) => Show (c b_a3it)
+flatten {
+  FM_SubstOnly forall b (c :: * -> *).
+               (Show b, c ~ T a_a3nj[ssk:1]) =>
+               Show (c b)
+Unfilled tyvar b_a3it
+Unfilled tyvar c_a3iw
+Unfilled tyvar a_a3nj[ssk:1]
+Unfilled tyvar c_a3iw
+Unfilled tyvar b_a3it
+flatten }
+  forall b (c :: * -> *). (Show b, c ~ T a_a3nj[ssk:1]) => Show (c b)
+end stage canonicalization }
+Step 8[l:1,d:0] Given forall-constraint:
+    [G] df_a3nN {0}:: forall b (c :: * -> *).
+                      (Show b, c ~ T a_a3nj[ssk:1]) =>
+                      Show (c b)
+End solver pipeline (discharged) }
+End solveSimpleGivens }
+simpl_loop iteration=0 (no new given superclasses = False, 0 simples to solve)
+simpl_loop: wc =
+  WC {wc_impl =
+        Implic {
+          TcLevel = 2
+          Skolems =
+          No-eqs = True
+          Status = Solved {Dead givens = []}
+          Given =
+          Wanted = WC {}
+          Binds = EvBindsVar<a3ns>
+          the instance declaration }
+        Implic {
+          TcLevel = 2
+          Skolems =
+          No-eqs = True
+          Status = Unsolved
+          Given =
+          Wanted =
+            WC {wc_simple =
+                  [WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+          Binds = EvBindsVar<a3nz>
+          the instance declaration }
+        Implic {
+          TcLevel = 2
+          Skolems =
+          No-eqs = True
+          Status = Solved {Dead givens = []}
+          Given =
+          Wanted = WC {}
+          Binds = EvBindsVar<a3nF>
+          the instance declaration }}
+solveSimpleWanteds { {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {}
+solveNestedImplications starting {
+solveImplication {
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+    Binds = EvBindsVar<a3nz>
+    the instance declaration }
+  Inerts {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+          Given instances = [G] df_a3nN {0}:: forall b (c :: * -> *).
+                                              (Show b, c ~ T a_a3nj[ssk:1]) =>
+                                              Show (c b)
+                            [G] df_a3nI {0}:: forall b. Show b => ShowT a_a3nj[ssk:1] b
+          Unsolved goals = 0}
+         Inert fsks = []
+solveWanteds {
+  WC {wc_simple =
+        [WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+solveSimpleWanteds {
+  {[WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+-----------------------------
+Start solver pipeline {
+  tclevel = 2
+  work item = [WD] $dShow_a3nx {0}:: Show
+                                       (T a_a3nj[ssk:1] Int) (CDictCan(psc))
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+            Given instances = [G] df_a3nN {0}:: forall b (c :: * -> *).
+                                                (Show b, c ~ T a_a3nj[ssk:1]) =>
+                                                Show (c b)
+                              [G] df_a3nI {0}:: forall b. Show b => ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [WD] $dShow_a3nx {0}:: Show
+                                         (T a_a3nj[ssk:1] Int) (CDictCan(psc))
+flatten_args { T a_a3nj[ssk:1] Int
+matchFamTcM
+  Matching: T a_a3nj[ssk:1]
+  Match failed
+Unfilled tyvar a_a3nj[ssk:1]
+matchFamTcM
+  Matching: T a_a3nj[ssk:1]
+  Match failed
+New coercion hole: co_a3nP
+Emitting new coercion hole
+  {co_a3nP} :: T a_a3nj[ssk:1] GHC.Prim.~# s_a3nO[fmv:2]
+extendFlatCache
+  T [a_a3nj[ssk:1]]
+  [WD]
+  s_a3nO[fmv:2]
+flatten/flat-cache miss
+  T [a_a3nj[ssk:1]]
+  s_a3nO[fmv:2]
+  [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1] GHC.Prim.~# s_a3nO[fmv:2]
+flatten } s_a3nO[fmv:2] Int
+Emitting new wanted
+  $dShow_a3nQ :: Show (s_a3nO[fmv:2] Int)
+  arising from a use of ‘show’ at <interactive>:211:22-27
+addTcEvBind
+  a3nz
+  [W] $dShow_a3nx
+    = $dShow_a3nQ
+      `cast` ((Show (Sym {co_a3nP} <Int>_N))_R
+              :: Show (s_a3nO[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int))
+canClass
+  [WD] $dShow_a3nx {0}:: Show (T a_a3nj[ssk:1] Int)
+  Show (s_a3nO[fmv:2] Int)
+  ContinueWith [WD] $dShow_a3nQ {0}:: Show (s_a3nO[fmv:2] Int)
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] $dShow_a3nQ {0}:: Show
+                                         (s_a3nO[fmv:2] Int) (CDictCan(psc))
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [WD] $dShow_a3nQ {0}:: Show
+                                         (s_a3nO[fmv:2] Int) (CDictCan(psc))
+doTopReact
+  [WD] $dShow_a3nQ {0}:: Show (s_a3nO[fmv:2] Int) (CDictCan(psc))
+matchClassInst pred = Show (s_a3nO[fmv:2] Int) {
+matchInstEnv
+  goal: Show [s_a3nO[fmv:2] Int]
+  matches: []
+  unify: [instance C a => Show (D a)
+            -- Defined at <interactive>:210:14,
+          instance (Show a, Show b) => Show (a, b) -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c) => Show (a, b, c)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d) => Show (a, b, c, d)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e) =>
+                   Show (a, b, c, d, e)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f) =>
+                   Show (a, b, c, d, e, f)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f,
+                    Show g) =>
+                   Show (a, b, c, d, e, f, g)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h) =>
+                   Show (a, b, c, d, e, f, g, h)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i) =>
+                   Show (a, b, c, d, e, f, g, h, i)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j) =>
+                   Show (a, b, c, d, e, f, g, h, i, j)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l, Show m) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l, m)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l, Show m, Show n) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l, m, n)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l, Show m, Show n, Show o) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)
+            -- Defined in ‘GHC.Show’,
+          instance Show a => Show (Maybe a) -- Defined in ‘GHC.Show’,
+          instance Show a => Show (GHC.Base.NonEmpty a)
+            -- Defined in ‘GHC.Show’,
+          instance Show a => Show [a] -- Defined in ‘GHC.Show’,
+          instance forall k (a :: k) (b :: k).
+                   Show (a Data.Type.Equality.:~: b)
+            -- Defined in ‘Data.Type.Equality’,
+          instance forall k2 k1 (a :: k1) (b :: k2).
+                   Show (a Data.Type.Equality.:~~: b)
+            -- Defined in ‘Data.Type.Equality’]
+matchClass multiple matches, deferring choice
+  dict Show (s_a3nO[fmv:2] Int)
+  matches []
+} matchClassInst global result NotSure
+try_fundeps
+  [WD] $dShow_a3nQ {0}:: Show (s_a3nO[fmv:2] Int) (CDictCan(psc))
+end stage top-level reactions }
+insertInertCan {
+  Trying to insert new inert item: [WD] $dShow_a3nQ {0}:: Show
+                                                            (s_a3nO[fmv:2] Int) (CDictCan(psc))
+addInertCan }
+Step 9[l:2,d:0] Kept as inert:
+    [WD] $dShow_a3nQ {0}:: Show (s_a3nO[fmv:2] Int)
+End solver pipeline (kept as inert) }
+  final_item = [WD] $dShow_a3nQ {0}:: Show
+                                        (s_a3nO[fmv:2] Int) (CDictCan(psc))
+-----------------------------
+Start solver pipeline {
+  tclevel = 2
+  work item = [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1]
+                                       GHC.Prim.~# s_a3nO[fmv:2] (CFunEqCan)
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+                           [WD] $dShow_a3nQ {0}:: Show (s_a3nO[fmv:2] Int) (CDictCan(psc))
+            Given instances = [G] df_a3nN {0}:: forall b (c :: * -> *).
+                                                (Show b, c ~ T a_a3nj[ssk:1]) =>
+                                                Show (c b)
+                              [G] df_a3nI {0}:: forall b. Show b => ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 1}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1]
+                                         GHC.Prim.~# s_a3nO[fmv:2] (CFunEqCan)
+flatten_args { a_a3nj[ssk:1]
+Unfilled tyvar a_a3nj[ssk:1]
+flatten } a_a3nj[ssk:1]
+canCFunEqCan: refl
+  T a_a3nj[ssk:1]
+  <T a_a3nj[ssk:1]>_N
+extendFlatCache
+  T [a_a3nj[ssk:1]]
+  [WD]
+  s_a3nO[fmv:2]
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1]
+                                         GHC.Prim.~# s_a3nO[fmv:2] (CFunEqCan)
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1]
+                                         GHC.Prim.~# s_a3nO[fmv:2] (CFunEqCan)
+doTopReact
+  [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1]
+                           GHC.Prim.~# s_a3nO[fmv:2] (CFunEqCan)
+matchFamTcM
+  Matching: T a_a3nj[ssk:1]
+  Match failed
+improveTopFunEqs
+  T [a_a3nj[ssk:1]] s_a3nO[fmv:2]
+  []
+end stage top-level reactions }
+insertInertCan {
+  Trying to insert new inert item: [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1]
+                                                            GHC.Prim.~# s_a3nO[fmv:2] (CFunEqCan)
+addInertCan }
+Step 10[l:2,d:0] Kept as inert:
+    [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1] GHC.Prim.~# s_a3nO[fmv:2]
+End solver pipeline (kept as inert) }
+  final_item = [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1]
+                                        GHC.Prim.~# s_a3nO[fmv:2] (CFunEqCan)
+getUnsolvedInerts
+   tv eqs = {}
+  fun eqs = {[WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1]
+                                      GHC.Prim.~# s_a3nO[fmv:2] (CFunEqCan)}
+  others = {[WD] $dShow_a3nQ {0}:: Show
+                                     (s_a3nO[fmv:2] Int) (CDictCan(psc))}
+  implics = {}
+Unflattening
+  {Funeqs = [WD] hole{co_a3nP} {0}:: T a_a3nj[ssk:1]
+                                     GHC.Prim.~# s_a3nO[fmv:2] (CFunEqCan)
+   Tv eqs =}
+Filling coercion hole co_a3nP := <T a_a3nj[ssk:1]>_N
+unflattenFmv s_a3nO[fmv:2] := T a_a3nj[ssk:1]
+writeMetaTyVar s_a3nO[fmv:2] :: * -> * := T a_a3nj[ssk:1]
+Unflattening 1 {}
+Unflattening 2 {}
+Unflattening 3 {}
+Unflattening done {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {wc_simple =
+                   [WD] $dShow_a3nQ {0}:: Show (s_a3nO[fmv:2] Int) (CDictCan(psc))}
+simpl_loop iteration=0 (no new given superclasses = True, 1 simples to solve)
+simpl_loop: wc =
+  WC {wc_simple =
+        [WD] $dShow_a3nQ {0}:: Show (s_a3nO[fmv:2] Int) (CDictCan)}
+solveSimpleWanteds {
+  {[WD] $dShow_a3nQ {0}:: Show (s_a3nO[fmv:2] Int) (CDictCan)}
+-----------------------------
+Start solver pipeline {
+  tclevel = 2
+  work item = [WD] $dShow_a3nQ {0}:: Show
+                                       (s_a3nO[fmv:2] Int) (CDictCan)
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+            Given instances = [G] df_a3nN {0}:: forall b (c :: * -> *).
+                                                (Show b, c ~ T a_a3nj[ssk:1]) =>
+                                                Show (c b)
+                              [G] df_a3nI {0}:: forall b. Show b => ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 0}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [WD] $dShow_a3nQ {0}:: Show
+                                         (s_a3nO[fmv:2] Int) (CDictCan)
+flatten_args { s_a3nO[fmv:2] Int
+Following filled tyvar s_a3nO[fmv:2] = T a_a3nj[ssk:1]
+matchFamTcM
+  Matching: T a_a3nj[ssk:1]
+  Match failed
+Unfilled tyvar a_a3nj[ssk:1]
+matchFamTcM
+  Matching: T a_a3nj[ssk:1]
+  Match failed
+New coercion hole: co_a3nS
+Emitting new coercion hole
+  {co_a3nS} :: T a_a3nj[ssk:1] GHC.Prim.~# s_a3nR[fmv:2]
+extendFlatCache
+  T [a_a3nj[ssk:1]]
+  [WD]
+  s_a3nR[fmv:2]
+flatten/flat-cache miss
+  T [a_a3nj[ssk:1]]
+  s_a3nR[fmv:2]
+  [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1] GHC.Prim.~# s_a3nR[fmv:2]
+flatten } s_a3nR[fmv:2] Int
+Emitting new wanted
+  $dShow_a3nT :: Show (s_a3nR[fmv:2] Int)
+  arising from a use of ‘show’ at <interactive>:211:22-27
+addTcEvBind
+  a3nz
+  [W] $dShow_a3nQ
+    = $dShow_a3nT
+      `cast` ((Show (Sym {co_a3nS} <Int>_N))_R
+              :: Show (s_a3nR[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int))
+canClass
+  [WD] $dShow_a3nQ {0}:: Show (s_a3nO[fmv:2] Int)
+  Show (s_a3nR[fmv:2] Int)
+  ContinueWith [WD] $dShow_a3nT {0}:: Show (s_a3nR[fmv:2] Int)
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] $dShow_a3nT {0}:: Show
+                                         (s_a3nR[fmv:2] Int) (CDictCan)
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [WD] $dShow_a3nT {0}:: Show
+                                         (s_a3nR[fmv:2] Int) (CDictCan)
+doTopReact
+  [WD] $dShow_a3nT {0}:: Show (s_a3nR[fmv:2] Int) (CDictCan)
+matchClassInst pred = Show (s_a3nR[fmv:2] Int) {
+matchInstEnv
+  goal: Show [s_a3nR[fmv:2] Int]
+  matches: []
+  unify: [instance C a => Show (D a)
+            -- Defined at <interactive>:210:14,
+          instance (Show a, Show b) => Show (a, b) -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c) => Show (a, b, c)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d) => Show (a, b, c, d)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e) =>
+                   Show (a, b, c, d, e)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f) =>
+                   Show (a, b, c, d, e, f)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f,
+                    Show g) =>
+                   Show (a, b, c, d, e, f, g)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h) =>
+                   Show (a, b, c, d, e, f, g, h)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i) =>
+                   Show (a, b, c, d, e, f, g, h, i)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j) =>
+                   Show (a, b, c, d, e, f, g, h, i, j)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l, Show m) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l, m)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l, Show m, Show n) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l, m, n)
+            -- Defined in ‘GHC.Show’,
+          instance (Show a, Show b, Show c, Show d, Show e, Show f, Show g,
+                    Show h, Show i, Show j, Show k, Show l, Show m, Show n, Show o) =>
+                   Show (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)
+            -- Defined in ‘GHC.Show’,
+          instance Show a => Show (Maybe a) -- Defined in ‘GHC.Show’,
+          instance Show a => Show (GHC.Base.NonEmpty a)
+            -- Defined in ‘GHC.Show’,
+          instance Show a => Show [a] -- Defined in ‘GHC.Show’,
+          instance forall k (a :: k) (b :: k).
+                   Show (a Data.Type.Equality.:~: b)
+            -- Defined in ‘Data.Type.Equality’,
+          instance forall k2 k1 (a :: k1) (b :: k2).
+                   Show (a Data.Type.Equality.:~~: b)
+            -- Defined in ‘Data.Type.Equality’]
+matchClass multiple matches, deferring choice
+  dict Show (s_a3nR[fmv:2] Int)
+  matches []
+} matchClassInst global result NotSure
+try_fundeps
+  [WD] $dShow_a3nT {0}:: Show (s_a3nR[fmv:2] Int) (CDictCan)
+end stage top-level reactions }
+insertInertCan {
+  Trying to insert new inert item: [WD] $dShow_a3nT {0}:: Show
+                                                            (s_a3nR[fmv:2] Int) (CDictCan)
+addInertCan }
+Step 11[l:2,d:0] Kept as inert:
+    [WD] $dShow_a3nT {0}:: Show (s_a3nR[fmv:2] Int)
+End solver pipeline (kept as inert) }
+  final_item = [WD] $dShow_a3nT {0}:: Show
+                                        (s_a3nR[fmv:2] Int) (CDictCan)
+-----------------------------
+Start solver pipeline {
+  tclevel = 2
+  work item = [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1]
+                                       GHC.Prim.~# s_a3nR[fmv:2] (CFunEqCan)
+  inerts = {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+                           [WD] $dShow_a3nT {0}:: Show (s_a3nR[fmv:2] Int) (CDictCan)
+            Given instances = [G] df_a3nN {0}:: forall b (c :: * -> *).
+                                                (Show b, c ~ T a_a3nj[ssk:1]) =>
+                                                Show (c b)
+                              [G] df_a3nI {0}:: forall b. Show b => ShowT a_a3nj[ssk:1] b
+            Unsolved goals = 1}
+           Inert fsks = []
+  rest of worklist = WL {}
+runStage canonicalization {
+  workitem   =  [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1]
+                                         GHC.Prim.~# s_a3nR[fmv:2] (CFunEqCan)
+flatten_args { a_a3nj[ssk:1]
+Unfilled tyvar a_a3nj[ssk:1]
+flatten } a_a3nj[ssk:1]
+canCFunEqCan: refl
+  T a_a3nj[ssk:1]
+  <T a_a3nj[ssk:1]>_N
+extendFlatCache
+  T [a_a3nj[ssk:1]]
+  [WD]
+  s_a3nR[fmv:2]
+end stage canonicalization }
+runStage interact with inerts {
+  workitem   =  [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1]
+                                         GHC.Prim.~# s_a3nR[fmv:2] (CFunEqCan)
+end stage interact with inerts }
+runStage top-level reactions {
+  workitem   =  [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1]
+                                         GHC.Prim.~# s_a3nR[fmv:2] (CFunEqCan)
+doTopReact
+  [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1]
+                           GHC.Prim.~# s_a3nR[fmv:2] (CFunEqCan)
+matchFamTcM
+  Matching: T a_a3nj[ssk:1]
+  Match failed
+improveTopFunEqs
+  T [a_a3nj[ssk:1]] s_a3nR[fmv:2]
+  []
+end stage top-level reactions }
+insertInertCan {
+  Trying to insert new inert item: [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1]
+                                                            GHC.Prim.~# s_a3nR[fmv:2] (CFunEqCan)
+addInertCan }
+Step 12[l:2,d:0] Kept as inert:
+    [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1] GHC.Prim.~# s_a3nR[fmv:2]
+End solver pipeline (kept as inert) }
+  final_item = [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1]
+                                        GHC.Prim.~# s_a3nR[fmv:2] (CFunEqCan)
+getUnsolvedInerts
+   tv eqs = {}
+  fun eqs = {[WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1]
+                                      GHC.Prim.~# s_a3nR[fmv:2] (CFunEqCan)}
+  others = {[WD] $dShow_a3nT {0}:: Show
+                                     (s_a3nR[fmv:2] Int) (CDictCan)}
+  implics = {}
+Unflattening
+  {Funeqs = [WD] hole{co_a3nS} {0}:: T a_a3nj[ssk:1]
+                                     GHC.Prim.~# s_a3nR[fmv:2] (CFunEqCan)
+   Tv eqs =}
+Filling coercion hole co_a3nS := <T a_a3nj[ssk:1]>_N
+unflattenFmv s_a3nR[fmv:2] := T a_a3nj[ssk:1]
+writeMetaTyVar s_a3nR[fmv:2] :: * -> * := T a_a3nj[ssk:1]
+Unflattening 1 {}
+Unflattening 2 {}
+Unflattening 3 {}
+Unflattening done {}
+solveSimpleWanteds end }
+  iterations = 1
+  residual = WC {wc_simple =
+                   [WD] $dShow_a3nT {0}:: Show (s_a3nR[fmv:2] Int) (CDictCan)}
+solveWanteds }
+  final wc = WC {wc_simple =
+                   [WD] $dShow_a3nT {0}:: Show (s_a3nR[fmv:2] Int) (CDictCan)}
+  current evbinds  = {[W] $dShow_a3nx
+                        = $dShow_a3nQ
+                          `cast` ((Show (Sym {co_a3nP} <Int>_N))_R
+                                  :: Show (s_a3nO[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int)),
+                      [W] $dShow_a3nQ
+                        = $dShow_a3nT
+                          `cast` ((Show (Sym {co_a3nS} <Int>_N))_R
+                                  :: Show (s_a3nR[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int))}
+getNoGivenEqs
+  No given equalities
+  Skols: []
+  Inerts: {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+           Given instances = [G] df_a3nN {0}:: forall b (c :: * -> *).
+                                               (Show b, c ~ T a_a3nj[ssk:1]) =>
+                                               Show (c b)
+                             [G] df_a3nI {0}:: forall b. Show b => ShowT a_a3nj[ssk:1] b
+           Unsolved goals = 0}
+  Insols: {}
+unflattenGivens []
+zonkSimples done:
+  {[WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan)}
+floatEqualities
+  Skols = []
+  Extended skols = [a3nx :-> $dShow_a3nx, a3nQ :-> $dShow_a3nQ]
+  Simples = {[WD] $dShow_a3nT {0}:: Show
+                                      (T a_a3nj[ssk:1] Int) (CDictCan)}
+  Eqs = {}
+  Floated eqs = {}
+solveImplication 2
+  {}
+  WC {wc_simple =
+        [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan)}
+setImplicationStatus(not-all-solved) {
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan)}
+    Binds = EvBindsVar<a3nz>
+    the instance declaration }
+neededEvVars
+  old_needs: [a3nK :-> co_a3nK, a3nL :-> co_a3nL, a3nM :-> co_a3nM]
+  seeds3: [a3nK :-> co_a3nK, a3nL :-> co_a3nL, a3nM :-> co_a3nM,
+           a3nP :-> co_a3nP, a3nQ :-> $dShow_a3nQ, a3nS :-> co_a3nS,
+           a3nT :-> $dShow_a3nT]
+  ev_binds: [a3nx :-> [W] $dShow_a3nx
+                        = $dShow_a3nQ
+                          `cast` ((Show (Sym {co_a3nP} <Int>_N))_R
+                                  :: Show (s_a3nO[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int)),
+             a3nQ :-> [W] $dShow_a3nQ
+                        = $dShow_a3nT
+                          `cast` ((Show (Sym {co_a3nS} <Int>_N))_R
+                                  :: Show (s_a3nR[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int))]
+  live_ev_binds: [a3nx :-> [W] $dShow_a3nx
+                             = $dShow_a3nQ
+                               `cast` ((Show (Sym {co_a3nP} <Int>_N))_R
+                                       :: Show (s_a3nO[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int)),
+                  a3nQ :-> [W] $dShow_a3nQ
+                             = $dShow_a3nT
+                               `cast` ((Show (Sym {co_a3nS} <Int>_N))_R
+                                       :: Show (s_a3nR[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int))]
+setImplicationStatus(not-all-solved) }
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+    Binds = EvBindsVar<a3nz>
+    the instance declaration }
+solveImplication end }
+  no_given_eqs = True
+  floated_eqs = {}
+  res_implic = Just Implic {
+                      TcLevel = 2
+                      Skolems =
+                      No-eqs = True
+                      Status = Unsolved
+                      Given =
+                      Wanted =
+                        WC {wc_simple =
+                              [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+                      Binds = EvBindsVar<a3nz>
+                      the instance declaration }
+  implication evbinds = {[W] $dShow_a3nx
+                           = $dShow_a3nQ
+                             `cast` ((Show (Sym {co_a3nP} <Int>_N))_R
+                                     :: Show (s_a3nO[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int)),
+                         [W] $dShow_a3nQ
+                           = $dShow_a3nT
+                             `cast` ((Show (Sym {co_a3nS} <Int>_N))_R
+                                     :: Show (s_a3nR[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int))}
+  implication tvcs = [a3nK :-> co_a3nK, a3nL :-> co_a3nL,
+                      a3nM :-> co_a3nM]
+solveNestedImplications end }
+  all floated_eqs = {}
+  unsolved_implics = {Just Implic {
+                             TcLevel = 2
+                             Skolems =
+                             No-eqs = True
+                             Status = Solved {Dead givens = []}
+                             Given =
+                             Wanted = WC {}
+                             Binds = EvBindsVar<a3ns>
+                             the instance declaration },
+                      Just Implic {
+                             TcLevel = 2
+                             Skolems =
+                             No-eqs = True
+                             Status = Unsolved
+                             Given =
+                             Wanted =
+                               WC {wc_simple =
+                                     [WD] $dShow_a3nT {0}:: Show
+                                                              (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+                             Binds = EvBindsVar<a3nz>
+                             the instance declaration },
+                      Just Implic {
+                             TcLevel = 2
+                             Skolems =
+                             No-eqs = True
+                             Status = Solved {Dead givens = []}
+                             Given =
+                             Wanted = WC {}
+                             Binds = EvBindsVar<a3nF>
+                             the instance declaration }}
+solveWanteds }
+  final wc = WC {wc_impl =
+                   Implic {
+                     TcLevel = 2
+                     Skolems =
+                     No-eqs = True
+                     Status = Solved {Dead givens = []}
+                     Given =
+                     Wanted = WC {}
+                     Binds = EvBindsVar<a3ns>
+                     the instance declaration }
+                   Implic {
+                     TcLevel = 2
+                     Skolems =
+                     No-eqs = True
+                     Status = Unsolved
+                     Given =
+                     Wanted =
+                       WC {wc_simple =
+                             [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+                     Binds = EvBindsVar<a3nz>
+                     the instance declaration }
+                   Implic {
+                     TcLevel = 2
+                     Skolems =
+                     No-eqs = True
+                     Status = Solved {Dead givens = []}
+                     Given =
+                     Wanted = WC {}
+                     Binds = EvBindsVar<a3nF>
+                     the instance declaration }}
+  current evbinds  = {[G] df_a3nI
+                        = interactive:Ghci5.$p1C @ a_a3nj[ssk:1] $dC_a3nk,
+                      [G] df_a3nN
+                        = \ (@ b_a3it) (v_B1 :: Show b_a3it) ->
+                            interactive:Ghci5.$p1ShowT
+                              @ a_a3nj[ssk:1] @ b_a3it (df_a3nI @ b_a3it v_B1)}
+getNoGivenEqs
+  No given equalities
+  Skols: [a_a3nj[ssk:1]]
+  Inerts: {Dictionaries = [G] $dC_a3nk {0}:: C a_a3nj[ssk:1] (CDictCan)
+           Given instances = [G] df_a3nN {0}:: forall b (c :: * -> *).
+                                               (Show b, c ~ T a_a3nj[ssk:1]) =>
+                                               Show (c b)
+                             [G] df_a3nI {0}:: forall b. Show b => ShowT a_a3nj[ssk:1] b
+           Unsolved goals = 0}
+  Insols: {}
+unflattenGivens []
+zonkSimples done: {}
+floatEqualities
+  Skols = [a_a3nj[ssk:1]]
+  Extended skols = [a3nj :-> a_a3nj[ssk:1], a3nk :-> $dC_a3nk,
+                    a3nI :-> df_a3nI, a3nN :-> df_a3nN]
+  Simples = {}
+  Eqs = {}
+  Floated eqs = {}
+solveImplication 2
+  {}
+  WC {wc_impl =
+        Implic {
+          TcLevel = 2
+          Skolems =
+          No-eqs = True
+          Status = Solved {Dead givens = []}
+          Given =
+          Wanted = WC {}
+          Binds = EvBindsVar<a3ns>
+          the instance declaration }
+        Implic {
+          TcLevel = 2
+          Skolems =
+          No-eqs = True
+          Status = Unsolved
+          Given =
+          Wanted =
+            WC {wc_simple =
+                  [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+          Binds = EvBindsVar<a3nz>
+          the instance declaration }
+        Implic {
+          TcLevel = 2
+          Skolems =
+          No-eqs = True
+          Status = Solved {Dead givens = []}
+          Given =
+          Wanted = WC {}
+          Binds = EvBindsVar<a3nF>
+          the instance declaration }}
+setImplicationStatus(not-all-solved) {
+  Implic {
+    TcLevel = 1
+    Skolems = a_a3nj[ssk:1]
+    No-eqs = True
+    Status = Unsolved
+    Given = $dC_a3nk :: C a_a3nj[ssk:1]
+    Wanted =
+      WC {wc_impl =
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = True
+              Status = Solved {Dead givens = []}
+              Given =
+              Wanted = WC {}
+              Binds = EvBindsVar<a3ns>
+              the instance declaration }
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = True
+              Status = Unsolved
+              Given =
+              Wanted =
+                WC {wc_simple =
+                      [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+              Binds = EvBindsVar<a3nz>
+              the instance declaration }
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = True
+              Status = Solved {Dead givens = []}
+              Given =
+              Wanted = WC {}
+              Binds = EvBindsVar<a3nF>
+              the instance declaration }}
+    Binds = EvBindsVar<a3nl>
+    the instance declaration }
+neededEvVars
+  old_needs: []
+  seeds3: [a3nk :-> $dC_a3nk, a3nK :-> co_a3nK, a3nL :-> co_a3nL,
+           a3nM :-> co_a3nM, a3nP :-> co_a3nP, a3nS :-> co_a3nS,
+           a3nT :-> $dShow_a3nT, r3kR :-> interactive:Ghci6.$fShowD]
+  ev_binds: [a3nI :-> [G] df_a3nI
+                        = interactive:Ghci5.$p1C @ a_a3nj[ssk:1] $dC_a3nk,
+             a3nN :-> [G] df_a3nN
+                        = \ (@ b_a3it) (v_B1 :: Show b_a3it) ->
+                            interactive:Ghci5.$p1ShowT
+                              @ a_a3nj[ssk:1] @ b_a3it (df_a3nI @ b_a3it v_B1)]
+  live_ev_binds: []
+setImplicationStatus(not-all-solved) }
+  Implic {
+    TcLevel = 1
+    Skolems = a_a3nj[ssk:1]
+    No-eqs = True
+    Status = Unsolved
+    Given = $dC_a3nk :: C a_a3nj[ssk:1]
+    Wanted =
+      WC {wc_impl =
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = True
+              Status = Unsolved
+              Given =
+              Wanted =
+                WC {wc_simple =
+                      [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+              Binds = EvBindsVar<a3nz>
+              the instance declaration }}
+    Binds = EvBindsVar<a3nl>
+    the instance declaration }
+solveImplication end }
+  no_given_eqs = True
+  floated_eqs = {}
+  res_implic = Just Implic {
+                      TcLevel = 1
+                      Skolems = a_a3nj[ssk:1]
+                      No-eqs = True
+                      Status = Unsolved
+                      Given = $dC_a3nk :: C a_a3nj[ssk:1]
+                      Wanted =
+                        WC {wc_impl =
+                              Implic {
+                                TcLevel = 2
+                                Skolems =
+                                No-eqs = True
+                                Status = Unsolved
+                                Given =
+                                Wanted =
+                                  WC {wc_simple =
+                                        [WD] $dShow_a3nT {0}:: Show
+                                                                 (T a_a3nj[ssk:1]
+                                                                    Int) (CDictCan(psc))}
+                                Binds = EvBindsVar<a3nz>
+                                the instance declaration }}
+                      Binds = EvBindsVar<a3nl>
+                      the instance declaration }
+  implication evbinds = {}
+  implication tvcs = []
+solveNestedImplications end }
+  all floated_eqs = {}
+  unsolved_implics = {Just Implic {
+                             TcLevel = 1
+                             Skolems = a_a3nj[ssk:1]
+                             No-eqs = True
+                             Status = Unsolved
+                             Given = $dC_a3nk :: C a_a3nj[ssk:1]
+                             Wanted =
+                               WC {wc_impl =
+                                     Implic {
+                                       TcLevel = 2
+                                       Skolems =
+                                       No-eqs = True
+                                       Status = Unsolved
+                                       Given =
+                                       Wanted =
+                                         WC {wc_simple =
+                                               [WD] $dShow_a3nT {0}:: Show
+                                                                        (T a_a3nj[ssk:1]
+                                                                           Int) (CDictCan(psc))}
+                                       Binds = EvBindsVar<a3nz>
+                                       the instance declaration }}
+                             Binds = EvBindsVar<a3nl>
+                             the instance declaration }}
+solveWanteds }
+  final wc = WC {wc_impl =
+                   Implic {
+                     TcLevel = 1
+                     Skolems = a_a3nj[ssk:1]
+                     No-eqs = True
+                     Status = Unsolved
+                     Given = $dC_a3nk :: C a_a3nj[ssk:1]
+                     Wanted =
+                       WC {wc_impl =
+                             Implic {
+                               TcLevel = 2
+                               Skolems =
+                               No-eqs = True
+                               Status = Unsolved
+                               Given =
+                               Wanted =
+                                 WC {wc_simple =
+                                       [WD] $dShow_a3nT {0}:: Show
+                                                                (T a_a3nj[ssk:1]
+                                                                   Int) (CDictCan(psc))}
+                               Binds = EvBindsVar<a3nz>
+                               the instance declaration }}
+                     Binds = EvBindsVar<a3nl>
+                     the instance declaration }}
+  current evbinds  = {}
+zonkSimples done: {}
+zonkSimples done: {}
+zonkSimples done:
+  {[WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+applyDefaultingRules {
+  wanteds = WC {wc_impl =
+                  Implic {
+                    TcLevel = 1
+                    Skolems = a_a3nj[ssk:1]
+                    No-eqs = True
+                    Status = Unsolved
+                    Given = $dC_a3nk :: C a_a3nj[ssk:1]
+                    Wanted =
+                      WC {wc_impl =
+                            Implic {
+                              TcLevel = 2
+                              Skolems =
+                              No-eqs = True
+                              Status = Unsolved
+                              Given =
+                              Wanted =
+                                WC {wc_simple =
+                                      [WD] $dShow_a3nT {0}:: Show
+                                                               (T a_a3nj[ssk:1]
+                                                                  Int) (CDictCan(psc))}
+                              Binds = EvBindsVar<a3nz>
+                              the instance declaration }}
+                    Binds = EvBindsVar<a3nl>
+                    the instance declaration }}
+  groups  = []
+  info    = ([(), [], Integer, Double], (False, True))
+applyDefaultingRules } []
+setImplicationStatus(not-all-solved) {
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+    Binds = EvBindsVar<a3nz>
+    the instance declaration }
+neededEvVars
+  old_needs: [a3nK :-> co_a3nK, a3nL :-> co_a3nL, a3nM :-> co_a3nM,
+              a3nP :-> co_a3nP, a3nQ :-> $dShow_a3nQ, a3nS :-> co_a3nS,
+              a3nT :-> $dShow_a3nT]
+  seeds3: [a3nK :-> co_a3nK, a3nL :-> co_a3nL, a3nM :-> co_a3nM,
+           a3nP :-> co_a3nP, a3nQ :-> $dShow_a3nQ, a3nS :-> co_a3nS,
+           a3nT :-> $dShow_a3nT]
+  ev_binds: [a3nx :-> [W] $dShow_a3nx
+                        = $dShow_a3nQ
+                          `cast` ((Show (Sym {co_a3nP} <Int>_N))_R
+                                  :: Show (s_a3nO[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int)),
+             a3nQ :-> [W] $dShow_a3nQ
+                        = $dShow_a3nT
+                          `cast` ((Show (Sym {co_a3nS} <Int>_N))_R
+                                  :: Show (s_a3nR[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int))]
+  live_ev_binds: [a3nx :-> [W] $dShow_a3nx
+                             = $dShow_a3nQ
+                               `cast` ((Show (Sym {co_a3nP} <Int>_N))_R
+                                       :: Show (s_a3nO[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int)),
+                  a3nQ :-> [W] $dShow_a3nQ
+                             = $dShow_a3nT
+                               `cast` ((Show (Sym {co_a3nS} <Int>_N))_R
+                                       :: Show (s_a3nR[fmv:2] Int) ~R# Show (T a_a3nj[ssk:1] Int))]
+setImplicationStatus(not-all-solved) }
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+    Binds = EvBindsVar<a3nz>
+    the instance declaration }
+setImplicationStatus(not-all-solved) {
+  Implic {
+    TcLevel = 1
+    Skolems = a_a3nj[ssk:1]
+    No-eqs = True
+    Status = Unsolved
+    Given = $dC_a3nk :: C a_a3nj[ssk:1]
+    Wanted =
+      WC {wc_impl =
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = True
+              Status = Unsolved
+              Given =
+              Wanted =
+                WC {wc_simple =
+                      [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+              Binds = EvBindsVar<a3nz>
+              the instance declaration }}
+    Binds = EvBindsVar<a3nl>
+    the instance declaration }
+neededEvVars
+  old_needs: [a3nk :-> $dC_a3nk, a3nK :-> co_a3nK, a3nL :-> co_a3nL,
+              a3nM :-> co_a3nM, a3nP :-> co_a3nP, a3nS :-> co_a3nS,
+              a3nT :-> $dShow_a3nT, r3kR :-> interactive:Ghci6.$fShowD]
+  seeds3: [a3nk :-> $dC_a3nk, a3nK :-> co_a3nK, a3nL :-> co_a3nL,
+           a3nM :-> co_a3nM, a3nP :-> co_a3nP, a3nS :-> co_a3nS,
+           a3nT :-> $dShow_a3nT, r3kR :-> interactive:Ghci6.$fShowD]
+  ev_binds: []
+  live_ev_binds: []
+setImplicationStatus(not-all-solved) }
+  Implic {
+    TcLevel = 1
+    Skolems = a_a3nj[ssk:1]
+    No-eqs = True
+    Status = Unsolved
+    Given = $dC_a3nk :: C a_a3nj[ssk:1]
+    Wanted =
+      WC {wc_impl =
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = True
+              Status = Unsolved
+              Given =
+              Wanted =
+                WC {wc_simple =
+                      [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+              Binds = EvBindsVar<a3nz>
+              the instance declaration }}
+    Binds = EvBindsVar<a3nl>
+    the instance declaration }
+Constraint solver steps = 12
+unflattenGivens []
+End simplifyTop }
+reportUnsolved {
+newTcEvBinds unique = a3nU
+reportUnsolved warning/error settings:
+  type errors: TypeError
+  expr holes: HoleError
+  type holes: HoleError
+  scope holes: HoleError
+reportUnsolved (before zonking and tidying)
+  WC {wc_impl =
+        Implic {
+          TcLevel = 1
+          Skolems = a_a3nj[ssk:1]
+          No-eqs = True
+          Status = Unsolved
+          Given = $dC_a3nk :: C a_a3nj[ssk:1]
+          Wanted =
+            WC {wc_impl =
+                  Implic {
+                    TcLevel = 2
+                    Skolems =
+                    No-eqs = True
+                    Status = Unsolved
+                    Given =
+                    Wanted =
+                      WC {wc_simple =
+                            [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+                    Binds = EvBindsVar<a3nz>
+                    the instance declaration }}
+          Binds = EvBindsVar<a3nl>
+          the instance declaration }}
+zonkSimples done: {}
+zonkSimples done: {}
+zonkSimples done:
+  {[WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+reportUnsolved (after zonking):
+  Free tyvars:
+  Tidy env: ([], [])
+  Wanted: WC {wc_impl =
+                Implic {
+                  TcLevel = 1
+                  Skolems = a_a3nj[ssk:1]
+                  No-eqs = True
+                  Status = Unsolved
+                  Given = $dC_a3nk :: C a_a3nj[ssk:1]
+                  Wanted =
+                    WC {wc_impl =
+                          Implic {
+                            TcLevel = 2
+                            Skolems =
+                            No-eqs = True
+                            Status = Unsolved
+                            Given =
+                            Wanted =
+                              WC {wc_simple =
+                                    [WD] $dShow_a3nT {0}:: Show
+                                                             (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+                            Binds = EvBindsVar<a3nz>
+                            the instance declaration }}
+                  Binds = EvBindsVar<a3nl>
+                  the instance declaration }}
+reportWanteds
+  Simples = {}
+  Suppress = False
+rw2 []
+tryReporters {
+  []
+  []
+tryReporters } []
+tryReporters {
+  []
+  []
+tryReporters } []
+reportImplic
+  Implic {
+    TcLevel = 1
+    Skolems = a_a3nj[ssk:1]
+    No-eqs = True
+    Status = Unsolved
+    Given = $dC_a3nk :: C a_a3nj[ssk:1]
+    Wanted =
+      WC {wc_impl =
+            Implic {
+              TcLevel = 2
+              Skolems =
+              No-eqs = True
+              Status = Unsolved
+              Given =
+              Wanted =
+                WC {wc_simple =
+                      [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+              Binds = EvBindsVar<a3nz>
+              the instance declaration }}
+    Binds = EvBindsVar<a3nl>
+    the instance declaration }
+reportWanteds
+  Simples = {}
+  Suppress = False
+rw2 []
+tryReporters {
+  []
+  []
+tryReporters } []
+tryReporters {
+  []
+  []
+tryReporters } []
+reportImplic
+  Implic {
+    TcLevel = 2
+    Skolems =
+    No-eqs = True
+    Status = Unsolved
+    Given =
+    Wanted =
+      WC {wc_simple =
+            [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+    Binds = EvBindsVar<a3nz>
+    the instance declaration }
+reportWanteds
+  Simples = {[WD] $dShow_a3nT {0}:: Show
+                                      (T a_a3nj[ssk:1] Int) (CDictCan(psc))}
+  Suppress = False
+rw2
+  [[WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CNonCanonical)]
+tryReporters {
+  [[WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CNonCanonical)]
+  []
+tryReporters }
+  [[WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CNonCanonical)]
+tryReporters {
+  [[WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CNonCanonical)]
+  []
+tryReporter{
+  Dicts [[WD] $dShow_a3nT {0}:: Show
+                                  (T a_a3nj[ssk:1] Int) (CNonCanonical)]
+relevantBindings
+  [WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CNonCanonical)
+  arising from a use of ‘show’
+  [a3nj :-> a_a3nj[ssk:1]]
+  x_a3n3 :: T a_a3nj[ssk:1] Int,
+  show_a3nv :: D a_a3nj[ssk:1] -> String
+relevantBindings 1 x_a3n3 :: T a_a3nj[ssk:1] Int
+relevantBindings 1 show_a3nv :: D a_a3nj[ssk:1] -> String
+About to maybeReportErr
+  Constraint: [[WD] $dShow_a3nT {0}:: Show
+                                        (T a_a3nj[ssk:1] Int) (CNonCanonical)]
+  cec_suppress = False
+  cec_defer_type_errors = TypeError
+Adding error:
+  <interactive>:211:22: error:
+      • Could not deduce (Show (T a Int)) arising from a use of ‘show’
+        from the context: C a
+          bound by the instance declaration at <interactive>:210:14-30
+      • In the expression: show x
+        In an equation for ‘show’: show (MkD x) = show x
+        In the instance declaration for ‘Show (D a)’
+reportGroup
+  [[WD] $dShow_a3nT {0}:: Show (T a_a3nj[ssk:1] Int) (CNonCanonical)]
+tryReporter end } Dicts False False
+tryReporters } []
+reportUnsolved }
+reportUnsolved (unsafe overlapping) {
+reportUnsolved (unsafe overlapping) }
+mkTypeableBinds []
+Tc9
+
+<interactive>:211:22: error:
+    • Could not deduce (Show (T a Int)) arising from a use of ‘show’
+      from the context: C a
+        bound by the instance declaration at <interactive>:210:14-30
+    • In the expression: show x
+      In an equation for ‘show’: show (MkD x) = show x
+      In the instance declaration for ‘Show (D a)’

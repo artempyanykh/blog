@@ -126,8 +126,8 @@
      data ByteArray = ByteArray ByteArray#
 
      smallCpy :: ByteArray -> IO ByteArray
-     smallCpy (ByteArray ba) = IO $ \s0 -> case newByteArray# 32# s0 of
-       (# s1, mut #) -> case copyByteArray# ba 0# mut 0# 32# s1 of
+     smallCpy (ByteArray ba) = IO $ \s0 -> case newByteArray# 8# s0 of
+       (# s1, mut #) -> case copyByteArray# ba 2# mut 0# 8# s1 of
          s2 -> case unsafeFreezeByteArray# mut s2 of
                (# s3, frozen #) -> (# s3, ByteArray frozen #)
    #+END_SRC
@@ -136,4 +136,38 @@
      ghc -O2 -S hmemcpy.hs -o orig-hmemcpy.s
    #+END_SRC
 
+   #+BEGIN_SRC bash
+     ~/dev/ghc/inplace/bin/ghc-stage2 -O2 -no-hs-main -c -keep-s-file hmemcpy.hs -o hmemcpy.o
+   #+END_SRC
+
    #+RESULTS:
+
+   #+BEGIN_SRC haskell :tangle test-call.hs
+     module TestCall (testCall) where
+
+     testCall :: Int -> Int
+     testCall a = a + 1
+   #+END_SRC
+
+   #+BEGIN_SRC bash
+     ghc -O2 -c -keep-s-file test-call.hs -o test-call.o
+   #+END_SRC
+
+   #+RESULTS:
+
+   It seems that function calls have a common prologue:
+   #+BEGIN_EXAMPLE
+     .PRO
+       leaq -8(%rbp),%rax
+       cmpq %r15,%rax
+       jb .EPI
+   #+END_EXAMPLE
+
+   and a common epilogue:
+   #+BEGIN_EXAMPLE
+     .EPI
+       movl MANGLED_FUN_NAME_closure,%ebx
+       jmp *-8(%r13)
+   #+END_EXAMPLE
+
+   So, %rbp, %r13 and %r15 seem to be set up prior to the call, but with what?

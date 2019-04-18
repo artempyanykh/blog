@@ -6,51 +6,53 @@
 	.long	14
 	.long	0
 .globl CopyArray_smallCpy1_info
-.type CopyArray_smallCpy1_info, @object
+.type CopyArray_smallCpy1_info, @function
 CopyArray_smallCpy1_info:
-.Lc1jx:
+.Lc1kG:
 	leaq -8(%rbp),%rax
 	cmpq %r15,%rax
-	jb .Lc1jG
-.Lc1jH:
-	movq $c1ju_info,-8(%rbp)
+	jb .Lc1kP
+.Lc1kQ:
+	movq $.Lc1kD_info,-8(%rbp)
 	movq %r14,%rbx
 	addq $-8,%rbp
 	testb $7,%bl
-	jne .Lc1ju
-.Lc1jv:
+	jne .Lc1kD
+.Lc1kE:
 	jmp *(%rbx)
-.Lc1jK:
-	movq $64,904(%r13)
-	jmp stg_gc_unpt_r1
 .align 8
 	.quad	0
 	.long	30
 	.long	0
-c1ju_info:
-.Lc1ju:
-	addq $64,%r12
+.Lc1kD_info:
+.Lc1kD:
+	addq $40,%r12
 	cmpq 856(%r13),%r12
-	ja .Lc1jK
-.Lc1jJ:
+	ja .Lc1kT
+.Lc1kS:
 	movq 7(%rbx),%rax
-	movq $stg_ARR_WORDS_info,-56(%r12)
-	movq $32,-48(%r12)
-	leaq -56(%r12),%rbx
-	subq $8,%rsp
+	movq $stg_ARR_WORDS_info,-32(%r12)
+	movq $8,-24(%r12)
+	leaq -32(%r12),%rbx
 	leaq 16(%rbx),%rcx
-	leaq 16(%rax),%rsi
-	movq %rcx,%rdi
-	movl $32,%edx
-	xorl %eax,%eax
-	call memcpy
-	addq $8,%rsp
+	addq $18,%rax
+	movw 0(%rax),%dx
+	movw %dx,0(%rcx)
+	movw 2(%rax),%dx
+	movw %dx,2(%rcx)
+	movw 4(%rax),%dx
+	movw %dx,4(%rcx)
+	movw 6(%rax),%ax
+	movw %ax,6(%rcx)
 	movq $CopyArray_ByteArray_con_info,-8(%r12)
 	movq %rbx,(%r12)
 	leaq -7(%r12),%rbx
 	addq $8,%rbp
 	jmp *(%rbp)
-.Lc1jG:
+.Lc1kT:
+	movq $40,904(%r13)
+	jmp stg_gc_unpt_r1
+.Lc1kP:
 	movl $CopyArray_smallCpy1_closure,%ebx
 	jmp *-8(%r13)
 	.size CopyArray_smallCpy1_info, .-CopyArray_smallCpy1_info
@@ -69,9 +71,9 @@ CopyArray_smallCpy1_closure:
 	.long	14
 	.long	0
 .globl CopyArray_smallCpy_info
-.type CopyArray_smallCpy_info, @object
+.type CopyArray_smallCpy_info, @function
 CopyArray_smallCpy_info:
-.Lc1jU:
+.Lc1l5:
 	jmp CopyArray_smallCpy1_info
 	.size CopyArray_smallCpy_info, .-CopyArray_smallCpy_info
 .section .data
@@ -87,7 +89,7 @@ CopyArray_smallCpy_closure:
 .globl CopyArray_zdtrModule4_bytes
 .type CopyArray_zdtrModule4_bytes, @object
 CopyArray_zdtrModule4_bytes:
-	.asciz "main"
+	.string "main"
 .section .data
 .align 8
 .align 1
@@ -102,7 +104,7 @@ CopyArray_zdtrModule3_closure:
 .globl CopyArray_zdtrModule2_bytes
 .type CopyArray_zdtrModule2_bytes, @object
 CopyArray_zdtrModule2_bytes:
-	.asciz "CopyArray"
+	.string "CopyArray"
 .section .data
 .align 8
 .align 1
@@ -124,7 +126,7 @@ CopyArray_zdtrModule_closure:
 .section .data
 .align 8
 .align 1
-r16G_closure:
+.Lr15s_closure:
 	.quad	ghczmprim_GHCziTypes_KindRepTyConApp_con_info
 	.quad	ghczmprim_GHCziTypes_zdtcByteArrayzh_closure
 	.quad	ghczmprim_GHCziTypes_ZMZN_closure+1
@@ -135,7 +137,7 @@ r16G_closure:
 .globl CopyArray_zdtcByteArray2_bytes
 .type CopyArray_zdtcByteArray2_bytes, @object
 CopyArray_zdtcByteArray2_bytes:
-	.asciz "ByteArray"
+	.string "ByteArray"
 .section .data
 .align 8
 .align 1
@@ -161,7 +163,7 @@ CopyArray_zdtcByteArray_closure:
 .section .data
 .align 8
 .align 1
-r16H_closure:
+.Lr17u_closure:
 	.quad	ghczmprim_GHCziTypes_KindRepTyConApp_con_info
 	.quad	CopyArray_zdtcByteArray_closure+1
 	.quad	ghczmprim_GHCziTypes_ZMZN_closure+1
@@ -173,8 +175,8 @@ r16H_closure:
 .type CopyArray_zdtczqByteArray1_closure, @object
 CopyArray_zdtczqByteArray1_closure:
 	.quad	ghczmprim_GHCziTypes_KindRepFun_con_info
-	.quad	r16G_closure+1
-	.quad	r16H_closure+1
+	.quad	.Lr15s_closure+1
+	.quad	.Lr17u_closure+1
 	.quad	3
 .section .rodata.str,"aMS",@progbits,1
 .align 1
@@ -182,7 +184,7 @@ CopyArray_zdtczqByteArray1_closure:
 .globl CopyArray_zdtczqByteArray3_bytes
 .type CopyArray_zdtczqByteArray3_bytes, @object
 CopyArray_zdtczqByteArray3_bytes:
-	.asciz "'ByteArray"
+	.string "'ByteArray"
 .section .data
 .align 8
 .align 1
@@ -213,16 +215,16 @@ CopyArray_zdtczqByteArray_closure:
 	.long	14
 	.long	0
 CopyArray_ByteArray_info:
-.Lc1kj:
+.Lc1lu:
 	addq $16,%r12
 	cmpq 856(%r13),%r12
-	ja .Lc1kn
-.Lc1km:
+	ja .Lc1ly
+.Lc1lx:
 	movq $CopyArray_ByteArray_con_info,-8(%r12)
 	movq %r14,(%r12)
 	leaq -7(%r12),%rbx
 	jmp *(%rbp)
-.Lc1kn:
+.Lc1ly:
 	movq $16,904(%r13)
 	movl $CopyArray_ByteArray_closure,%ebx
 	jmp *-8(%r13)
@@ -237,12 +239,12 @@ CopyArray_ByteArray_closure:
 .section .rodata.str,"aMS",@progbits,1
 .align 1
 .align 1
-i1ks_str:
-	.asciz "main:CopyArray.ByteArray"
+i1lD_str:
+	.string "main:CopyArray.ByteArray"
 .section .text
 .align 8
 .align 8
-	.long	i1ks_str-(CopyArray_ByteArray_con_info)+0
+	.long	i1lD_str-(CopyArray_ByteArray_con_info)+0
 	.long	0
 	.quad	1
 	.long	2
@@ -250,11 +252,11 @@ i1ks_str:
 .globl CopyArray_ByteArray_con_info
 .type CopyArray_ByteArray_con_info, @object
 CopyArray_ByteArray_con_info:
-.Lc1kr:
+.Lc1lC:
 	incq %rbx
 	jmp *(%rbp)
 	.size CopyArray_ByteArray_con_info, .-CopyArray_ByteArray_con_info
 .section .note.GNU-stack,"",@progbits
-.ident "GHC 8.6.4"
+.ident "GHC 8.9.20190409"
 
 

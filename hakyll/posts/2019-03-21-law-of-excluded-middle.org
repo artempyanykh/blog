@@ -22,13 +22,36 @@ The latter at first seemed rather bizarre and required (and still
 requires) significant un-learning on my side, in part due to absense
 of LEM.
 
+Ahead are some basic pieces of intuitionistic logic accompanied by
+~Coq~ code to keep the narrative more hand-on.
+
 #+BEGIN_EXPORT html
 <!--more-->
 #+END_EXPORT
 
-TODO
+* Propositions, types, True, and False
+  Propositions are what logic is made of. It is a factual claim that
+  in the context of intuitionistic logic can be proved only by
+  providing an evidence or in other words *constructing a proof*.
 
-#+BEGIN_SRC coq -n
+  #+BEGIN_SRC coq -n
+    Check Type.
+
+    Search or.
+    Print or_comm.
+    Locate "->".
+    Print iff.
+    Print False.
+    Check True.
+
+    Check I.
+
+    Lemma or_comm': forall A B: Prop, A \/ B -> B \/ A.
+    Proof.
+      intros. apply or_comm in H. exact H.
+  #+END_SRC
+
+  #+BEGIN_SRC coq -n
   Lemma or_impl: forall (A B C: Prop),
       ((A \/ B) -> C) -> ((A -> C) /\ (B -> C)).
   Proof.
@@ -43,9 +66,9 @@ TODO
       apply Habc in pf_AorB as pf_C.
       apply pf_C.
   Qed.
-#+END_SRC
+  #+END_SRC
 
-#+BEGIN_SRC coq -n
+  #+BEGIN_SRC coq -n
   Theorem not_refuting_LEM: forall (A: Prop), ~~(A \/ ~A).
   Proof.
     intro A.
@@ -56,4 +79,4 @@ TODO
     apply H_refuteAContradictory in H_refuteA as Contradiction.
     apply Contradiction.
   Qed.
-#+END_SRC
+  #+END_SRC
