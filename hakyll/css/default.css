@@ -130,6 +130,10 @@ blockquote {
   font-style: normal;
 }
 
+.underline {
+  text-decoration: underline;
+}
+
 /* ////////////////////////////////// */
 /* Logo and header H1 related styles */
 /* ////////////////////////////////// */

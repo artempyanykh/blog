@@ -12,71 +12,333 @@ third choice. LEM is one of the core tenets of formal reasoning in
 "classical" branches of mathematics, and for me as a classically
 trained mathematician this is indeed a very natural way of thinking.
 
-Recently, however, I got interested in the theory of programming
-languages. The discipline differs a great deal from functional
-analysis, probability theory or other familiar branches of
-mathematics, and learning required starting from the very basics,
-including proof theory and intuitionistic logic.
+Recently, I got interested in the theory of programming languages. The
+discipline differs a great deal from functional analysis, probability
+theory or other familiar branches of mathematics, and learning
+required starting from the very basics, including proof theory and
+intuitionistic logic.
 
-The latter at first seemed rather bizarre and required (and still
-requires) significant un-learning on my side, in part due to absense
-of LEM.
+Honestly, this did feel pretty daunting and unproductive given how
+much effort is required even for simple proofs. So I figured that
+doing some exercises /in code/ instead of pencil & paper should make
+it more fun.
 
 Ahead are some basic pieces of intuitionistic logic accompanied by
-~Coq~ code to keep the narrative more hand-on.
+snippets of ~Coq~ code.
 
 #+BEGIN_EXPORT html
 <!--more-->
 #+END_EXPORT
 
-* Propositions, types, True, and False
-  Propositions are what logic is made of. It is a factual claim that
-  in the context of intuitionistic logic can be proved only by
-  providing an evidence or in other words *constructing a proof*.
+* Propositions and types
+  Propositions are what logic is made of. A proposition is a factual
+  claim that in the context of intuitionistic logic can be proved only
+  by providing an evidence or in other words by *constructing a
+  proof*.
+
+  There is a well known correspondence between propositions and
+  types. In short, each proposition can be represented as a special
+  type[fn:1], and constructing a proof is equivalent to constructing
+  an instance (or a term) of this type.
+
+  The idea of proofs as terms can be clearly seen in how True and
+  False are defined in ~Coq~[fn:2].
 
   #+BEGIN_SRC coq -n
-    Check Type.
+    Print True.
+  #+END_SRC
 
-    Search or.
-    Print or_comm.
-    Locate "->".
-    Print iff.
+  #+BEGIN_EXAMPLE
+    Inductive True : Prop :=  I : True
+  #+END_EXAMPLE
+
+  =Print= is a built-in command that prints a definition of a
+  symbol. In this particular example we can see that =True= is a type
+  of type =Prop= (where =Prop= is a basic type for propositions) and
+  it has one constructor[fn:3] =I=. The fact that =I= is a nullary
+  constructor reflects the idea that we don't need anything to prove
+  =True=, we can just provide =I= as a proof right away as can be seen
+  below:
+
+  #+BEGIN_SRC coq -n
+    Example true_is_true: True.
+    Proof. exact I. Qed.
+  #+END_SRC
+
+  =true_is_true= is a proposition of type =True= and we prove this
+  proposition by providing an instance =I= of required type using
+  =exact I= command.
+
+  Similarly, =False= is defined as:
+
+  #+BEGIN_SRC coq -n
     Print False.
-    Check True.
+  #+END_SRC
 
-    Check I.
+  #+BEGIN_EXAMPLE
+    Inductive False : Prop :=
+  #+END_EXAMPLE
 
-    Lemma or_comm': forall A B: Prop, A \/ B -> B \/ A.
+  There is no constructor for this type which again matches our
+  intuition that we cannot prove falsehood. However, if we /somehow/
+  get a proof of =False= we can prove any other proposition out of
+  it. A standard function =False_ind= reflects this in its type:
+
+  #+BEGIN_SRC coq -n
+    Check False_ind.
+  #+END_SRC
+  #+BEGIN_EXAMPLE
+    False_ind : forall P : Prop, False -> P
+  #+END_EXAMPLE
+
+* Logical connectives
+  Complex propositions are built from simpler ones using logical
+  connectives. One example of a connective is *implication*. It is
+  built into =Coq=, but its form ~A -> B~ suggests the following
+  reading: /we can prove an implication if given a proof of =A= we can
+  prove =B=/.
+
+  Next logical connective is *conjunction* denoted by =/\=. It is not
+  built-in, but rather defined in a standard library as:
+
+  #+BEGIN_SRC coq -n
+    Print and.
+  #+END_SRC
+  #+BEGIN_EXAMPLE
+    Inductive and (A B : Prop) : Prop :=  conj : A -> B -> A /\ B
+  #+END_EXAMPLE
+
+  A conjunction of propositions =A= and =B= is a proposition of type
+  =and= that can be constructed (introduced/proved) given terms
+  (proves) of =A= and =B=.
+
+  Next connective is *disjunction* denoted by =\/= and defined as:
+  #+BEGIN_SRC coq -n
+    Print or.
+  #+END_SRC
+  #+BEGIN_EXAMPLE
+    Inductive or (A B : Prop) : Prop :=
+        or_introl : A -> A \/ B | or_intror : B -> A \/ B
+  #+END_EXAMPLE
+  This one has two constructors which means we can prove a disjunction
+  of =A= and =B= by either proving =A= and using ~or_introl~ rule to
+  introduce =A \/ B=, or proving =B= and using ~or_intror~ rule.
+
+  *Negation* is a derived connective denoted by =~=, which doesn't have its own
+  introduction rules, but is rather defined as:
+
+  #+BEGIN_SRC coq -n
+    Print not.
+  #+END_SRC
+
+  #+BEGIN_EXAMPLE
+    not = fun A : Prop => A -> False ; <----
+         : Prop -> Prop
+  #+END_EXAMPLE
+
+  The part ~A -> False~ captures the idea that to prove a negation of
+  =A= we need to prove that =A= is contradictory.
+
+  *Biconditional* or iff as another derived connective denoted by
+  =<->= and defined as:
+  #+BEGIN_SRC coq -n
+    Print iff.
+  #+END_SRC
+  #+BEGIN_EXAMPLE
+    iff = fun A B : Prop => (A -> B) /\ (B -> A) ; <----
+         : Prop -> Prop -> Prop
+  #+END_EXAMPLE
+
+  At this point we have all required logical connectives[fn:4] and can
+  proceed to the fun part where we prove things.
+
+* Simple proofs
+  =Coq= is designed to be used interactively. Just reading proofs
+  without seeing the state of the proof in =Coq='s output is rather
+  laborious. I'll show some intermediate output between =(*= and =*)=
+  in the code samples below, but installing =Coq= and executing proofs
+  step-by-step is strongly encouraged.
+
+  We start by proving two lemmas that state that when some proposition
+  is a direct consequence of a disjunction then it is a direct
+  consequence of any side of a disjunction. Let's do the left side
+  first.
+  #+BEGIN_SRC coq -n
+    Lemma or_impl: forall A B C: Prop,
+        ((A \/ B) -> C) -> (A -> C).
     Proof.
-      intros. apply or_comm in H. exact H.
+      (*
+        This is a default state of the proof:
+        1 subgoal (ID 1)
+
+        ============================
+        forall A B C : Prop, (A \/ B -> C) -> A -> C
+
+        To actually get anything done we need to introduce
+        the propositions and premises into the scope using
+        intros command.
+       ,*)
+      intros A B C H_or H_A.
+      (*
+        1 subgoal (ID 6)
+
+        A, B, C : Prop
+        H_or : A \/ B -> C
+        H_A : A
+        ============================
+        C
+
+        The goal has changed: now we need to prove C using
+        hypotheses in the scope.
+
+        We see that there is a single way to prove C and it
+        is by proving A \/ B from H_or.
+
+        Since we have a proof of A in a form of H_A we can
+        prove A \/ B using or_introl constructor. The resulting
+        term is named Pf_or.
+       ,*)
+      pose (Pf_or := or_introl H_A: A \/ B).
+      (*
+        1 subgoal (ID 10)
+
+        A, B, C : Prop
+        H_or : A \/ B -> C
+        H_A : A
+        Pf_or := (or_introl H_A : A \/ B) : A \/ B
+        ============================
+        C
+
+        Now we can prove C from Pf_or and H_or by modus ponens.
+       ,*)
+      apply H_or in Pf_or as Pf.
+      (*
+        1 subgoal (ID 13)
+
+        A, B, C : Prop
+        H_or : A \/ B -> C
+        H_A : A
+        Pf_or := (or_introl H_A : A \/ B) : A \/ B
+        Pf : C
+        ============================
+        C
+       ,*)
+      exact Pf.
+    Qed.
   #+END_SRC
 
+  The right side can be proved similarly:
   #+BEGIN_SRC coq -n
-  Lemma or_impl: forall (A B C: Prop),
-      ((A \/ B) -> C) -> ((A -> C) /\ (B -> C)).
-  Proof.
-    intros A B C Habc.
-    split.
-    - intro Ha.
-      pose (pf_AorB := or_introl Ha : A \/ B).
-      apply Habc in pf_AorB as pf_C.
-      apply pf_C.
-    - intro Hb.
-      pose (pf_AorB := or_intror Hb : A \/ B).
-      apply Habc in pf_AorB as pf_C.
-      apply pf_C.
-  Qed.
+    Lemma or_impr: forall A B C: Prop,
+        ((A \/ B) -> C) -> (B -> C).
+    Proof.
+      intros A B C H_or H_B.
+      pose (Pf_B := or_intror H_B : A \/ B).
+      apply H_or in Pf_B as Pf.
+      exact Pf.
+    Qed.
   #+END_SRC
 
+  We can also easily prove a combined proposition by splitting a
+  conjunction and using ~or_impl~ and ~or_impr~ to prove each side
+  separately:
   #+BEGIN_SRC coq -n
-  Theorem not_refuting_LEM: forall (A: Prop), ~~(A \/ ~A).
-  Proof.
-    intro A.
-    unfold not.
-    intro H_refuteLEM.
-    apply or_impl in H_refuteLEM.
-    destruct H_refuteLEM as [H_refuteA H_refuteAContradictory].
-    apply H_refuteAContradictory in H_refuteA as Contradiction.
-    apply Contradiction.
-  Qed.
+    Lemma or_implr: forall (A B C: Prop),
+        ((A \/ B) -> C) -> ((A -> C) /\ (B -> C)).
+    Proof.
+      intros A B C H_or.
+      split.
+      (*
+        A, B, C : Prop
+        H_or : A \/ B -> C
+        ============================
+        A -> C
+
+        subgoal 2 (ID 10) is:
+        B -> C
+       ,*)
+      - exact (or_impl A B C H_or).
+      - exact (or_impr A B C H_or).
+    Qed.
   #+END_SRC
+
+  This lemma will come in handy when we try to prove a theorem about
+  the law of excluded middle in the next section.
+* We don't need no LEM
+
+  #+BEGIN_SRC coq -n
+    Theorem not_refuting_LEM: forall (A: Prop), ~~(A \/ ~A).
+    Proof.
+      intro A.
+      (*
+        1 subgoal (ID 5)
+
+        A : Prop
+        ============================
+        ~ ~ (A \/ ~ A)
+       ,*)
+      unfold not.
+      (*
+        A : Prop
+        ============================
+        (A \/ (A -> False) -> False) -> False
+       ,*)
+      intro H_refuteLEM.
+      (*
+        1 subgoal (ID 7)
+
+        A : Prop
+        H_refuteLEM : A \/ (A -> False) -> False
+        ============================
+        False
+       ,*)
+      apply or_implr in H_refuteLEM.
+      (*
+        1 subgoal (ID 8)
+
+        A : Prop
+        H_refuteLEM : (A -> False) /\ ((A -> False) -> False)
+        ============================
+        False
+       ,*)
+      destruct H_refuteLEM as [H_refuteA H_refuteNotA].
+      (*
+        1 subgoal (ID 14)
+
+        A : Prop
+        H_refuteA : A -> False
+        H_refuteNotA : (A -> False) -> False
+        ============================
+        False
+       ,*)
+      apply H_refuteNotA in H_refuteA as Pf_False.
+      (*
+        1 subgoal (ID 17)
+
+        A : Prop
+        H_refuteA : A -> False
+        Pf_False : False
+        H_refuteNotA : (A -> False) -> False
+        ============================
+        False
+       ,*)
+      exact Pf_False.
+    Qed.
+  #+END_SRC
+
+* Footnotes
+
+[fn:4] Here we have implication as a basic building block with other
+connectives defined in terms of it. But this is not the only way to
+axiomatize logic; there is a handful with different basic connectives,
+axioms and inference rules designed in such a way to make a resulting
+system consistent.
+
+[fn:3] Constructors are also called *introduction rules*. Indeed
+constructors can be thought of as rules that /introduce/ a term of a
+specific type given some other terms.
+
+[fn:2] This might be a good time to install ~Coq~ and an IDE (whether
+its =Coq-IDE= or =Proof General=).
+
+[fn:1] Of course the type system should be rich enough to allow this.
