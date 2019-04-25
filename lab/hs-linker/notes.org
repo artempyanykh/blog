@@ -8,6 +8,8 @@
     T13366.run  T13366 [unexpected] (normal)
     T13366.run  T13366 [unexpected] (ext-interp)
 *** TODO Misalignment logic won't be needed for Darwin after the change
+*** DONE runner: internal error: checkProddableBlock: invalid fixup in runtime linker: 0x1036d0004
+    Invalid probing len in internal relocation check
 *** DONE Linker unload segfaults (not every time, but can be repeated)
     Unexpected failures:
     linker_unload.run  linker_unload [bad exit code] (normal)
@@ -413,6 +415,161 @@
         iextdefsym 0
         nextdefsym 3
          iundefsym 3
+         nundefsym 0
+            tocoff 0
+              ntoc 0
+         modtaboff 0
+           nmodtab 0
+      extrefsymoff 0
+       nextrefsyms 0
+    indirectsymoff 0
+     nindirectsyms 0
+         extreloff 0
+           nextrel 0
+         locreloff 0
+           nlocrel 0
+   #+end_example
+
+   #+BEGIN_SRC C :tangle foo_align.c :main no
+     #include <stdint.h>
+     #include <stdalign.h>
+
+     alignas(64) int foo = 42;
+
+     int isAligned()
+     {
+             return ((uintptr_t)&foo & -64) == 0;
+     }
+   #+END_SRC
+
+   #+RESULTS:
+
+   #+BEGIN_SRC bash :results output
+     cc -c foo_align.c -o foo_align.o
+     objdump -d foo_align.o
+     objdump -t foo_align.o
+     objdump -r foo_align.o
+     echo ""
+     otool -l foo_align.o
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+
+   foo_align.o:	file format Mach-O 64-bit x86-64
+
+   Disassembly of section __TEXT,__text:
+   _isAligned:
+          0:	55 	pushq	%rbp
+          1:	48 89 e5 	movq	%rsp, %rbp
+          4:	48 8d 05 00 00 00 00 	leaq	(%rip), %rax
+          b:	48 a9 c0 ff ff ff 	testq	$-64, %rax
+         11:	0f 94 c1 	sete	%cl
+         14:	0f b6 c1 	movzbl	%cl, %eax
+         17:	5d 	popq	%rbp
+         18:	c3 	retq
+
+   foo_align.o:	file format Mach-O 64-bit x86-64
+
+   SYMBOL TABLE:
+   0000000000000040 g       __DATA,__data	_foo
+   0000000000000000 g     F __TEXT,__text	_isAligned
+
+   foo_align.o:	file format Mach-O 64-bit x86-64
+
+   RELOCATION RECORDS FOR [__text]:
+   0000000000000007 X86_64_RELOC_SIGNED _foo
+
+   RELOCATION RECORDS FOR [__compact_unwind]:
+   0000000000000000 X86_64_RELOC_UNSIGNED __text
+
+
+   foo_align.o:
+   Mach header
+         magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+    0xfeedfacf 16777223          3  0x00           1     4        520 0x00002000
+   Load command 0
+         cmd LC_SEGMENT_64
+     cmdsize 392
+     segname
+      vmaddr 0x0000000000000000
+      vmsize 0x00000000000000a8
+     fileoff 552
+    filesize 168
+     maxprot 0x00000007
+    initprot 0x00000007
+      nsects 4
+       flags 0x0
+   Section
+     sectname __text
+      segname __TEXT
+         addr 0x0000000000000000
+         size 0x0000000000000019
+       offset 552
+        align 2^4 (16)
+       reloff 720
+       nreloc 1
+        flags 0x80000400
+    reserved1 0
+    reserved2 0
+   Section
+     sectname __data
+      segname __DATA
+         addr 0x0000000000000040
+         size 0x0000000000000004
+       offset 616
+        align 2^6 (64)
+       reloff 0
+       nreloc 0
+        flags 0x00000000
+    reserved1 0
+    reserved2 0
+   Section
+     sectname __compact_unwind
+      segname __LD
+         addr 0x0000000000000048
+         size 0x0000000000000020
+       offset 624
+        align 2^3 (8)
+       reloff 728
+       nreloc 1
+        flags 0x02000000
+    reserved1 0
+    reserved2 0
+   Section
+     sectname __eh_frame
+      segname __TEXT
+         addr 0x0000000000000068
+         size 0x0000000000000040
+       offset 656
+        align 2^3 (8)
+       reloff 0
+       nreloc 0
+        flags 0x6800000b
+    reserved1 0
+    reserved2 0
+   Load command 1
+          cmd LC_BUILD_VERSION
+      cmdsize 24
+     platform macos
+          sdk n/a
+        minos 10.14
+       ntools 0
+   Load command 2
+        cmd LC_SYMTAB
+    cmdsize 24
+     symoff 736
+      nsyms 2
+     stroff 768
+    strsize 20
+   Load command 3
+               cmd LC_DYSYMTAB
+           cmdsize 80
+         ilocalsym 0
+         nlocalsym 0
+        iextdefsym 0
+        nextdefsym 2
+         iundefsym 2
          nundefsym 0
             tocoff 0
               ntoc 0
