@@ -264,7 +264,28 @@ snippets of ~Coq~ code.
 
   This lemma will come in handy when we try to prove a theorem about
   the law of excluded middle in the next section.
+
 * We don't need no LEM
+
+  The theorem we're going to prove can be written as
+  =¬¬(A∨¬A)=. Although, at first it may seem like gobbledygook, it has
+  a very clear and profound meaning. The =A∨¬A= part is exactly the
+  Law of Excluded Middle, and the whole theorem can be read as:
+
+  #+BEGIN_EXAMPLE
+  Intuitionistic logic /does not/      /refute/ the /Law of Excluded Middle/.
+                          ¬               ¬                   A∨¬A
+  #+END_EXAMPLE
+
+  Note that "does not refute" doesn't mean "asserts". In fact, double
+  negation elimination, i.e. =¬¬A -> A=, is an axiom of classical logic and
+  equivalent to LEM.
+
+  The annotated proof in =Coq= is given below. Although, the proof may
+  seem rather straightforward, especially with =or_implr= lemma proved
+  previously, it definitely didn't seem trivial to me and took some
+  time to figure out all the necessary pieces. So, hopefully someone
+  will find it interesting.
 
   #+BEGIN_SRC coq -n
     Theorem not_refuting_LEM: forall (A: Prop), ~~(A \/ ~A).
@@ -276,12 +297,19 @@ snippets of ~Coq~ code.
         A : Prop
         ============================
         ~ ~ (A \/ ~ A)
+
+        We cannot do anything with negation as it is.
+        To proceed we need to unfold it, according to
+        the definition.
        ,*)
       unfold not.
       (*
         A : Prop
         ============================
         (A \/ (A -> False) -> False) -> False
+
+        Not we can bring the left hand side of
+        the implication into scope.
        ,*)
       intro H_refuteLEM.
       (*
@@ -291,6 +319,10 @@ snippets of ~Coq~ code.
         H_refuteLEM : A \/ (A -> False) -> False
         ============================
         False
+
+        We can furter break down H_refuteLEM into 2
+        pieces using or_implr lemma and destruct
+        tactic.
        ,*)
       apply or_implr in H_refuteLEM.
       (*
@@ -310,6 +342,9 @@ snippets of ~Coq~ code.
         H_refuteNotA : (A -> False) -> False
         ============================
         False
+
+        Here we can use H_refuteA to prove the right hand
+        side of H_refuteNotA.
        ,*)
       apply H_refuteNotA in H_refuteA as Pf_False.
       (*
@@ -331,10 +366,10 @@ snippets of ~Coq~ code.
 [fn:4] Here we have implication as a basic building block with other
 connectives defined in terms of it. But this is not the only way to
 axiomatize logic; there is a handful with different basic connectives,
-axioms and inference rules designed in such a way to make a resulting
-system consistent.
+axioms and inference rules designed in such a way to make the
+resulting system consistent.
 
-[fn:3] Constructors are also called *introduction rules*. Indeed
+[fn:3] Constructors are also called *introduction rules*. Indeed,
 constructors can be thought of as rules that /introduce/ a term of a
 specific type given some other terms.
 
