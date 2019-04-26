@@ -1,16 +1,17 @@
 ---
 title:  (╯°□°）╯ ¬¬(A∨¬A)
 category: logic
-date: 2019-03-21
+date: 2019-04-26
 ---
 
 ... or "the missing Law of Excluded Middle".
 
 First things first, Law of Excluded Middle or LEM is an axiom of logic
-that states that a proposition is either true or false, there is no
-third choice. LEM is one of the core tenets of formal reasoning in
-"classical" branches of mathematics, and for me as a classically
-trained mathematician this is indeed a very natural way of thinking.
+that states that either some proposition ~A~ holds or its negation
+~¬A~ holds, there is no third choice. LEM is one of the core tenets of
+formal reasoning in "classical" branches of mathematics, and for me as
+a classically trained mathematician this is indeed a very natural way
+of thinking.
 
 Recently, I got interested in the theory of programming languages. The
 discipline differs a great deal from functional analysis, probability
@@ -18,10 +19,10 @@ theory or other familiar branches of mathematics, and learning
 required starting from the very basics, including proof theory and
 intuitionistic logic.
 
-Honestly, this did feel pretty daunting and unproductive given how
-much effort is required even for simple proofs. So I figured that
-doing some exercises /in code/ instead of pencil & paper should make
-it more fun.
+Honestly, this all did feel pretty daunting and unproductive given how
+much effort was required even for simple proofs. So I figured that
+doing exercises /in code/ instead of pencil & paper should make it
+more fun.
 
 Ahead are some basic pieces of intuitionistic logic accompanied by
 snippets of ~Coq~ code.
@@ -31,17 +32,17 @@ snippets of ~Coq~ code.
 #+END_EXPORT
 
 * Propositions and types
-  Propositions are what logic is made of. A proposition is a factual
-  claim that in the context of intuitionistic logic can be proved only
-  by providing an evidence or in other words by *constructing a
-  proof*.
+  Propositions are the foundation of logic. A proposition is a factual
+  claim that in the context of intuitionistic logic can be proved
+  _only by providing an evidence_ or, in other words, by _constructing
+  a proof_.
 
   There is a well known correspondence between propositions and
   types. In short, each proposition can be represented as a special
   type[fn:1], and constructing a proof is equivalent to constructing
   an instance (or a term) of this type.
 
-  The idea of proofs as terms can be clearly seen in how True and
+  The idea of proofs as terms can be seen more clearly in how True and
   False are defined in ~Coq~[fn:2].
 
   #+BEGIN_SRC coq -n
@@ -55,10 +56,10 @@ snippets of ~Coq~ code.
   =Print= is a built-in command that prints a definition of a
   symbol. In this particular example we can see that =True= is a type
   of type =Prop= (where =Prop= is a basic type for propositions) and
-  it has one constructor[fn:3] =I=. The fact that =I= is a nullary
-  constructor reflects the idea that we don't need anything to prove
-  =True=, we can just provide =I= as a proof right away as can be seen
-  below:
+  it has one constructor[fn:3], namely =I=. The fact that =I= is a
+  nullary constructor reflects the idea that we don't need anything to
+  prove =True=, we can just provide =I= as a proof right away as can
+  be seen below:
 
   #+BEGIN_SRC coq -n
     Example true_is_true: True.
@@ -112,7 +113,8 @@ snippets of ~Coq~ code.
   =and= that can be constructed (introduced/proved) given terms
   (proves) of =A= and =B=.
 
-  Next connective is *disjunction* denoted by =\/= and defined as:
+  Another logical connective is *disjunction* denoted by =\/= and
+  defined as:
   #+BEGIN_SRC coq -n
     Print or.
   #+END_SRC
@@ -149,8 +151,9 @@ snippets of ~Coq~ code.
          : Prop -> Prop -> Prop
   #+END_EXAMPLE
 
-  At this point we have all required logical connectives[fn:4] and can
-  proceed to the fun part where we prove things.
+  All these connectives are regular types[fn:4]. Currently, we have
+  everything needed to start proving interesting theorems, but you are
+  encouraged to explore the standard library further.
 
 * Simple proofs
   =Coq= is designed to be used interactively. Just reading proofs
@@ -239,9 +242,8 @@ snippets of ~Coq~ code.
     Qed.
   #+END_SRC
 
-  We can also easily prove a combined proposition by splitting a
-  conjunction and using ~or_impl~ and ~or_impr~ to prove each side
-  separately:
+  We can also prove a combined proposition by splitting a conjunction
+  and using ~or_impl~ and ~or_impr~ to prove each side separately:
   #+BEGIN_SRC coq -n
     Lemma or_implr: forall (A B C: Prop),
         ((A \/ B) -> C) -> ((A -> C) /\ (B -> C)).
@@ -267,19 +269,19 @@ snippets of ~Coq~ code.
 
 * We don't need no LEM
 
-  The theorem we're going to prove can be written as
-  =¬¬(A∨¬A)=. Although, at first it may seem like gobbledygook, it has
-  a very clear and profound meaning. The =A∨¬A= part is exactly the
-  Law of Excluded Middle, and the whole theorem can be read as:
+  The theorem we're going to prove can be written as $\neg \neg (A
+  \lor \neg A)$. Although, at first it may seem like gobbledygook, it
+  has a very clear and profound meaning. The $A \lor \neg A$ part is
+  exactly LEM, and the whole theorem can be read as:
 
   #+BEGIN_EXAMPLE
-  Intuitionistic logic /does not/      /refute/ the /Law of Excluded Middle/.
-                          ¬               ¬                   A∨¬A
+  Intuitionistic logic /does not/  /refute/ the /Law of Excluded Middle/.
+                          ¬            ¬                   A∨¬A
   #+END_EXAMPLE
 
-  Note that "does not refute" doesn't mean "asserts". In fact, double
-  negation elimination, i.e. =¬¬A -> A=, is an axiom of classical logic and
-  equivalent to LEM.
+  Note that "does not refute" is not the same as "asserts". In fact,
+  double negation elimination $\neg \neg A \implies A$ is an axiom of
+  classical logic and equivalent to LEM.
 
   The annotated proof in =Coq= is given below. Although, the proof may
   seem rather straightforward, especially with =or_implr= lemma proved
@@ -363,14 +365,13 @@ snippets of ~Coq~ code.
 
 * Footnotes
 
-[fn:4] Here we have implication as a basic building block with other
-connectives defined in terms of it. But this is not the only way to
-axiomatize logic; there is a handful with different basic connectives,
-axioms and inference rules designed in such a way to make the
-resulting system consistent.
+[fn:4] Here implication and inductive types are basic building
+blocks. Other connectives are defined in terms of them. But this is
+not the only way to axiomatize logic; there is a handful others with
+different basic connectives, axioms and inference rules.
 
-[fn:3] Constructors are also called *introduction rules*. Indeed,
-constructors can be thought of as rules that /introduce/ a term of a
+[fn:3] Constructors are also called _introduction rules_. Indeed,
+constructors can be thought of as /rules/ that /introduce/ a term of
 specific type given some other terms.
 
 [fn:2] This might be a good time to install ~Coq~ and an IDE (whether
