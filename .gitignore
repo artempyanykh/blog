@@ -1,5 +1,7 @@
 .sass-cache/
 .texpadtmp/
 .stack-work/
+dist-newstyle
+cabal.project.local
 _site/
 _cache/
