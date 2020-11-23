@@ -52,139 +52,139 @@
 
 <h1 id="propositions-and-types">Propositions and types</h1>
 <p>Propositions are the foundation of logic. A proposition is a factual claim that in the context of intuitionistic logic can be proved <span class="underline">only by providing an evidence</span> or, in other words, by <span class="underline">constructing a proof</span>.</p>
-<p>There is a well known correspondence between propositions and types. In short, each proposition can be represented as a special type<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, and constructing a proof is equivalent to constructing an instance (or a term) of this type.</p>
-<p>The idea of proofs as terms can be seen more clearly in how True and False are defined in <code>Coq</code><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
-<div class="sourceCode" id="cb1" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb1-1" title="1">Print True.</a></code></pre></div>
+<p>There is a well known correspondence between propositions and types. In short, each proposition can be represented as a special type<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, and constructing a proof is equivalent to constructing an instance (or a term) of this type.</p>
+<p>The idea of proofs as terms can be seen more clearly in how True and False are defined in <code>Coq</code><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
+<div class="sourceCode" id="cb1" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb1-1"><a href="#cb1-1"></a>Print True.</span></code></pre></div>
 <pre class="example"><code>Inductive True : Prop :=  I : True
 </code></pre>
-<p><code>Print</code> is a built-in command that prints a definition of a symbol. In this particular example we can see that <code>True</code> is a type of type <code>Prop</code> (where <code>Prop</code> is a basic type for propositions) and it has one constructor<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>, namely <code>I</code>. The fact that <code>I</code> is a nullary constructor reflects the idea that we don’t need anything to prove <code>True</code>, we can just provide <code>I</code> as a proof right away as can be seen below:</p>
-<div class="sourceCode" id="cb3" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb3-1" title="1">Example true_is_true: True.</a>
-<a class="sourceLine" id="cb3-2" title="2">Proof. exact I. Qed.</a></code></pre></div>
+<p><code>Print</code> is a built-in command that prints a definition of a symbol. In this particular example we can see that <code>True</code> is a type of type <code>Prop</code> (where <code>Prop</code> is a basic type for propositions) and it has one constructor<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, namely <code>I</code>. The fact that <code>I</code> is a nullary constructor reflects the idea that we don’t need anything to prove <code>True</code>, we can just provide <code>I</code> as a proof right away as can be seen below:</p>
+<div class="sourceCode" id="cb3" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb3-1"><a href="#cb3-1"></a>Example true_is_true: True.</span>
+<span id="cb3-2"><a href="#cb3-2"></a>Proof. exact I. Qed.</span></code></pre></div>
 <p><code>true_is_true</code> is a proposition of type <code>True</code> and we prove this proposition by providing an instance <code>I</code> of required type using <code>exact I</code> command.</p>
 <p>Similarly, <code>False</code> is defined as:</p>
-<div class="sourceCode" id="cb4" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb4-1" title="1">Print False.</a></code></pre></div>
+<div class="sourceCode" id="cb4" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb4-1"><a href="#cb4-1"></a>Print False.</span></code></pre></div>
 <pre class="example"><code>Inductive False : Prop :=
 </code></pre>
 <p>There is no constructor for this type which again matches our intuition that we cannot prove falsehood. However, if we <em>somehow</em> get a proof of <code>False</code> we can prove any other proposition out of it. A standard function <code>False_ind</code> reflects this in its type:</p>
-<div class="sourceCode" id="cb6" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb6-1" title="1">Check False_ind.</a></code></pre></div>
+<div class="sourceCode" id="cb6" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb6-1"><a href="#cb6-1"></a>Check False_ind.</span></code></pre></div>
 <pre class="example"><code>False_ind : forall P : Prop, False -&gt; P
 </code></pre>
 <h1 id="logical-connectives">Logical connectives</h1>
 <p>Complex propositions are built from simpler ones using logical connectives. One example of a connective is <strong>implication</strong>. It is built into <code>Coq</code>, but its form <code>A -&gt; B</code> suggests the following reading: <em>we can prove an implication if given a proof of <code>A</code> we can prove <code>B</code></em>.</p>
 <p>Next logical connective is <strong>conjunction</strong> denoted by <code>/\</code>. It is not built-in, but rather defined in a standard library as:</p>
-<div class="sourceCode" id="cb8" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb8-1" title="1">Print and.</a></code></pre></div>
+<div class="sourceCode" id="cb8" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb8-1"><a href="#cb8-1"></a>Print and.</span></code></pre></div>
 <pre class="example"><code>Inductive and (A B : Prop) : Prop :=  conj : A -&gt; B -&gt; A /\ B
 </code></pre>
 <p>A conjunction of propositions <code>A</code> and <code>B</code> is a proposition of type <code>and</code> that can be constructed (introduced/proved) given terms (proves) of <code>A</code> and <code>B</code>.</p>
 <p>Another logical connective is <strong>disjunction</strong> denoted by <code>\/</code> and defined as:</p>
-<div class="sourceCode" id="cb10" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb10-1" title="1">Print or.</a></code></pre></div>
+<div class="sourceCode" id="cb10" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb10-1"><a href="#cb10-1"></a>Print or.</span></code></pre></div>
 <pre class="example"><code>Inductive or (A B : Prop) : Prop :=
     or_introl : A -&gt; A \/ B | or_intror : B -&gt; A \/ B
 </code></pre>
 <p>This one has two constructors which means we can prove a disjunction of <code>A</code> and <code>B</code> by either proving <code>A</code> and using <code>or_introl</code> rule to introduce <code>A \/ B</code>, or proving <code>B</code> and using <code>or_intror</code> rule.</p>
 <p><strong>Negation</strong> is a derived connective denoted by <code>~</code>, which doesn’t have its own introduction rules, but is rather defined as:</p>
-<div class="sourceCode" id="cb12" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb12-1" title="1">Print not.</a></code></pre></div>
+<div class="sourceCode" id="cb12" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb12-1"><a href="#cb12-1"></a>Print not.</span></code></pre></div>
 <pre class="example"><code>not = fun A : Prop =&gt; A -&gt; False ; &lt;----
      : Prop -&gt; Prop
 </code></pre>
 <p>The part <code>A -&gt; False</code> captures the idea that to prove a negation of <code>A</code> we need to prove that <code>A</code> is contradictory.</p>
 <p><strong>Biconditional</strong> or iff as another derived connective denoted by <code>&lt;-&gt;</code> and defined as:</p>
-<div class="sourceCode" id="cb14" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb14-1" title="1">Print iff.</a></code></pre></div>
+<div class="sourceCode" id="cb14" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb14-1"><a href="#cb14-1"></a>Print iff.</span></code></pre></div>
 <pre class="example"><code>iff = fun A B : Prop =&gt; (A -&gt; B) /\ (B -&gt; A) ; &lt;----
      : Prop -&gt; Prop -&gt; Prop
 </code></pre>
-<p>All these connectives are regular types<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>. Currently, we have everything needed to start proving interesting theorems, but you are encouraged to explore the standard library further.</p>
+<p>All these connectives are regular types<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>. Currently, we have everything needed to start proving interesting theorems, but you are encouraged to explore the standard library further.</p>
 <h1 id="simple-proofs">Simple proofs</h1>
 <p><code>Coq</code> is designed to be used interactively. Just reading proofs without seeing the state of the proof in <code>Coq</code>’s output is rather laborious. I’ll show some intermediate output between <code>(*</code> and <code>*)</code> in the code samples below, but installing <code>Coq</code> and executing proofs step-by-step is strongly encouraged.</p>
 <p>We start by proving two lemmas that state that when some proposition is a direct consequence of a disjunction then it is a direct consequence of any side of a disjunction. Let’s do the left side first.</p>
-<div class="sourceCode" id="cb16" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb16-1" title="1">Lemma or_impl: forall A B C: Prop,</a>
-<a class="sourceLine" id="cb16-2" title="2">    ((A \/ B) -&gt; C) -&gt; (A -&gt; C).</a>
-<a class="sourceLine" id="cb16-3" title="3">Proof.</a>
-<a class="sourceLine" id="cb16-4" title="4">  (*</a>
-<a class="sourceLine" id="cb16-5" title="5">    This is a default state of the proof:</a>
-<a class="sourceLine" id="cb16-6" title="6">    1 subgoal (ID 1)</a>
-<a class="sourceLine" id="cb16-7" title="7"></a>
-<a class="sourceLine" id="cb16-8" title="8">    ============================</a>
-<a class="sourceLine" id="cb16-9" title="9">    forall A B C : Prop, (A \/ B -&gt; C) -&gt; A -&gt; C</a>
-<a class="sourceLine" id="cb16-10" title="10"></a>
-<a class="sourceLine" id="cb16-11" title="11">    To actually get anything done we need to introduce</a>
-<a class="sourceLine" id="cb16-12" title="12">    the propositions and premises into the scope using</a>
-<a class="sourceLine" id="cb16-13" title="13">    intros command.</a>
-<a class="sourceLine" id="cb16-14" title="14">   *)</a>
-<a class="sourceLine" id="cb16-15" title="15">  intros A B C H_or H_A.</a>
-<a class="sourceLine" id="cb16-16" title="16">  (*</a>
-<a class="sourceLine" id="cb16-17" title="17">    1 subgoal (ID 6)</a>
-<a class="sourceLine" id="cb16-18" title="18"></a>
-<a class="sourceLine" id="cb16-19" title="19">    A, B, C : Prop</a>
-<a class="sourceLine" id="cb16-20" title="20">    H_or : A \/ B -&gt; C</a>
-<a class="sourceLine" id="cb16-21" title="21">    H_A : A</a>
-<a class="sourceLine" id="cb16-22" title="22">    ============================</a>
-<a class="sourceLine" id="cb16-23" title="23">    C</a>
-<a class="sourceLine" id="cb16-24" title="24"></a>
-<a class="sourceLine" id="cb16-25" title="25">    The goal has changed: now we need to prove C using</a>
-<a class="sourceLine" id="cb16-26" title="26">    hypotheses in the scope.</a>
-<a class="sourceLine" id="cb16-27" title="27"></a>
-<a class="sourceLine" id="cb16-28" title="28">    We see that there is a single way to prove C and it</a>
-<a class="sourceLine" id="cb16-29" title="29">    is by proving A \/ B from H_or.</a>
-<a class="sourceLine" id="cb16-30" title="30"></a>
-<a class="sourceLine" id="cb16-31" title="31">    Since we have a proof of A in a form of H_A we can</a>
-<a class="sourceLine" id="cb16-32" title="32">    prove A \/ B using or_introl constructor. The resulting</a>
-<a class="sourceLine" id="cb16-33" title="33">    term is named Pf_or.</a>
-<a class="sourceLine" id="cb16-34" title="34">   *)</a>
-<a class="sourceLine" id="cb16-35" title="35">  pose (Pf_or := or_introl H_A: A \/ B).</a>
-<a class="sourceLine" id="cb16-36" title="36">  (*</a>
-<a class="sourceLine" id="cb16-37" title="37">    1 subgoal (ID 10)</a>
-<a class="sourceLine" id="cb16-38" title="38"></a>
-<a class="sourceLine" id="cb16-39" title="39">    A, B, C : Prop</a>
-<a class="sourceLine" id="cb16-40" title="40">    H_or : A \/ B -&gt; C</a>
-<a class="sourceLine" id="cb16-41" title="41">    H_A : A</a>
-<a class="sourceLine" id="cb16-42" title="42">    Pf_or := (or_introl H_A : A \/ B) : A \/ B</a>
-<a class="sourceLine" id="cb16-43" title="43">    ============================</a>
-<a class="sourceLine" id="cb16-44" title="44">    C</a>
-<a class="sourceLine" id="cb16-45" title="45"></a>
-<a class="sourceLine" id="cb16-46" title="46">    Now we can prove C from Pf_or and H_or by modus ponens.</a>
-<a class="sourceLine" id="cb16-47" title="47">   *)</a>
-<a class="sourceLine" id="cb16-48" title="48">  apply H_or in Pf_or as Pf.</a>
-<a class="sourceLine" id="cb16-49" title="49">  (*</a>
-<a class="sourceLine" id="cb16-50" title="50">    1 subgoal (ID 13)</a>
-<a class="sourceLine" id="cb16-51" title="51"></a>
-<a class="sourceLine" id="cb16-52" title="52">    A, B, C : Prop</a>
-<a class="sourceLine" id="cb16-53" title="53">    H_or : A \/ B -&gt; C</a>
-<a class="sourceLine" id="cb16-54" title="54">    H_A : A</a>
-<a class="sourceLine" id="cb16-55" title="55">    Pf_or := (or_introl H_A : A \/ B) : A \/ B</a>
-<a class="sourceLine" id="cb16-56" title="56">    Pf : C</a>
-<a class="sourceLine" id="cb16-57" title="57">    ============================</a>
-<a class="sourceLine" id="cb16-58" title="58">    C</a>
-<a class="sourceLine" id="cb16-59" title="59">   *)</a>
-<a class="sourceLine" id="cb16-60" title="60">  exact Pf.</a>
-<a class="sourceLine" id="cb16-61" title="61">Qed.</a></code></pre></div>
+<div class="sourceCode" id="cb16" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb16-1"><a href="#cb16-1"></a>Lemma or_impl: forall A B C: Prop,</span>
+<span id="cb16-2"><a href="#cb16-2"></a>    ((A \/ B) -&gt; C) -&gt; (A -&gt; C).</span>
+<span id="cb16-3"><a href="#cb16-3"></a>Proof.</span>
+<span id="cb16-4"><a href="#cb16-4"></a>  (*</span>
+<span id="cb16-5"><a href="#cb16-5"></a>    This is a default state of the proof:</span>
+<span id="cb16-6"><a href="#cb16-6"></a>    1 subgoal (ID 1)</span>
+<span id="cb16-7"><a href="#cb16-7"></a></span>
+<span id="cb16-8"><a href="#cb16-8"></a>    ============================</span>
+<span id="cb16-9"><a href="#cb16-9"></a>    forall A B C : Prop, (A \/ B -&gt; C) -&gt; A -&gt; C</span>
+<span id="cb16-10"><a href="#cb16-10"></a></span>
+<span id="cb16-11"><a href="#cb16-11"></a>    To actually get anything done we need to introduce</span>
+<span id="cb16-12"><a href="#cb16-12"></a>    the propositions and premises into the scope using</span>
+<span id="cb16-13"><a href="#cb16-13"></a>    intros command.</span>
+<span id="cb16-14"><a href="#cb16-14"></a>   *)</span>
+<span id="cb16-15"><a href="#cb16-15"></a>  intros A B C H_or H_A.</span>
+<span id="cb16-16"><a href="#cb16-16"></a>  (*</span>
+<span id="cb16-17"><a href="#cb16-17"></a>    1 subgoal (ID 6)</span>
+<span id="cb16-18"><a href="#cb16-18"></a></span>
+<span id="cb16-19"><a href="#cb16-19"></a>    A, B, C : Prop</span>
+<span id="cb16-20"><a href="#cb16-20"></a>    H_or : A \/ B -&gt; C</span>
+<span id="cb16-21"><a href="#cb16-21"></a>    H_A : A</span>
+<span id="cb16-22"><a href="#cb16-22"></a>    ============================</span>
+<span id="cb16-23"><a href="#cb16-23"></a>    C</span>
+<span id="cb16-24"><a href="#cb16-24"></a></span>
+<span id="cb16-25"><a href="#cb16-25"></a>    The goal has changed: now we need to prove C using</span>
+<span id="cb16-26"><a href="#cb16-26"></a>    hypotheses in the scope.</span>
+<span id="cb16-27"><a href="#cb16-27"></a></span>
+<span id="cb16-28"><a href="#cb16-28"></a>    We see that there is a single way to prove C and it</span>
+<span id="cb16-29"><a href="#cb16-29"></a>    is by proving A \/ B from H_or.</span>
+<span id="cb16-30"><a href="#cb16-30"></a></span>
+<span id="cb16-31"><a href="#cb16-31"></a>    Since we have a proof of A in a form of H_A we can</span>
+<span id="cb16-32"><a href="#cb16-32"></a>    prove A \/ B using or_introl constructor. The resulting</span>
+<span id="cb16-33"><a href="#cb16-33"></a>    term is named Pf_or.</span>
+<span id="cb16-34"><a href="#cb16-34"></a>   *)</span>
+<span id="cb16-35"><a href="#cb16-35"></a>  pose (Pf_or := or_introl H_A: A \/ B).</span>
+<span id="cb16-36"><a href="#cb16-36"></a>  (*</span>
+<span id="cb16-37"><a href="#cb16-37"></a>    1 subgoal (ID 10)</span>
+<span id="cb16-38"><a href="#cb16-38"></a></span>
+<span id="cb16-39"><a href="#cb16-39"></a>    A, B, C : Prop</span>
+<span id="cb16-40"><a href="#cb16-40"></a>    H_or : A \/ B -&gt; C</span>
+<span id="cb16-41"><a href="#cb16-41"></a>    H_A : A</span>
+<span id="cb16-42"><a href="#cb16-42"></a>    Pf_or := (or_introl H_A : A \/ B) : A \/ B</span>
+<span id="cb16-43"><a href="#cb16-43"></a>    ============================</span>
+<span id="cb16-44"><a href="#cb16-44"></a>    C</span>
+<span id="cb16-45"><a href="#cb16-45"></a></span>
+<span id="cb16-46"><a href="#cb16-46"></a>    Now we can prove C from Pf_or and H_or by modus ponens.</span>
+<span id="cb16-47"><a href="#cb16-47"></a>   *)</span>
+<span id="cb16-48"><a href="#cb16-48"></a>  apply H_or in Pf_or as Pf.</span>
+<span id="cb16-49"><a href="#cb16-49"></a>  (*</span>
+<span id="cb16-50"><a href="#cb16-50"></a>    1 subgoal (ID 13)</span>
+<span id="cb16-51"><a href="#cb16-51"></a></span>
+<span id="cb16-52"><a href="#cb16-52"></a>    A, B, C : Prop</span>
+<span id="cb16-53"><a href="#cb16-53"></a>    H_or : A \/ B -&gt; C</span>
+<span id="cb16-54"><a href="#cb16-54"></a>    H_A : A</span>
+<span id="cb16-55"><a href="#cb16-55"></a>    Pf_or := (or_introl H_A : A \/ B) : A \/ B</span>
+<span id="cb16-56"><a href="#cb16-56"></a>    Pf : C</span>
+<span id="cb16-57"><a href="#cb16-57"></a>    ============================</span>
+<span id="cb16-58"><a href="#cb16-58"></a>    C</span>
+<span id="cb16-59"><a href="#cb16-59"></a>   *)</span>
+<span id="cb16-60"><a href="#cb16-60"></a>  exact Pf.</span>
+<span id="cb16-61"><a href="#cb16-61"></a>Qed.</span></code></pre></div>
 <p>The right side can be proved similarly:</p>
-<div class="sourceCode" id="cb17" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb17-1" title="1">Lemma or_impr: forall A B C: Prop,</a>
-<a class="sourceLine" id="cb17-2" title="2">    ((A \/ B) -&gt; C) -&gt; (B -&gt; C).</a>
-<a class="sourceLine" id="cb17-3" title="3">Proof.</a>
-<a class="sourceLine" id="cb17-4" title="4">  intros A B C H_or H_B.</a>
-<a class="sourceLine" id="cb17-5" title="5">  pose (Pf_B := or_intror H_B : A \/ B).</a>
-<a class="sourceLine" id="cb17-6" title="6">  apply H_or in Pf_B as Pf.</a>
-<a class="sourceLine" id="cb17-7" title="7">  exact Pf.</a>
-<a class="sourceLine" id="cb17-8" title="8">Qed.</a></code></pre></div>
+<div class="sourceCode" id="cb17" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb17-1"><a href="#cb17-1"></a>Lemma or_impr: forall A B C: Prop,</span>
+<span id="cb17-2"><a href="#cb17-2"></a>    ((A \/ B) -&gt; C) -&gt; (B -&gt; C).</span>
+<span id="cb17-3"><a href="#cb17-3"></a>Proof.</span>
+<span id="cb17-4"><a href="#cb17-4"></a>  intros A B C H_or H_B.</span>
+<span id="cb17-5"><a href="#cb17-5"></a>  pose (Pf_B := or_intror H_B : A \/ B).</span>
+<span id="cb17-6"><a href="#cb17-6"></a>  apply H_or in Pf_B as Pf.</span>
+<span id="cb17-7"><a href="#cb17-7"></a>  exact Pf.</span>
+<span id="cb17-8"><a href="#cb17-8"></a>Qed.</span></code></pre></div>
 <p>We can also prove a combined proposition by splitting a conjunction and using <code>or_impl</code> and <code>or_impr</code> to prove each side separately:</p>
-<div class="sourceCode" id="cb18" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb18-1" title="1">Lemma or_implr: forall (A B C: Prop),</a>
-<a class="sourceLine" id="cb18-2" title="2">    ((A \/ B) -&gt; C) -&gt; ((A -&gt; C) /\ (B -&gt; C)).</a>
-<a class="sourceLine" id="cb18-3" title="3">Proof.</a>
-<a class="sourceLine" id="cb18-4" title="4">  intros A B C H_or.</a>
-<a class="sourceLine" id="cb18-5" title="5">  split.</a>
-<a class="sourceLine" id="cb18-6" title="6">  (*</a>
-<a class="sourceLine" id="cb18-7" title="7">    A, B, C : Prop</a>
-<a class="sourceLine" id="cb18-8" title="8">    H_or : A \/ B -&gt; C</a>
-<a class="sourceLine" id="cb18-9" title="9">    ============================</a>
-<a class="sourceLine" id="cb18-10" title="10">    A -&gt; C</a>
-<a class="sourceLine" id="cb18-11" title="11"></a>
-<a class="sourceLine" id="cb18-12" title="12">    subgoal 2 (ID 10) is:</a>
-<a class="sourceLine" id="cb18-13" title="13">    B -&gt; C</a>
-<a class="sourceLine" id="cb18-14" title="14">   *)</a>
-<a class="sourceLine" id="cb18-15" title="15">  - exact (or_impl A B C H_or).</a>
-<a class="sourceLine" id="cb18-16" title="16">  - exact (or_impr A B C H_or).</a>
-<a class="sourceLine" id="cb18-17" title="17">Qed.</a></code></pre></div>
+<div class="sourceCode" id="cb18" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb18-1"><a href="#cb18-1"></a>Lemma or_implr: forall (A B C: Prop),</span>
+<span id="cb18-2"><a href="#cb18-2"></a>    ((A \/ B) -&gt; C) -&gt; ((A -&gt; C) /\ (B -&gt; C)).</span>
+<span id="cb18-3"><a href="#cb18-3"></a>Proof.</span>
+<span id="cb18-4"><a href="#cb18-4"></a>  intros A B C H_or.</span>
+<span id="cb18-5"><a href="#cb18-5"></a>  split.</span>
+<span id="cb18-6"><a href="#cb18-6"></a>  (*</span>
+<span id="cb18-7"><a href="#cb18-7"></a>    A, B, C : Prop</span>
+<span id="cb18-8"><a href="#cb18-8"></a>    H_or : A \/ B -&gt; C</span>
+<span id="cb18-9"><a href="#cb18-9"></a>    ============================</span>
+<span id="cb18-10"><a href="#cb18-10"></a>    A -&gt; C</span>
+<span id="cb18-11"><a href="#cb18-11"></a></span>
+<span id="cb18-12"><a href="#cb18-12"></a>    subgoal 2 (ID 10) is:</span>
+<span id="cb18-13"><a href="#cb18-13"></a>    B -&gt; C</span>
+<span id="cb18-14"><a href="#cb18-14"></a>   *)</span>
+<span id="cb18-15"><a href="#cb18-15"></a>  - exact (or_impl A B C H_or).</span>
+<span id="cb18-16"><a href="#cb18-16"></a>  - exact (or_impr A B C H_or).</span>
+<span id="cb18-17"><a href="#cb18-17"></a>Qed.</span></code></pre></div>
 <p>This lemma will come in handy when we try to prove a theorem about the law of excluded middle in the next section.</p>
 <h1 id="we-dont-need-no-lem">We don’t need no LEM</h1>
 <p>The theorem we’re going to prove can be written as <span class="math inline">\(\neg \neg (A
@@ -194,85 +194,85 @@
 </code></pre>
 <p>Note that “does not refute” is not the same as “asserts”. In fact, double negation elimination <span class="math inline">\(\neg \neg A \implies A\)</span> is an axiom of classical logic and equivalent to LEM.</p>
 <p>The annotated proof in <code>Coq</code> is given below. Although, the proof may seem rather straightforward, especially with <code>or_implr</code> lemma proved previously, it definitely didn’t seem trivial to me and took some time to figure out all the necessary pieces. So, hopefully someone will find it interesting.</p>
-<div class="sourceCode" id="cb20" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><a class="sourceLine" id="cb20-1" title="1">Theorem not_refuting_LEM: forall (A: Prop), ~~(A \/ ~A).</a>
-<a class="sourceLine" id="cb20-2" title="2">Proof.</a>
-<a class="sourceLine" id="cb20-3" title="3">  intro A.</a>
-<a class="sourceLine" id="cb20-4" title="4">  (*</a>
-<a class="sourceLine" id="cb20-5" title="5">    1 subgoal (ID 5)</a>
-<a class="sourceLine" id="cb20-6" title="6"></a>
-<a class="sourceLine" id="cb20-7" title="7">    A : Prop</a>
-<a class="sourceLine" id="cb20-8" title="8">    ============================</a>
-<a class="sourceLine" id="cb20-9" title="9">    ~ ~ (A \/ ~ A)</a>
-<a class="sourceLine" id="cb20-10" title="10"></a>
-<a class="sourceLine" id="cb20-11" title="11">    We cannot do anything with negation as it is.</a>
-<a class="sourceLine" id="cb20-12" title="12">    To proceed we need to unfold it, according to</a>
-<a class="sourceLine" id="cb20-13" title="13">    the definition.</a>
-<a class="sourceLine" id="cb20-14" title="14">   *)</a>
-<a class="sourceLine" id="cb20-15" title="15">  unfold not.</a>
-<a class="sourceLine" id="cb20-16" title="16">  (*</a>
-<a class="sourceLine" id="cb20-17" title="17">    A : Prop</a>
-<a class="sourceLine" id="cb20-18" title="18">    ============================</a>
-<a class="sourceLine" id="cb20-19" title="19">    (A \/ (A -&gt; False) -&gt; False) -&gt; False</a>
-<a class="sourceLine" id="cb20-20" title="20"></a>
-<a class="sourceLine" id="cb20-21" title="21">    Not we can bring the left hand side of</a>
-<a class="sourceLine" id="cb20-22" title="22">    the implication into scope.</a>
-<a class="sourceLine" id="cb20-23" title="23">   *)</a>
-<a class="sourceLine" id="cb20-24" title="24">  intro H_refuteLEM.</a>
-<a class="sourceLine" id="cb20-25" title="25">  (*</a>
-<a class="sourceLine" id="cb20-26" title="26">    1 subgoal (ID 7)</a>
-<a class="sourceLine" id="cb20-27" title="27"></a>
-<a class="sourceLine" id="cb20-28" title="28">    A : Prop</a>
-<a class="sourceLine" id="cb20-29" title="29">    H_refuteLEM : A \/ (A -&gt; False) -&gt; False</a>
-<a class="sourceLine" id="cb20-30" title="30">    ============================</a>
-<a class="sourceLine" id="cb20-31" title="31">    False</a>
-<a class="sourceLine" id="cb20-32" title="32"></a>
-<a class="sourceLine" id="cb20-33" title="33">    We can furter break down H_refuteLEM into 2</a>
-<a class="sourceLine" id="cb20-34" title="34">    pieces using or_implr lemma and destruct</a>
-<a class="sourceLine" id="cb20-35" title="35">    tactic.</a>
-<a class="sourceLine" id="cb20-36" title="36">   *)</a>
-<a class="sourceLine" id="cb20-37" title="37">  apply or_implr in H_refuteLEM.</a>
-<a class="sourceLine" id="cb20-38" title="38">  (*</a>
-<a class="sourceLine" id="cb20-39" title="39">    1 subgoal (ID 8)</a>
-<a class="sourceLine" id="cb20-40" title="40"></a>
-<a class="sourceLine" id="cb20-41" title="41">    A : Prop</a>
-<a class="sourceLine" id="cb20-42" title="42">    H_refuteLEM : (A -&gt; False) /\ ((A -&gt; False) -&gt; False)</a>
-<a class="sourceLine" id="cb20-43" title="43">    ============================</a>
-<a class="sourceLine" id="cb20-44" title="44">    False</a>
-<a class="sourceLine" id="cb20-45" title="45">   *)</a>
-<a class="sourceLine" id="cb20-46" title="46">  destruct H_refuteLEM as [H_refuteA H_refuteNotA].</a>
-<a class="sourceLine" id="cb20-47" title="47">  (*</a>
-<a class="sourceLine" id="cb20-48" title="48">    1 subgoal (ID 14)</a>
-<a class="sourceLine" id="cb20-49" title="49"></a>
-<a class="sourceLine" id="cb20-50" title="50">    A : Prop</a>
-<a class="sourceLine" id="cb20-51" title="51">    H_refuteA : A -&gt; False</a>
-<a class="sourceLine" id="cb20-52" title="52">    H_refuteNotA : (A -&gt; False) -&gt; False</a>
-<a class="sourceLine" id="cb20-53" title="53">    ============================</a>
-<a class="sourceLine" id="cb20-54" title="54">    False</a>
-<a class="sourceLine" id="cb20-55" title="55"></a>
-<a class="sourceLine" id="cb20-56" title="56">    Here we can use H_refuteA to prove the right hand</a>
-<a class="sourceLine" id="cb20-57" title="57">    side of H_refuteNotA.</a>
-<a class="sourceLine" id="cb20-58" title="58">   *)</a>
-<a class="sourceLine" id="cb20-59" title="59">  apply H_refuteNotA in H_refuteA as Pf_False.</a>
-<a class="sourceLine" id="cb20-60" title="60">  (*</a>
-<a class="sourceLine" id="cb20-61" title="61">    1 subgoal (ID 17)</a>
-<a class="sourceLine" id="cb20-62" title="62"></a>
-<a class="sourceLine" id="cb20-63" title="63">    A : Prop</a>
-<a class="sourceLine" id="cb20-64" title="64">    H_refuteA : A -&gt; False</a>
-<a class="sourceLine" id="cb20-65" title="65">    Pf_False : False</a>
-<a class="sourceLine" id="cb20-66" title="66">    H_refuteNotA : (A -&gt; False) -&gt; False</a>
-<a class="sourceLine" id="cb20-67" title="67">    ============================</a>
-<a class="sourceLine" id="cb20-68" title="68">    False</a>
-<a class="sourceLine" id="cb20-69" title="69">   *)</a>
-<a class="sourceLine" id="cb20-70" title="70">  exact Pf_False.</a>
-<a class="sourceLine" id="cb20-71" title="71">Qed.</a></code></pre></div>
+<div class="sourceCode" id="cb20" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb20-1"><a href="#cb20-1"></a>Theorem not_refuting_LEM: forall (A: Prop), ~~(A \/ ~A).</span>
+<span id="cb20-2"><a href="#cb20-2"></a>Proof.</span>
+<span id="cb20-3"><a href="#cb20-3"></a>  intro A.</span>
+<span id="cb20-4"><a href="#cb20-4"></a>  (*</span>
+<span id="cb20-5"><a href="#cb20-5"></a>    1 subgoal (ID 5)</span>
+<span id="cb20-6"><a href="#cb20-6"></a></span>
+<span id="cb20-7"><a href="#cb20-7"></a>    A : Prop</span>
+<span id="cb20-8"><a href="#cb20-8"></a>    ============================</span>
+<span id="cb20-9"><a href="#cb20-9"></a>    ~ ~ (A \/ ~ A)</span>
+<span id="cb20-10"><a href="#cb20-10"></a></span>
+<span id="cb20-11"><a href="#cb20-11"></a>    We cannot do anything with negation as it is.</span>
+<span id="cb20-12"><a href="#cb20-12"></a>    To proceed we need to unfold it, according to</span>
+<span id="cb20-13"><a href="#cb20-13"></a>    the definition.</span>
+<span id="cb20-14"><a href="#cb20-14"></a>   *)</span>
+<span id="cb20-15"><a href="#cb20-15"></a>  unfold not.</span>
+<span id="cb20-16"><a href="#cb20-16"></a>  (*</span>
+<span id="cb20-17"><a href="#cb20-17"></a>    A : Prop</span>
+<span id="cb20-18"><a href="#cb20-18"></a>    ============================</span>
+<span id="cb20-19"><a href="#cb20-19"></a>    (A \/ (A -&gt; False) -&gt; False) -&gt; False</span>
+<span id="cb20-20"><a href="#cb20-20"></a></span>
+<span id="cb20-21"><a href="#cb20-21"></a>    Not we can bring the left hand side of</span>
+<span id="cb20-22"><a href="#cb20-22"></a>    the implication into scope.</span>
+<span id="cb20-23"><a href="#cb20-23"></a>   *)</span>
+<span id="cb20-24"><a href="#cb20-24"></a>  intro H_refuteLEM.</span>
+<span id="cb20-25"><a href="#cb20-25"></a>  (*</span>
+<span id="cb20-26"><a href="#cb20-26"></a>    1 subgoal (ID 7)</span>
+<span id="cb20-27"><a href="#cb20-27"></a></span>
+<span id="cb20-28"><a href="#cb20-28"></a>    A : Prop</span>
+<span id="cb20-29"><a href="#cb20-29"></a>    H_refuteLEM : A \/ (A -&gt; False) -&gt; False</span>
+<span id="cb20-30"><a href="#cb20-30"></a>    ============================</span>
+<span id="cb20-31"><a href="#cb20-31"></a>    False</span>
+<span id="cb20-32"><a href="#cb20-32"></a></span>
+<span id="cb20-33"><a href="#cb20-33"></a>    We can furter break down H_refuteLEM into 2</span>
+<span id="cb20-34"><a href="#cb20-34"></a>    pieces using or_implr lemma and destruct</span>
+<span id="cb20-35"><a href="#cb20-35"></a>    tactic.</span>
+<span id="cb20-36"><a href="#cb20-36"></a>   *)</span>
+<span id="cb20-37"><a href="#cb20-37"></a>  apply or_implr in H_refuteLEM.</span>
+<span id="cb20-38"><a href="#cb20-38"></a>  (*</span>
+<span id="cb20-39"><a href="#cb20-39"></a>    1 subgoal (ID 8)</span>
+<span id="cb20-40"><a href="#cb20-40"></a></span>
+<span id="cb20-41"><a href="#cb20-41"></a>    A : Prop</span>
+<span id="cb20-42"><a href="#cb20-42"></a>    H_refuteLEM : (A -&gt; False) /\ ((A -&gt; False) -&gt; False)</span>
+<span id="cb20-43"><a href="#cb20-43"></a>    ============================</span>
+<span id="cb20-44"><a href="#cb20-44"></a>    False</span>
+<span id="cb20-45"><a href="#cb20-45"></a>   *)</span>
+<span id="cb20-46"><a href="#cb20-46"></a>  destruct H_refuteLEM as [H_refuteA H_refuteNotA].</span>
+<span id="cb20-47"><a href="#cb20-47"></a>  (*</span>
+<span id="cb20-48"><a href="#cb20-48"></a>    1 subgoal (ID 14)</span>
+<span id="cb20-49"><a href="#cb20-49"></a></span>
+<span id="cb20-50"><a href="#cb20-50"></a>    A : Prop</span>
+<span id="cb20-51"><a href="#cb20-51"></a>    H_refuteA : A -&gt; False</span>
+<span id="cb20-52"><a href="#cb20-52"></a>    H_refuteNotA : (A -&gt; False) -&gt; False</span>
+<span id="cb20-53"><a href="#cb20-53"></a>    ============================</span>
+<span id="cb20-54"><a href="#cb20-54"></a>    False</span>
+<span id="cb20-55"><a href="#cb20-55"></a></span>
+<span id="cb20-56"><a href="#cb20-56"></a>    Here we can use H_refuteA to prove the right hand</span>
+<span id="cb20-57"><a href="#cb20-57"></a>    side of H_refuteNotA.</span>
+<span id="cb20-58"><a href="#cb20-58"></a>   *)</span>
+<span id="cb20-59"><a href="#cb20-59"></a>  apply H_refuteNotA in H_refuteA as Pf_False.</span>
+<span id="cb20-60"><a href="#cb20-60"></a>  (*</span>
+<span id="cb20-61"><a href="#cb20-61"></a>    1 subgoal (ID 17)</span>
+<span id="cb20-62"><a href="#cb20-62"></a></span>
+<span id="cb20-63"><a href="#cb20-63"></a>    A : Prop</span>
+<span id="cb20-64"><a href="#cb20-64"></a>    H_refuteA : A -&gt; False</span>
+<span id="cb20-65"><a href="#cb20-65"></a>    Pf_False : False</span>
+<span id="cb20-66"><a href="#cb20-66"></a>    H_refuteNotA : (A -&gt; False) -&gt; False</span>
+<span id="cb20-67"><a href="#cb20-67"></a>    ============================</span>
+<span id="cb20-68"><a href="#cb20-68"></a>    False</span>
+<span id="cb20-69"><a href="#cb20-69"></a>   *)</span>
+<span id="cb20-70"><a href="#cb20-70"></a>  exact Pf_False.</span>
+<span id="cb20-71"><a href="#cb20-71"></a>Qed.</span></code></pre></div>
 <h1 id="footnotes">Footnotes</h1>
-<section class="footnotes">
+<section class="footnotes" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1"><p>Of course the type system should be rich enough to allow this.<a href="#fnref1" class="footnote-back">↩</a></p></li>
-<li id="fn2"><p>This might be a good time to install <code>Coq</code> and an IDE (whether its <code>Coq-IDE</code> or <code>Proof General</code>).<a href="#fnref2" class="footnote-back">↩</a></p></li>
-<li id="fn3"><p>Constructors are also called <span class="underline">introduction rules</span>. Indeed, constructors can be thought of as <em>rules</em> that <em>introduce</em> a term of specific type given some other terms.<a href="#fnref3" class="footnote-back">↩</a></p></li>
-<li id="fn4"><p>Here implication and inductive types are basic building blocks. Other connectives are defined in terms of them. But this is not the only way to axiomatize logic; there is a handful others with different basic connectives, axioms and inference rules.<a href="#fnref4" class="footnote-back">↩</a></p></li>
+<li id="fn1" role="doc-endnote"><p>Of course the type system should be rich enough to allow this.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>This might be a good time to install <code>Coq</code> and an IDE (whether its <code>Coq-IDE</code> or <code>Proof General</code>).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p>Constructors are also called <span class="underline">introduction rules</span>. Indeed, constructors can be thought of as <em>rules</em> that <em>introduce</em> a term of specific type given some other terms.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>Here implication and inductive types are basic building blocks. Other connectives are defined in terms of them. But this is not the only way to axiomatize logic; there is a handful others with different basic connectives, axioms and inference rules.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
     </section>
