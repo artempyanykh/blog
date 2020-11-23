@@ -2,57 +2,60 @@
 
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>$title$</title>
-    <link rel="stylesheet" href="/css/default.css" />
-    <link rel="stylesheet" href="/css/syntax.css" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
-    <link rel="icon" type="image/png" href="/images/favicon.png">
-  </head>
-  <body>
-    <header>
-      <div class="header-page">
-        <span class="header-page-link">
-          $partial("templates/logo.html")$
-        </span>
 
-        <h1>$title$</h1>
-      </div>
-    </header>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>$title$</title>
+  <link rel="stylesheet" href="/css/default.css" />
+  <link rel="stylesheet" href="/css/syntax.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  $partial("templates/ga.html")$
+</head>
 
-    <main role="main">
-      $body$
-    </main>
+<body>
+  <header>
+    <div class="header-page">
+      <span class="header-page-link">
+        $partial("templates/logo.html")$
+      </span>
 
-    <footer>
-      <nav class="footer-nav">
+      <h1>$title$</h1>
+    </div>
+  </header>
 
-        <a class="footer-nav-item" href="/">
-          <span class="fa fa-home fa-lg"></span>
-        </a>
+  <main role="main">
+    $body$
+  </main>
 
-        <a class="footer-nav-item" href="https://github.com/$github_username$">
-          <span class="fa fa-github fa-lg"></span>
-        </a>
+  <footer>
+    <nav class="footer-nav">
 
-        <a class="footer-nav-item" href="https://ru.linkedin.com/in/$linkedin_username$/en">
-          <span class="fa fa-linkedin fa-lg"></span>
-        </a>
+      <a class="footer-nav-item" href="/">
+        <span class="fa fa-home fa-lg"></span>
+      </a>
 
-        <a class="footer-nav-item" href="https://twitter.com/$twitter_username$">
-          <span class="fa fa-twitter fa-lg"></span>
-        </a>
+      <a class="footer-nav-item" href="https://github.com/$github_username$">
+        <span class="fa fa-github fa-lg"></span>
+      </a>
 
-        <a class="footer-nav-item" href="/about.html">
-          <span class="fa fa-question fa-lg"></span>
-        </a>
-      </nav>
-    </footer>
+      <a class="footer-nav-item" href="https://ru.linkedin.com/in/$linkedin_username$/en">
+        <span class="fa fa-linkedin fa-lg"></span>
+      </a>
 
-    $partial("templates/mathjax.html")$
-    $partial("templates/ga.html")$
-  </body>
+      <a class="footer-nav-item" href="https://twitter.com/$twitter_username$">
+        <span class="fa fa-twitter fa-lg"></span>
+      </a>
+
+      <a class="footer-nav-item" href="/about.html">
+        <span class="fa fa-question fa-lg"></span>
+      </a>
+    </nav>
+  </footer>
+
+  $partial("templates/mathjax.html")$
+</body>
+
 </html>
