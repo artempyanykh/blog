@@ -20,4 +20,4 @@ In both cases we're going to look at how straightforward the translation from th
 --- 
 
 - Coding problem: [link to Hackerrank](https://www.hackerrank.com/challenges/minimum-swaps-2/problem).
-- Source code of the solutions: [link to Github](https://github.com/artempyanykh/artempyanykh.github.io/tree/master/lab/coding-in-haskell).
+- Source code of the solutions: [link to Github](https://github.com/artempyanykh/blog/tree/master/lab/coding-in-haskell).
