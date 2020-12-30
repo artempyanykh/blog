@@ -1,6 +1,8 @@
 module SwapsGrig where
 
-import Data.Array.IArray (Array, array, elems, (!))
+import Data.Array.Unboxed
+
+-- import Data.Array.IArray (Array, array, elems, (!))
 
 imap :: (Int -> a -> b) -> [a] -> [b]
 imap = m 1
