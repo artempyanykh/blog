@@ -54,24 +54,38 @@
         
     </section>
     <section>
-        <p><strong>A functor is a homomorphism of categories.</strong> Nice and short definition, but it made absolutely no sense to me. At the time I decided to step up my FP game, I was pretty well versed in Scalaz, confidently used Functor, Monad, Applicative and the like. So, I jumped into a textbook on Category Theory… and got totally stuck. Something just hadn’t clicked in my mind, I couldn’t map the math to Scalaz code, and instead of being enlightened I only got confused. Then other things came up, and Cats were put on a back-burner. The issue as I see it now was in the wrong mindset I developed while being exposed only to the code and internet articles. Recently, I made another attempt in learning Category Theory which is on-going now and to some extent more successful.</p>
+        <p><strong>A functor is a homomorphism of categories.</strong>
+Nice and short definition, but it made absolutely no sense to me.
+At the time I decided to step up my FP game, I was pretty well versed in Scalaz, confidently used Functor, Monad, Applicative and the like.
+So, I jumped into a textbook on Category Theory… and got totally stuck.
+Something just hadn’t clicked in my mind, I couldn’t map the math to Scalaz code, and instead of being enlightened I only got confused.
+Then other things came up, and Cats were put on a back-burner.
+The issue as I see it now was in the wrong mindset I developed while being exposed only to the code and internet articles.
+Recently, I made another attempt in learning Category Theory which is on-going now and to some extent more successful.</p>
 <!--more-->
 <h2 id="what-is-a-category">What is a category?</h2>
-<p>It always helps to go back to basics when feeling confused. So, let’s start with the most basic thing in Cats, namely the definition of a category.</p>
+<p>It always helps to go back to basics when feeling confused.
+So, let’s start with the most basic thing in Cats, namely the definition of a category.</p>
 <p>Formally, a category <span class="math inline">\(\mathscr{C}\)</span> consists of:</p>
 <ol type="1">
 <li>A collection of objects <span class="math inline">\(C_0 = \{A, B, C, \ldots\}\)</span>,</li>
 <li>A collections of arrows<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> <span class="math inline">\(C_1 = \{f, g, h, \ldots\}\)</span>.</li>
 </ol>
-<p>Each arrow has a domain <span class="math inline">\(\mathsf{dom}\ f = A \in C_0\)</span> and a codomain <span class="math inline">\(\mathsf{cod}\ f = B \in C_0\)</span>. This is best visualized with an actual arrow going from <span class="math inline">\(A\)</span> to <span class="math inline">\(B\)</span>, that is <span class="math inline">\(A \xrightarrow{f} B\)</span>.</p>
-<p>For each pair of arrows <span class="math inline">\(f\)</span> and <span class="math inline">\(g\)</span> such that <span class="math inline">\(\mathsf{cod}\ f = \mathsf{dom}\ g\)</span> there should exist another arrow <span class="math inline">\(g \circ f\)</span> called <em>a composition</em>. This operation should be associative, that is <span class="math display">\[
+<p>Each arrow has a domain <span class="math inline">\(\mathsf{dom}\ f = A \in C_0\)</span> and a codomain <span class="math inline">\(\mathsf{cod}\ f = B \in C_0\)</span>.
+This is best visualized with an actual arrow going from <span class="math inline">\(A\)</span> to <span class="math inline">\(B\)</span>, that is <span class="math inline">\(A \xrightarrow{f} B\)</span>.</p>
+<p>For each pair of arrows <span class="math inline">\(f\)</span> and <span class="math inline">\(g\)</span> such that <span class="math inline">\(\mathsf{cod}\ f = \mathsf{dom}\ g\)</span> there should exist another arrow <span class="math inline">\(g \circ f\)</span> called <em>a composition</em>.
+This operation should be associative, that is
+<span class="math display">\[
 (h \circ g) \circ f = h \circ (g \circ f).
 \]</span></p>
-<p>Another important piece in the definition of a category is the existence of an identity arrow. Formally, for each object <span class="math inline">\(A \in C_0\)</span> there should be an arrow <span class="math inline">\(\mathbb{1}_A: A \rightarrow A\)</span> such that for every arrow <span class="math inline">\(f: A \rightarrow B\)</span> the following holds <span class="math display">\[
+<p>Another important piece in the definition of a category is the existence of an identity arrow.
+Formally, for each object <span class="math inline">\(A \in C_0\)</span> there should be an arrow <span class="math inline">\(\mathbb{1}_A: A \rightarrow A\)</span> such that for every arrow <span class="math inline">\(f: A \rightarrow B\)</span> the following holds
+<span class="math display">\[
 f \circ \mathbb{1}_A = \mathbb{1}_B \circ f = f.
 \]</span></p>
 <p>From a categorical point of view, objects are not that important, arrow and relationships between them are important.</p>
-<p>So far, so good. Let’s make the last step and figure out what category we’re dealing with as functional programmers. Apparently it has something to do with functions, and actually, that’s pretty much it. Category <span class="math inline">\(\mathscr{L}\)</span><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> defined as follows:</p>
+<p>So far, so good.
+Let’s make the last step and figure out what category we’re dealing with as functional programmers. Apparently it has something to do with functions, and actually, that’s pretty much it. Category <span class="math inline">\(\mathscr{L}\)</span><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> defined as follows:</p>
 <ul>
 <li><p>Objects <span class="math inline">\(C_0\)</span> are types of our programming language, like <code>Int</code>, <code>Float</code> or <code>Vector[String]</code>.</p></li>
 <li><p>Arrows <span class="math inline">\(C_1\)</span> are functions, e.g.</p>
@@ -79,81 +93,108 @@ f \circ \mathbb{1}_A = \mathbb{1}_B \circ f = f.
 <li><p>Composition <span class="math inline">\(\circ\)</span> is a regular function composition.</p></li>
 </ul>
 <p>Not really a rocket science, but it takes time to sink in.</p>
-<p>It helps to consider another example of a category. I like to call it <span class="math inline">\(\mathscr{F}lower\)</span>. It consists of one artificial object <span class="math inline">\(O\)</span>, and four arrows denoted as <span class="math inline">\(0, 1, 2, 3\)</span>, with the composition being addition modulo 4.</p>
+<p>It helps to consider another example of a category.
+I like to call it <span class="math inline">\(\mathscr{F}lower\)</span>.
+It consists of one artificial object <span class="math inline">\(O\)</span>, and four arrows denoted as <span class="math inline">\(0, 1, 2, 3\)</span>, with the composition being addition modulo 4.</p>
 <p><img src="../images/posts/what-is-a-functor/graphs.svg" width="200" alt="Flower category"></p>
 <p>A simple exercise for a reader would be to prove that:</p>
 <ol type="1">
 <li>the composition of arrows is associative,</li>
 <li>arrow <span class="math inline">\(0\)</span> is an identity arrow.</li>
 </ol>
-<p>Just by looking at <span class="math inline">\(\mathscr{L}\)</span> and <span class="math inline">\(\mathscr{F}lower\)</span> it is easy to see that the notion of a <em>category</em> captures a very broad range of subjects. We as functional programmers are interested in just one category, however, and that is <span class="math inline">\(\mathscr{L}\)</span>.</p>
+<p>Just by looking at <span class="math inline">\(\mathscr{L}\)</span> and <span class="math inline">\(\mathscr{F}lower\)</span> it is easy to see that the notion of a <em>category</em> captures a very broad range of subjects.
+We as functional programmers are interested in just one category, however, and that is <span class="math inline">\(\mathscr{L}\)</span>.</p>
 <h2 id="what-is-a-functor">What is a functor?</h2>
-<p>In short, functor <span class="math inline">\(F\)</span> is a <em>structure preserving</em> map from category <span class="math inline">\(\mathscr{C} = \{C_0, C_1, \circ_\mathscr{C}\}\)</span> to category <span class="math inline">\(\mathscr{D} = \{D_0, D_1, \circ_\mathscr{D}\}\)</span>. Since categories have objects <strong>and</strong> arrows we actually need two maps here:</p>
+<p>In short, functor <span class="math inline">\(F\)</span> is a <em>structure preserving</em> map from category <span class="math inline">\(\mathscr{C} = \{C_0, C_1, \circ_\mathscr{C}\}\)</span> to category <span class="math inline">\(\mathscr{D} = \{D_0, D_1, \circ_\mathscr{D}\}\)</span>.
+Since categories have objects <strong>and</strong> arrows we actually need two maps here:</p>
 <ul>
 <li><span class="math inline">\(F_0: C_0 \rightarrow D_0\)</span> which maps objects to objects, and</li>
 <li><span class="math inline">\(F_1: C_1 \rightarrow D_1\)</span> which maps arrows to arrows,</li>
 </ul>
 <p>We also need laws that capture the essence of being a <em>structure preserving</em> map:</p>
 <ol type="1">
-<li>Functor should preserve domain and codomain: <span class="math display">\[
+<li>Functor should preserve domain and codomain:
+<span class="math display">\[
 \forall f: A \rightarrow B \in C_1 \implies F_1(f): F_0(A) \rightarrow F_0(B).
 \]</span></li>
-<li>Functor should preserve composition: <span class="math display">\[
+<li>Functor should preserve composition:
+<span class="math display">\[
 \forall f, g \in C_1, \mathsf{cod}\ f = \mathsf{dom}\ g: F_1 (g \circ_\mathscr{C} f) = F_1(f) \circ_\mathscr{D} F_1(g).
 \]</span></li>
-<li>Functor should preserve identity arrow: <span class="math display">\[
+<li>Functor should preserve identity arrow:
+<span class="math display">\[
 \forall A \in C_0: F_1(\mathbb{1}_A) = \mathbb{1}_{F_0(A)}.
 \]</span></li>
 </ol>
 <p>This may seem abstract, but not crazy complicated, and it actually starts making sense if you give it enough thinking.</p>
 <h2 id="how-do-we-translate-this-into-scala">How do we translate this into Scala?</h2>
-<p>First, we need to understand that the only category we’re dealing with is <span class="math inline">\(\mathscr{L}\)</span>. So, every functor <span class="math inline">\(F\)</span> will be from <span class="math inline">\(\mathscr{L}\)</span> to <span class="math inline">\(\mathscr{L}\)</span>. Such functors are called <em>endofunctors</em> <a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
-<p>Let’s translate the definition from the previous section into Scala code. There are two parts:</p>
+<p>First, we need to understand that the only category we’re dealing with is <span class="math inline">\(\mathscr{L}\)</span>.
+So, every functor <span class="math inline">\(F\)</span> will be from <span class="math inline">\(\mathscr{L}\)</span> to <span class="math inline">\(\mathscr{L}\)</span>.
+Such functors are called <em>endofunctors</em> <a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
+<p>Let’s translate the definition from the previous section into Scala code.
+There are two parts:</p>
 <ol type="1">
 <li>Mapping from any type to some other type. This is <span class="math inline">\(F_0\)</span> or “objects to objects”.</li>
 <li>Mapping from any function to some other function. This is <span class="math inline">\(F_1\)</span> or “arrows to arrows”.</li>
 </ol>
 <p>In the code that looks like this:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">trait</span> Functor {</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>  <span class="kw">type</span> F0[A]</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  <span class="kw">def</span> F1[A, B](arrow: A =&gt; B): F0[A] =&gt; F0[B]</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> Functor <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> F0<span class="op">[</span>A<span class="op">]</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> F1<span class="op">[</span>A<span class="op">,</span> B<span class="op">](</span>arrow<span class="op">:</span> A <span class="op">=&gt;</span> B<span class="op">):</span> F0<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> F0<span class="op">[</span>B<span class="op">]</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>One specific example of a functor would be the following:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">class</span> ListFunctor <span class="kw">extends</span> Functor {</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>  <span class="kw">type</span> F0[A] = List[A]</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>  <span class="kw">def</span> F1[A, B](arrow: A =&gt; B): F0[A] =&gt; F0[B] = fa =&gt; fa.<span class="fu">map</span>(arrow)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ListFunctor <span class="kw">extends</span> Functor <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> F0<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> <span class="ex">List</span><span class="op">[</span>A<span class="op">]</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> F1<span class="op">[</span>A<span class="op">,</span> B<span class="op">](</span>arrow<span class="op">:</span> A <span class="op">=&gt;</span> B<span class="op">):</span> F0<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> F0<span class="op">[</span>B<span class="op">]</span> <span class="op">=</span> fa <span class="op">=&gt;</span> fa<span class="op">.</span><span class="fu">map</span><span class="op">(</span>arrow<span class="op">)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>It’s relatively easy to check that functor laws hold for this object.</p>
 <p>Consider another example:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">class</span> NotListFunctor <span class="kw">extends</span> Functor {</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  <span class="kw">type</span> F0[A] = List[A]</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="kw">def</span> F1[A, B](arrow: A =&gt; B): F0[A] =&gt; F0[B] = fa =&gt; List.<span class="fu">empty</span>[B]</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>}</span></code></pre></div>
-<p>We have all necessary pieces defined, but the resulting object is not a functor because some of the laws don’t hold. Give it a minute and think which law doesn’t hold here.</p>
-<p>Sometimes when there is a functor defined with <code>type F0[A] = F[A]</code>, people say that <code>F</code> is a functor. This is confusing and not true. <code>F[_]</code> is just a type constructor or, in other words, a mapping from any type <code>A</code> to some other type. A functor is a thing on its own, and specific <code>F</code> is just a part of its definition.</p>
-<p>An interesting question is whether there is a single functor with <code>type F0[A] = List[A]</code>. The answer is <em>yes</em>, and it actually holds true for pretty much every parametric data type. Fascinating!</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> NotListFunctor <span class="kw">extends</span> Functor <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> F0<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> <span class="ex">List</span><span class="op">[</span>A<span class="op">]</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> F1<span class="op">[</span>A<span class="op">,</span> B<span class="op">](</span>arrow<span class="op">:</span> A <span class="op">=&gt;</span> B<span class="op">):</span> F0<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> F0<span class="op">[</span>B<span class="op">]</span> <span class="op">=</span> fa <span class="op">=&gt;</span> <span class="ex">List</span><span class="op">.</span>empty<span class="op">[</span>B<span class="op">]</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>We have all necessary pieces defined, but the resulting object is not a functor because some of the laws don’t hold.
+Give it a minute and think which law doesn’t hold here.</p>
+<p>Sometimes when there is a functor defined with <code>type F0[A] = F[A]</code>, people say that <code>F</code> is a functor.
+This is confusing and not true.
+<code>F[_]</code> is just a type constructor or, in other words, a mapping from any type <code>A</code> to some other type.
+A functor is a thing on its own, and specific <code>F</code> is just a part of its definition.</p>
+<p>An interesting question is whether there is a single functor with <code>type F0[A] = List[A]</code>.
+The answer is <em>yes</em>, and it actually holds true for pretty much every parametric data type.
+Fascinating!</p>
 <p>One very different example of a functor would be the following:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">class</span> IntFunctor <span class="kw">extends</span> Functor {</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  <span class="kw">type</span> F0[A] = Int</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  <span class="kw">def</span> F1[A, B](f: A =&gt; B): F0[A] =&gt; F0[B] = x =&gt; x</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>}</span></code></pre></div>
-<p>We don’t have a parametric data type here. Instead, we map every type to <code>Int</code>. It’s a good exercise to show that this actually is a functor.</p>
-<p>Enough with examples. Let’s compare the definition of a functor above with a simplified version in Scalaz:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">trait</span> ScalazFunctor[F[_]] {</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>  <span class="kw">def</span> map[A, B](fa: F[A])(f: A =&gt; B): F[B]</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>}</span></code></pre></div>
-<p>It’s close, but not exactly the same. I think that we end up with <code>ScalazFunctor</code> instead of <code>Functor</code> for a couple reasons. First, if you want to use a functor as an implicit parameter in a function, it’s more convenient to have <code>F0</code> as a type parameter of a <code>Functor</code>. After fixing that we have:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">trait</span> Functor[F0[_]] {</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>  <span class="kw">def</span> F1[A, B](arrow: A =&gt; B): F0[A] =&gt; F0[B]</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Next issue is with type inference — we need to specify type arguments on every <code>F1</code> invocation. If we make <code>F0[A]</code> the first argument to <code>F1[A, B]</code> then the compiler will usually figure out <code>A</code> and <code>B</code> on its own. After this change we arrive at:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">trait</span> Functor[F0[_]] {</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>  <span class="kw">def</span> F1[A, B](f0a: F0[A])(arrow: A =&gt; B): F0[B]</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>}</span></code></pre></div>
-<p>This perfectly matches <code>ScalazFunctor</code>, the definitions are completely equivalent and <code>ScalazFunctor</code> is actually more convenient to use. The downside of the latter definition, in my opinion, is that it hides <em>objects to objects</em> part of a functor definition, and makes relating math and code harder.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> IntFunctor <span class="kw">extends</span> Functor <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> F0<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> <span class="bu">Int</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> F1<span class="op">[</span>A<span class="op">,</span> B<span class="op">](</span>f<span class="op">:</span> A <span class="op">=&gt;</span> B<span class="op">):</span> F0<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> F0<span class="op">[</span>B<span class="op">]</span> <span class="op">=</span> x <span class="op">=&gt;</span> x</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>We don’t have a parametric data type here.
+Instead, we map every type to <code>Int</code>.
+It’s a good exercise to show that this actually is a functor.</p>
+<p>Enough with examples.
+Let’s compare the definition of a functor above with a simplified version in Scalaz:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> ScalazFunctor<span class="op">[</span>F<span class="op">[</span>_<span class="op">]]</span> <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> map<span class="op">[</span>A<span class="op">,</span> B<span class="op">](</span>fa<span class="op">:</span> F<span class="op">[</span>A<span class="op">])(</span>f<span class="op">:</span> A <span class="op">=&gt;</span> B<span class="op">):</span> F<span class="op">[</span>B<span class="op">]</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>It’s close, but not exactly the same.
+I think that we end up with <code>ScalazFunctor</code> instead of <code>Functor</code> for a couple reasons.
+First, if you want to use a functor as an implicit parameter in a function, it’s more convenient to have <code>F0</code> as a type parameter of a <code>Functor</code>.
+After fixing that we have:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> Functor<span class="op">[</span>F0<span class="op">[</span>_<span class="op">]]</span> <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> F1<span class="op">[</span>A<span class="op">,</span> B<span class="op">](</span>arrow<span class="op">:</span> A <span class="op">=&gt;</span> B<span class="op">):</span> F0<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> F0<span class="op">[</span>B<span class="op">]</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Next issue is with type inference — we need to specify type arguments on every <code>F1</code> invocation.
+If we make <code>F0[A]</code> the first argument to <code>F1[A, B]</code> then the compiler will usually figure out <code>A</code> and <code>B</code> on its own.
+After this change we arrive at:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> Functor<span class="op">[</span>F0<span class="op">[</span>_<span class="op">]]</span> <span class="op">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> F1<span class="op">[</span>A<span class="op">,</span> B<span class="op">](</span>f0a<span class="op">:</span> F0<span class="op">[</span>A<span class="op">])(</span>arrow<span class="op">:</span> A <span class="op">=&gt;</span> B<span class="op">):</span> F0<span class="op">[</span>B<span class="op">]</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This perfectly matches <code>ScalazFunctor</code>, the definitions are completely equivalent and <code>ScalazFunctor</code> is actually more convenient to use.
+The downside of the latter definition, in my opinion, is that it hides <em>objects to objects</em> part of a functor definition, and makes relating math and code harder.</p>
 <h2 id="conclusion">Conclusion</h2>
-<p>At this point, I’m pretty happy with my understanding of basic categorical notions and how to map them to the code. There are a couple more things that require a deeper dive in, for instance, the notion of <em>structure preserving</em> actually has a precise definition, although it was used rather loosely in this post. Also, the proof of uniqueness of <code>ListFunctor</code> and other similar functors is still an open question to me.</p>
-<section class="footnotes" role="doc-endnotes">
+<p>At this point, I’m pretty happy with my understanding of basic categorical notions and how to map them to the code.
+There are a couple more things that require a deeper dive in, for instance, the notion of <em>structure preserving</em> actually has a precise definition, although it was used rather loosely in this post.
+Also, the proof of uniqueness of <code>ListFunctor</code> and other similar functors is still an open question to me.</p>
+<section class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
 <li id="fn1" role="doc-endnote"><p>Arrows are also called morphisms.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>

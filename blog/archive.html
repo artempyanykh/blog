@@ -62,7 +62,8 @@
   <li>
     <a href="./posts/2020-11-23-coding-interview-in-haskell.html"><h2>Coding interview in Haskell (FAANG-style). Yay or nay?</h2></a>
     <span class="post-list-date">November 23, 2020</span>
-    <div class="post-list-teaser"><p>Can Haskell be a practical language choice for passing a FAANG-style coding interview? To find this out we’re going to solve a typical interview problem in Haskell in 2 different ways:</p>
+    <div class="post-list-teaser"><p>Can Haskell be a practical language choice for passing a FAANG-style coding interview?
+To find this out we’re going to solve a typical interview problem in Haskell in 2 different ways:</p>
 <ul>
 <li>simple with recursion and persistent maps, and</li>
 <li>more advanced with mutable arrays and ST monad.</li>
@@ -90,10 +91,23 @@
     <a href="./posts/2019-04-26-law-of-excluded-middle.html"><h2>(╯°□°）╯ ¬¬(A∨¬A)</h2></a>
     <span class="post-list-date">April 26, 2019</span>
     <div class="post-list-teaser"><p>… or “the missing Law of Excluded Middle”.</p>
-<p>First things first, Law of Excluded Middle or LEM is an axiom of logic that states that either some proposition <code>A</code> holds or its negation <code>¬A</code> holds, there is no third choice. LEM is one of the core tenets of formal reasoning in “classical” branches of mathematics, and for me as a classically trained mathematician this is indeed a very natural way of thinking.</p>
-<p>Recently, I got interested in the theory of programming languages. The discipline differs a great deal from functional analysis, probability theory or other familiar branches of mathematics, and learning required starting from the very basics, including proof theory and intuitionistic logic.</p>
-<p>Honestly, this all did feel pretty daunting and unproductive given how much effort was required even for simple proofs. So I figured that doing exercises <em>in code</em> instead of pencil &amp; paper should make it more fun.</p>
-<p>Ahead are some basic pieces of intuitionistic logic accompanied by snippets of <code>Coq</code> code.</p>
+<p>First things first, Law of Excluded Middle or LEM is an axiom of logic
+that states that either some proposition <code>A</code> holds or its negation
+<code>¬A</code> holds, there is no third choice. LEM is one of the core tenets of
+formal reasoning in “classical” branches of mathematics, and for me as
+a classically trained mathematician this is indeed a very natural way
+of thinking.</p>
+<p>Recently, I got interested in the theory of programming languages. The
+discipline differs a great deal from functional analysis, probability
+theory or other familiar branches of mathematics, and learning
+required starting from the very basics, including proof theory and
+intuitionistic logic.</p>
+<p>Honestly, this all did feel pretty daunting and unproductive given how
+much effort was required even for simple proofs. So I figured that
+doing exercises <em>in code</em> instead of pencil &amp; paper should make it
+more fun.</p>
+<p>Ahead are some basic pieces of intuitionistic logic accompanied by
+snippets of <code>Coq</code> code.</p>
 </div>
     <p class="post-list-continue"><a href="./posts/2019-04-26-law-of-excluded-middle.html">&hellip;continue reading&hellip;</a></p>
   </li>
@@ -101,9 +115,17 @@
   <li>
     <a href="./posts/2019-01-16-assembling-fizz-buzz.html"><h2>Assembling FizzBuzz</h2></a>
     <span class="post-list-date">January 16, 2019</span>
-    <div class="post-list-teaser"><p>The <a href="https://artempyanykh.com/blog/posts/2018-12-31-assembling-noop.html">previous post</a> covers preliminary topics that include tool-chain, compiling assembly programs and turning them into executables, a bit about anatomy of Mach-O object files, and finally SysV ABI and system calls.</p>
-<p>With that out of the way, we are ready to get serious and solve some real problems… like FizzBuzz. This time around we’ll be doing dynamic linking with C runtime, using library functions, accessing command line arguments, and, of course, fighting segfaults.</p>
-<p>This <strong>is not</strong> a post about how to solve a FizzBuzz. The problems is used merely as a means to illustrate low-level aspects of linking, executable loading, lazy symbol binding, etc.</p>
+    <div class="post-list-teaser"><p>The <a href="https://artempyanykh.com/blog/posts/2018-12-31-assembling-noop.html">previous post</a> covers preliminary topics that include tool-chain,
+compiling assembly programs and turning them into executables, a bit
+about anatomy of Mach-O object files, and finally SysV ABI and system
+calls.</p>
+<p>With that out of the way, we are ready to get serious and solve some
+real problems… like FizzBuzz. This time around we’ll be doing
+dynamic linking with C runtime, using library functions, accessing
+command line arguments, and, of course, fighting segfaults.</p>
+<p>This <strong>is not</strong> a post about how to solve a FizzBuzz. The problems is
+used merely as a means to illustrate low-level aspects of linking,
+executable loading, lazy symbol binding, etc.</p>
 </div>
     <p class="post-list-continue"><a href="./posts/2019-01-16-assembling-fizz-buzz.html">&hellip;continue reading&hellip;</a></p>
   </li>
@@ -111,8 +133,13 @@
   <li>
     <a href="./posts/2018-12-31-assembling-noop.html"><h2>Assembling a no-op</h2></a>
     <span class="post-list-date">December 31, 2018</span>
-    <div class="post-list-teaser"><p>When I hear <code>hello-world</code> I imagine a trivial one-line program. However, things that are actually happening under the hood are far from being trivial: memory allocation, register and stack manipulation, and interop with an OS kernel among others. So I figured that going a couple layers down the stack to the bare assembly in order to build a minimal working program (and a couple more complex ones) might be a fun excercise.</p>
-<p>This is the first post about assembly on MacOS X, that covers “getting started”, calling conventions and system calls. I plan to write another post with more practical examples later on.</p>
+    <div class="post-list-teaser"><p>When I hear <code class="verbatim">hello-world</code> I imagine a trivial one-line program. However, things that are actually
+happening under the hood are far from being trivial: memory allocation, register and stack
+manipulation, and interop with an OS kernel among others. So I figured that going a couple layers
+down the stack to the bare assembly in order to build a minimal working program (and a couple more
+complex ones) might be a fun excercise.</p>
+<p>This is the first post about assembly on MacOS X, that covers “getting started”, calling conventions
+and system calls. I plan to write another post with more practical examples later on.</p>
 </div>
     <p class="post-list-continue"><a href="./posts/2018-12-31-assembling-noop.html">&hellip;continue reading&hellip;</a></p>
   </li>
@@ -120,7 +147,14 @@
   <li>
     <a href="./posts/2017-10-02-what-is-a-functor-anyway.html"><h2>What a Functor is anyway?</h2></a>
     <span class="post-list-date">October  2, 2017</span>
-    <div class="post-list-teaser"><p><strong>A functor is a homomorphism of categories.</strong> Nice and short definition, but it made absolutely no sense to me. At the time I decided to step up my FP game, I was pretty well versed in Scalaz, confidently used Functor, Monad, Applicative and the like. So, I jumped into a textbook on Category Theory… and got totally stuck. Something just hadn’t clicked in my mind, I couldn’t map the math to Scalaz code, and instead of being enlightened I only got confused. Then other things came up, and Cats were put on a back-burner. The issue as I see it now was in the wrong mindset I developed while being exposed only to the code and internet articles. Recently, I made another attempt in learning Category Theory which is on-going now and to some extent more successful.</p>
+    <div class="post-list-teaser"><p><strong>A functor is a homomorphism of categories.</strong>
+Nice and short definition, but it made absolutely no sense to me.
+At the time I decided to step up my FP game, I was pretty well versed in Scalaz, confidently used Functor, Monad, Applicative and the like.
+So, I jumped into a textbook on Category Theory… and got totally stuck.
+Something just hadn’t clicked in my mind, I couldn’t map the math to Scalaz code, and instead of being enlightened I only got confused.
+Then other things came up, and Cats were put on a back-burner.
+The issue as I see it now was in the wrong mindset I developed while being exposed only to the code and internet articles.
+Recently, I made another attempt in learning Category Theory which is on-going now and to some extent more successful.</p>
 </div>
     <p class="post-list-continue"><a href="./posts/2017-10-02-what-is-a-functor-anyway.html">&hellip;continue reading&hellip;</a></p>
   </li>

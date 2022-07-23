@@ -55,59 +55,112 @@
     </section>
     <section>
         <p>… or “the missing Law of Excluded Middle”.</p>
-<p>First things first, Law of Excluded Middle or LEM is an axiom of logic that states that either some proposition <code>A</code> holds or its negation <code>¬A</code> holds, there is no third choice. LEM is one of the core tenets of formal reasoning in “classical” branches of mathematics, and for me as a classically trained mathematician this is indeed a very natural way of thinking.</p>
-<p>Recently, I got interested in the theory of programming languages. The discipline differs a great deal from functional analysis, probability theory or other familiar branches of mathematics, and learning required starting from the very basics, including proof theory and intuitionistic logic.</p>
-<p>Honestly, this all did feel pretty daunting and unproductive given how much effort was required even for simple proofs. So I figured that doing exercises <em>in code</em> instead of pencil &amp; paper should make it more fun.</p>
-<p>Ahead are some basic pieces of intuitionistic logic accompanied by snippets of <code>Coq</code> code.</p>
+<p>First things first, Law of Excluded Middle or LEM is an axiom of logic
+that states that either some proposition <code>A</code> holds or its negation
+<code>¬A</code> holds, there is no third choice. LEM is one of the core tenets of
+formal reasoning in “classical” branches of mathematics, and for me as
+a classically trained mathematician this is indeed a very natural way
+of thinking.</p>
+<p>Recently, I got interested in the theory of programming languages. The
+discipline differs a great deal from functional analysis, probability
+theory or other familiar branches of mathematics, and learning
+required starting from the very basics, including proof theory and
+intuitionistic logic.</p>
+<p>Honestly, this all did feel pretty daunting and unproductive given how
+much effort was required even for simple proofs. So I figured that
+doing exercises <em>in code</em> instead of pencil &amp; paper should make it
+more fun.</p>
+<p>Ahead are some basic pieces of intuitionistic logic accompanied by
+snippets of <code>Coq</code> code.</p>
 <!--more-->
 
 <h1 id="propositions-and-types">Propositions and types</h1>
-<p>Propositions are the foundation of logic. A proposition is a factual claim that in the context of intuitionistic logic can be proved <span class="underline">only by providing an evidence</span> or, in other words, by <span class="underline">constructing a proof</span>.</p>
-<p>There is a well known correspondence between propositions and types. In short, each proposition can be represented as a special type<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, and constructing a proof is equivalent to constructing an instance (or a term) of this type.</p>
-<p>The idea of proofs as terms can be seen more clearly in how True and False are defined in <code>Coq</code><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
+<p>Propositions are the foundation of logic. A proposition is a factual
+claim that in the context of intuitionistic logic can be proved
+<u>only by providing an evidence</u> or, in other words, by <u>constructing
+a proof</u>.</p>
+<p>There is a well known correspondence between propositions and
+types. In short, each proposition can be represented as a special
+type<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, and constructing a proof is equivalent to constructing
+an instance (or a term) of this type.</p>
+<p>The idea of proofs as terms can be seen more clearly in how True and
+False are defined in <code>Coq</code><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
 <div class="sourceCode" id="cb1" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb1-1"><a href="#cb1-1"></a>Print True.</span></code></pre></div>
 <pre class="example"><code>Inductive True : Prop :=  I : True
 </code></pre>
-<p><code>Print</code> is a built-in command that prints a definition of a symbol. In this particular example we can see that <code>True</code> is a type of type <code>Prop</code> (where <code>Prop</code> is a basic type for propositions) and it has one constructor<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, namely <code>I</code>. The fact that <code>I</code> is a nullary constructor reflects the idea that we don’t need anything to prove <code>True</code>, we can just provide <code>I</code> as a proof right away as can be seen below:</p>
+<p><code class="verbatim">Print</code> is a built-in command that prints a definition of a
+symbol. In this particular example we can see that <code class="verbatim">True</code> is a type
+of type <code class="verbatim">Prop</code> (where <code class="verbatim">Prop</code> is a basic type for propositions) and
+it has one constructor<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, namely <code class="verbatim">I</code>. The fact that <code class="verbatim">I</code> is a
+nullary constructor reflects the idea that we don’t need anything to
+prove <code class="verbatim">True</code>, we can just provide <code class="verbatim">I</code> as a proof right away as can
+be seen below:</p>
 <div class="sourceCode" id="cb3" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb3-1"><a href="#cb3-1"></a>Example true_is_true: True.</span>
 <span id="cb3-2"><a href="#cb3-2"></a>Proof. exact I. Qed.</span></code></pre></div>
-<p><code>true_is_true</code> is a proposition of type <code>True</code> and we prove this proposition by providing an instance <code>I</code> of required type using <code>exact I</code> command.</p>
-<p>Similarly, <code>False</code> is defined as:</p>
+<p><code class="verbatim">true_is_true</code> is a proposition of type <code class="verbatim">True</code> and we prove this
+proposition by providing an instance <code class="verbatim">I</code> of required type using
+<code class="verbatim">exact I</code> command.</p>
+<p>Similarly, <code class="verbatim">False</code> is defined as:</p>
 <div class="sourceCode" id="cb4" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb4-1"><a href="#cb4-1"></a>Print False.</span></code></pre></div>
 <pre class="example"><code>Inductive False : Prop :=
 </code></pre>
-<p>There is no constructor for this type which again matches our intuition that we cannot prove falsehood. However, if we <em>somehow</em> get a proof of <code>False</code> we can prove any other proposition out of it. A standard function <code>False_ind</code> reflects this in its type:</p>
+<p>There is no constructor for this type which again matches our
+intuition that we cannot prove falsehood. However, if we <em>somehow</em>
+get a proof of <code class="verbatim">False</code> we can prove any other proposition out of
+it. A standard function <code class="verbatim">False_ind</code> reflects this in its type:</p>
 <div class="sourceCode" id="cb6" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb6-1"><a href="#cb6-1"></a>Check False_ind.</span></code></pre></div>
 <pre class="example"><code>False_ind : forall P : Prop, False -&gt; P
 </code></pre>
 <h1 id="logical-connectives">Logical connectives</h1>
-<p>Complex propositions are built from simpler ones using logical connectives. One example of a connective is <strong>implication</strong>. It is built into <code>Coq</code>, but its form <code>A -&gt; B</code> suggests the following reading: <em>we can prove an implication if given a proof of <code>A</code> we can prove <code>B</code></em>.</p>
-<p>Next logical connective is <strong>conjunction</strong> denoted by <code>/\</code>. It is not built-in, but rather defined in a standard library as:</p>
+<p>Complex propositions are built from simpler ones using logical
+connectives. One example of a connective is <strong>implication</strong>. It is
+built into <code class="verbatim">Coq</code>, but its form <code>A -&gt; B</code> suggests the following
+reading: <em>we can prove an implication if given a proof of <code class="verbatim">A</code> we can
+prove <code class="verbatim">B</code></em>.</p>
+<p>Next logical connective is <strong>conjunction</strong> denoted by <code class="verbatim">/\</code>. It is not
+built-in, but rather defined in a standard library as:</p>
 <div class="sourceCode" id="cb8" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb8-1"><a href="#cb8-1"></a>Print and.</span></code></pre></div>
 <pre class="example"><code>Inductive and (A B : Prop) : Prop :=  conj : A -&gt; B -&gt; A /\ B
 </code></pre>
-<p>A conjunction of propositions <code>A</code> and <code>B</code> is a proposition of type <code>and</code> that can be constructed (introduced/proved) given terms (proves) of <code>A</code> and <code>B</code>.</p>
-<p>Another logical connective is <strong>disjunction</strong> denoted by <code>\/</code> and defined as:</p>
+<p>A conjunction of propositions <code class="verbatim">A</code> and <code class="verbatim">B</code> is a proposition of type
+<code class="verbatim">and</code> that can be constructed (introduced/proved) given terms
+(proves) of <code class="verbatim">A</code> and <code class="verbatim">B</code>.</p>
+<p>Another logical connective is <strong>disjunction</strong> denoted by <code class="verbatim">\/</code> and
+defined as:</p>
 <div class="sourceCode" id="cb10" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb10-1"><a href="#cb10-1"></a>Print or.</span></code></pre></div>
 <pre class="example"><code>Inductive or (A B : Prop) : Prop :=
     or_introl : A -&gt; A \/ B | or_intror : B -&gt; A \/ B
 </code></pre>
-<p>This one has two constructors which means we can prove a disjunction of <code>A</code> and <code>B</code> by either proving <code>A</code> and using <code>or_introl</code> rule to introduce <code>A \/ B</code>, or proving <code>B</code> and using <code>or_intror</code> rule.</p>
-<p><strong>Negation</strong> is a derived connective denoted by <code>~</code>, which doesn’t have its own introduction rules, but is rather defined as:</p>
+<p>This one has two constructors which means we can prove a disjunction
+of <code class="verbatim">A</code> and <code class="verbatim">B</code> by either proving <code class="verbatim">A</code> and using <code>or_introl</code> rule to
+introduce <code class="verbatim">A \/ B</code>, or proving <code class="verbatim">B</code> and using <code>or_intror</code> rule.</p>
+<p><strong>Negation</strong> is a derived connective denoted by <code class="verbatim">~</code>, which doesn’t have its own
+introduction rules, but is rather defined as:</p>
 <div class="sourceCode" id="cb12" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb12-1"><a href="#cb12-1"></a>Print not.</span></code></pre></div>
 <pre class="example"><code>not = fun A : Prop =&gt; A -&gt; False ; &lt;----
      : Prop -&gt; Prop
 </code></pre>
-<p>The part <code>A -&gt; False</code> captures the idea that to prove a negation of <code>A</code> we need to prove that <code>A</code> is contradictory.</p>
-<p><strong>Biconditional</strong> or iff as another derived connective denoted by <code>&lt;-&gt;</code> and defined as:</p>
+<p>The part <code>A -&gt; False</code> captures the idea that to prove a negation of
+<code class="verbatim">A</code> we need to prove that <code class="verbatim">A</code> is contradictory.</p>
+<p><strong>Biconditional</strong> or iff as another derived connective denoted by
+<code class="verbatim">&lt;-&gt;</code> and defined as:</p>
 <div class="sourceCode" id="cb14" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb14-1"><a href="#cb14-1"></a>Print iff.</span></code></pre></div>
 <pre class="example"><code>iff = fun A B : Prop =&gt; (A -&gt; B) /\ (B -&gt; A) ; &lt;----
      : Prop -&gt; Prop -&gt; Prop
 </code></pre>
-<p>All these connectives are regular types<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>. Currently, we have everything needed to start proving interesting theorems, but you are encouraged to explore the standard library further.</p>
+<p>All these connectives are regular types<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>. Currently, we have
+everything needed to start proving interesting theorems, but you are
+encouraged to explore the standard library further.</p>
 <h1 id="simple-proofs">Simple proofs</h1>
-<p><code>Coq</code> is designed to be used interactively. Just reading proofs without seeing the state of the proof in <code>Coq</code>’s output is rather laborious. I’ll show some intermediate output between <code>(*</code> and <code>*)</code> in the code samples below, but installing <code>Coq</code> and executing proofs step-by-step is strongly encouraged.</p>
-<p>We start by proving two lemmas that state that when some proposition is a direct consequence of a disjunction then it is a direct consequence of any side of a disjunction. Let’s do the left side first.</p>
+<p><code class="verbatim">Coq</code> is designed to be used interactively. Just reading proofs
+without seeing the state of the proof in <code class="verbatim">Coq</code>’s output is rather
+laborious. I’ll show some intermediate output between <code class="verbatim">(*</code> and <code class="verbatim">*)</code>
+in the code samples below, but installing <code class="verbatim">Coq</code> and executing proofs
+step-by-step is strongly encouraged.</p>
+<p>We start by proving two lemmas that state that when some proposition
+is a direct consequence of a disjunction then it is a direct
+consequence of any side of a disjunction. Let’s do the left side
+first.</p>
 <div class="sourceCode" id="cb16" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb16-1"><a href="#cb16-1"></a>Lemma or_impl: forall A B C: Prop,</span>
 <span id="cb16-2"><a href="#cb16-2"></a>    ((A \/ B) -&gt; C) -&gt; (A -&gt; C).</span>
 <span id="cb16-3"><a href="#cb16-3"></a>Proof.</span>
@@ -178,7 +231,8 @@
 <span id="cb17-6"><a href="#cb17-6"></a>  apply H_or in Pf_B as Pf.</span>
 <span id="cb17-7"><a href="#cb17-7"></a>  exact Pf.</span>
 <span id="cb17-8"><a href="#cb17-8"></a>Qed.</span></code></pre></div>
-<p>We can also prove a combined proposition by splitting a conjunction and using <code>or_impl</code> and <code>or_impr</code> to prove each side separately:</p>
+<p>We can also prove a combined proposition by splitting a conjunction
+and using <code>or_impl</code> and <code>or_impr</code> to prove each side separately:</p>
 <div class="sourceCode" id="cb18" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb18-1"><a href="#cb18-1"></a>Lemma or_implr: forall (A B C: Prop),</span>
 <span id="cb18-2"><a href="#cb18-2"></a>    ((A \/ B) -&gt; C) -&gt; ((A -&gt; C) /\ (B -&gt; C)).</span>
 <span id="cb18-3"><a href="#cb18-3"></a>Proof.</span>
@@ -196,15 +250,24 @@
 <span id="cb18-15"><a href="#cb18-15"></a>  - exact (or_impl A B C H_or).</span>
 <span id="cb18-16"><a href="#cb18-16"></a>  - exact (or_impr A B C H_or).</span>
 <span id="cb18-17"><a href="#cb18-17"></a>Qed.</span></code></pre></div>
-<p>This lemma will come in handy when we try to prove a theorem about the law of excluded middle in the next section.</p>
+<p>This lemma will come in handy when we try to prove a theorem about
+the law of excluded middle in the next section.</p>
 <h1 id="we-dont-need-no-lem">We don’t need no LEM</h1>
 <p>The theorem we’re going to prove can be written as <span class="math inline">\(\neg \neg (A
-  \lor \neg A)\)</span>. Although, at first it may seem like gobbledygook, it has a very clear and profound meaning. The <span class="math inline">\(A \lor \neg A\)</span> part is exactly LEM, and the whole theorem can be read as:</p>
+  \lor \neg A)\)</span>. Although, at first it may seem like gobbledygook, it
+has a very clear and profound meaning. The <span class="math inline">\(A \lor \neg A\)</span> part is
+exactly LEM, and the whole theorem can be read as:</p>
 <pre class="example"><code>Intuitionistic logic /does not/  /refute/ the /Law of Excluded Middle/.
                         ¬            ¬                   A∨¬A
 </code></pre>
-<p>Note that “does not refute” is not the same as “asserts”. In fact, double negation elimination <span class="math inline">\(\neg \neg A \implies A\)</span> is an axiom of classical logic and equivalent to LEM.</p>
-<p>The annotated proof in <code>Coq</code> is given below. Although, the proof may seem rather straightforward, especially with <code>or_implr</code> lemma proved previously, it definitely didn’t seem trivial to me and took some time to figure out all the necessary pieces. So, hopefully someone will find it interesting.</p>
+<p>Note that “does not refute” is not the same as “asserts”. In fact,
+double negation elimination <span class="math inline">\(\neg \neg A \implies A\)</span> is an axiom of
+classical logic and equivalent to LEM.</p>
+<p>The annotated proof in <code class="verbatim">Coq</code> is given below. Although, the proof may
+seem rather straightforward, especially with <code class="verbatim">or_implr</code> lemma proved
+previously, it definitely didn’t seem trivial to me and took some
+time to figure out all the necessary pieces. So, hopefully someone
+will find it interesting.</p>
 <div class="sourceCode" id="cb20" data-startFrom><pre class="sourceCode numberSource coq numberLines"><code class="sourceCode"><span id="cb20-1"><a href="#cb20-1"></a>Theorem not_refuting_LEM: forall (A: Prop), ~~(A \/ ~A).</span>
 <span id="cb20-2"><a href="#cb20-2"></a>Proof.</span>
 <span id="cb20-3"><a href="#cb20-3"></a>  intro A.</span>
@@ -277,13 +340,19 @@
 <span id="cb20-70"><a href="#cb20-70"></a>  exact Pf_False.</span>
 <span id="cb20-71"><a href="#cb20-71"></a>Qed.</span></code></pre></div>
 <h1 id="footnotes">Footnotes</h1>
-<section class="footnotes" role="doc-endnotes">
+<section class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
 <li id="fn1" role="doc-endnote"><p>Of course the type system should be rich enough to allow this.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2" role="doc-endnote"><p>This might be a good time to install <code>Coq</code> and an IDE (whether its <code>Coq-IDE</code> or <code>Proof General</code>).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3" role="doc-endnote"><p>Constructors are also called <span class="underline">introduction rules</span>. Indeed, constructors can be thought of as <em>rules</em> that <em>introduce</em> a term of specific type given some other terms.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4" role="doc-endnote"><p>Here implication and inductive types are basic building blocks. Other connectives are defined in terms of them. But this is not the only way to axiomatize logic; there is a handful others with different basic connectives, axioms and inference rules.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>This might be a good time to install <code>Coq</code> and an IDE (whether
+its <code class="verbatim">Coq-IDE</code> or <code class="verbatim">Proof General</code>).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p>Constructors are also called <u>introduction rules</u>. Indeed,
+constructors can be thought of as <em>rules</em> that <em>introduce</em> a term of
+specific type given some other terms.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>Here implication and inductive types are basic building
+blocks. Other connectives are defined in terms of them. But this is
+not the only way to axiomatize logic; there is a handful others with
+different basic connectives, axioms and inference rules.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
     </section>
