@@ -1,0 +1,119 @@
+<!-- -*- tab-width: 4; -*- -->
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>du it in Rust: async, tokio, streams, and surprises about perf</title>
+  <link rel="stylesheet" href="../css/default.css" />
+  <link rel="stylesheet" href="../css/syntax.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="icon" type="image/png" href="../images/favicon.png">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-X0Q4TM37FN"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-X0Q4TM37FN');
+</script>
+</head>
+
+<body>
+  <header>
+    <div class="header-page">
+      <span class="header-page-link">
+        <svg class="logo" data-name="Lab notes - logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 726 726" data-href="/" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <a xlink:href="/">
+    <rect id="link-fill" stroke="none" width="726" height="726" rx="47.41" ry="47.41"></rect>
+  </a>
+
+  <title>du it in Rust: async, tokio, streams, and surprises about perf</title>
+
+  <rect id="bg" width="726" height="726" rx="47.41" ry="47.41"></rect>
+
+  <g>
+    <path id="letter" d="M1533.7,1732.64c-9.79-25.5-19.58-51-28.48-81.14h-4.45c-6.23,24.73-17.8,53.32-27.59,78.82l-88.1,216.38h-81.87L1459,1600.49c3.56-8.5,5.34-13.91,5.34-17.77,0-4.64-1.78-11.59-6.23-20.87-27.59-65.68-59.62-117.46-112.12-117.46a105.24,105.24,0,0,0-15.13.77l7.12-52.55c7.12-2.32,19.58-3.09,30.26-3.09,84.54,0,124.58,70.32,170.85,177l164.62,380.2h-82.76Z" transform="translate(-1144 -1314)"></path>
+  </g>
+</svg>
+
+      </span>
+
+      <h1>du it in Rust: async, tokio, streams, and surprises about perf</h1>
+    </div>
+  </header>
+
+  <main role="main">
+    <article>
+    <section class="header">
+        Posted on April 12, 2021
+        
+    </section>
+    <section>
+        <p>“Rewrite it in Rust!” really picked up some steam and for a good reason: you get safety,
+expressiveness… and often better performance too. One such project is <a href="https://github.com/uutils/coreutils">a rewrite</a>
+of GNU coreutils in Rust. <code>coreutils</code> has been developed and improved over many years, so it’d be
+interesting to see where the rewrite will land performance-wise.</p>
+<p>In the meantime, I decided to <strong>take the venerable <code>du</code> utility and re-implement it in
+Rust</strong>. Moreover, I wanted to take full advantage of Rust’s “fearless concurrency” and use <code>async</code>
+and <code>tokio</code> to extract more performance in a multi-core environment.</p>
+<!--more-->
+<p>In this video, I implement a toy clone of <code>du</code> in Rust in 3 different ways:</p>
+<ul>
+<li>using standard library and blocking APIs,</li>
+<li>using async and tokio, but doing naive sequential processing,</li>
+<li>using more advances async features (streams, <code>FuturesUnordered</code>, select) to extract more parallelism out of the async code.</li>
+</ul>
+<p>Finally, all versions are benchmarked on Windows, WSL2, and Linux with surprising performance results!</p>
+<div class="video-container">
+<iframe class="video" src="https://www.youtube.com/embed/35v9BO1g_mA" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+</iframe>
+</div>
+<p>The full set of benchmark results is available on <a href="https://github.com/artempyanykh/rdu">the GitHub</a>, but a very short summary is that:</p>
+<ol type="1">
+<li>Synchronous file IO is very fast on Linux and it’s hard to beat <code>du</code>’s performance when the disk
+cache is warm. However, walking the directory tree in parallel can be beneficial for cases when
+your files are not on the disk and need to be materialized.</li>
+<li>Performance depends heavily on the underlying file system. Therefore, there’s no “one size fits
+all” solution. To build “the fastest cross-platform <code>du</code>”, you’d need to tune and benchmark the
+implementation for each file system separately.</li>
+</ol>
+    </section>
+</article>
+
+  </main>
+
+  <footer>
+    <nav class="footer-nav">
+
+      <a class="footer-nav-item" href="../">
+        <span class="fa fa-home fa-lg"></span>
+      </a>
+
+      <a class="footer-nav-item" href="https://github.com/artempyanykh">
+        <span class="fa fa-github fa-lg"></span>
+      </a>
+
+      <a class="footer-nav-item" href="https://ru.linkedin.com/in/artempyanykh/en">
+        <span class="fa fa-linkedin fa-lg"></span>
+      </a>
+
+      <a class="footer-nav-item" href="https://twitter.com/artem_pyanykh">
+        <span class="fa fa-twitter fa-lg"></span>
+      </a>
+
+      <a class="footer-nav-item" href="../about.html">
+        <span class="fa fa-question fa-lg"></span>
+      </a>
+    </nav>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+
+</body>
+
+</html>
