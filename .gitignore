@@ -5,3 +5,5 @@ dist-newstyle
 cabal.project.local
 _site/
 _cache/
+
+.ignore
