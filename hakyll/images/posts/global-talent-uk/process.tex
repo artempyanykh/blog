@@ -1,0 +1,48 @@
+\documentclass[tikz]{standalone}
+
+\usepackage{tikz}\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,positioning,fit,petri}
+
+\begin{document}
+  \begin{tikzpicture}[>=stealth,every node/.style={inner sep=7}]% Example:
+  
+  \node (p) at (-7.25,0) [] {};
+  \node (0) at (-5,0) [rectangle,draw,thick] {
+  \large Application};
+  \node (tn) at (0,0) [rectangle,draw,thick] {\large TechNation};
+  \node (en) at (5.25,0) [rectangle,draw,thick,violet,double,double distance=2] {\large\bf Endorsement};
+  \node (noen) at (2,-2) [rectangle,draw,thick] {\large Appeal};
+  \node (ho) at (9,0) [rectangle,draw,thick] {\large Home Office};
+  \node (vi) at (9,-2) [rectangle,draw,thick,double,double distance=2,black!60!green] {\Large\bf Visa};
+  
+  \node (pa) at (-7.25,1) [] {};
+  \node (0a) at (-5,1) [] {};
+  \node (tna) at (0,1) [] {};
+  \node (ena) at (5.25,1) [] {};
+  \node (hoa) at (9,1) [] {};
+  
+  \draw [->,thick] (p) to (0);
+  \draw [dashed,thick] (pa) to node [above] {\large\bf Several months} (tna);
+  
+  \draw [->,thick] (0) to[
+  	edge node={node [above] {Online}
+  			   node [below] {submission}}
+  ] (tn);
+  
+  \draw [->,thick] (tn) to[
+    edge node={node [above] {Approved}}
+  ] (en);
+  \draw [dashed,thick] (tna) to node [above] {\large\bf Several weeks} (ena);
+  
+  \draw [->,thick] (tn) to[
+  	bend left=45,
+    edge node={node [right,pos=0.67] {Rejected}}
+  ] (noen);
+  \draw [->,thick] (noen) to[
+    bend left=15,
+  ] (0);
+  \draw [->,thick] (en) to (ho);
+  \draw [->,thick] (ho) to (vi);
+  \draw [dashed,thick] (ena) to node [above] {\large\bf Several days} (hoa);
+
+  \end{tikzpicture}%
+\end{document}
