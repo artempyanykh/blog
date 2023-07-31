@@ -1,0 +1,422 @@
+<!-- -*- tab-width: 4; -*- -->
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>When 1 is 2 and 8 turns into 24</title>
+  <link rel="stylesheet" href="../css/default.css" />
+  <link rel="stylesheet" href="../css/syntax.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="icon" type="image/png" href="../images/favicon.png">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-X0Q4TM37FN"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-X0Q4TM37FN');
+</script>
+</head>
+
+<body>
+  <header>
+    <div class="header-page">
+      <span class="header-page-link">
+        <svg class="logo" data-name="Lab notes - logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 726 726" data-href="/" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <a xlink:href="/">
+    <rect id="link-fill" stroke="none" width="726" height="726" rx="47.41" ry="47.41"></rect>
+  </a>
+
+  <title>When 1 is 2 and 8 turns into 24</title>
+
+  <rect id="bg" width="726" height="726" rx="47.41" ry="47.41"></rect>
+
+  <g>
+    <path id="letter" d="M1533.7,1732.64c-9.79-25.5-19.58-51-28.48-81.14h-4.45c-6.23,24.73-17.8,53.32-27.59,78.82l-88.1,216.38h-81.87L1459,1600.49c3.56-8.5,5.34-13.91,5.34-17.77,0-4.64-1.78-11.59-6.23-20.87-27.59-65.68-59.62-117.46-112.12-117.46a105.24,105.24,0,0,0-15.13.77l7.12-52.55c7.12-2.32,19.58-3.09,30.26-3.09,84.54,0,124.58,70.32,170.85,177l164.62,380.2h-82.76Z" transform="translate(-1144 -1314)"></path>
+  </g>
+</svg>
+
+      </span>
+
+      <h1>When 1 is 2 and 8 turns into 24</h1>
+    </div>
+  </header>
+
+  <main role="main">
+    <article>
+    <section class="header">
+        Posted on July 30, 2023
+        
+    </section>
+    <section>
+        <p>How complicated can numbers really be? In OCaml, turns out, quite a bit: sometimes ‘1’ turns up as
+‘2’ in the assembly or a 64 bit number suddenly takes up 192 bits of space. But is it necessarily a
+<em>bad thing</em>?</p>
+<!--more-->
+
+<p>In this video I do a deeper dive into how numbers are implemented in OCaml looking both at the
+runtime’s source code and the generated assembly to support the findings. I also run a number of
+benchmarks to get a better feel for the overhead the comes from using a universal representation of
+values in OCaml.</p>
+<div class="video-container">
+<iframe class="video" src="https://www.youtube.com/embed/EblI_VXaeIk" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+<p>The text below severaly lacks prose and for now can be considered an appendix for the video. I hope
+to get back to it and re-work as a proper post at some point.</p>
+<h1 id="appendix">Appendix</h1>
+<h2 id="setup">Setup</h2>
+<div class="sourceCode" id="cb1" data-results="verbatim" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">uname</span> <span class="at">-ro</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">lscpu</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="st">'Model name'</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">--version</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n1</span></span></code></pre></div>
+<pre class="example"><code>: 6.4.6-100.fc37.x86_64 GNU/Linux
+: Model name:                      AMD Ryzen 5 3600 6-Core Processor
+: cc (GCC) 12.3.1 20230508 (Red Hat 12.3.1-1)
+</code></pre>
+<h2 id="integers">Integers</h2>
+<h3 id="memory-representation">Memory representation</h3>
+<div class="sourceCode" id="cb3" data-exports="both"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> x = <span class="dv">42</span> ;;</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ot">#show x</span></span></code></pre></div>
+<pre class="example"><code>val x : int
+</code></pre>
+<div class="sourceCode" id="cb5" data-exports="both"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> x = <span class="dv">42</span> <span class="kw">in</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> xr = Obj.repr x <span class="kw">in</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>Obj.is_block xr, Obj.reachable_words xr, Obj.tag xr</span></code></pre></div>
+<pre class="example"><code>(false, 0, 1000)
+</code></pre>
+<div class="sourceCode" id="cb7" data-exports="both"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> i64 = <span class="dt">Int64</span>.of_int <span class="dv">42</span> <span class="kw">in</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> i64r = Obj.repr i64 <span class="kw">in</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>Obj.is_block i64r, Obj.reachable_words i64r, Obj.tag i64r</span></code></pre></div>
+<pre class="example"><code>(true, 3, 255)
+</code></pre>
+<h3 id="peaking-into-assembly">Peaking into assembly</h3>
+<div class="sourceCode" id="cb9" data-noeval="yes" data-tangle="plus_one.ml"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> plus_one x = x + <span class="dv">1</span></span></code></pre></div>
+<div class="sourceCode" id="cb10" data-results="verbatim" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">opam</span> exec <span class="at">--switch</span><span class="op">=</span>4.14.1 <span class="at">--</span> ocamlopt <span class="at">-g</span> <span class="at">-O2</span> <span class="at">-S</span> <span class="at">-c</span> plus_one.ml</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> plus_one.s <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> cfi <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> align <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> type <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> size <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-C5</span> addq</span></code></pre></div>
+<pre class="example"><code> .file	1	&quot;plus_one.ml&quot;
+ .loc	1	1	13
+ .loc	1	1	17
+.L100:
+ .loc	1	1	17
+ addq	$2, %rax
+ ret
+ .text
+ .globl	camlPlus_one__entry
+camlPlus_one__entry:
+.L101:
+</code></pre>
+<div class="sourceCode" id="cb12" data-noeval="yes" data-tangle="plus.ml"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> plus x y = x + y</span></code></pre></div>
+<div class="sourceCode" id="cb13" data-results="verbatim" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">opam</span> exec <span class="at">--switch</span><span class="op">=</span>4.14.1 <span class="at">--</span> ocamlopt <span class="at">-g</span> <span class="at">-O2</span> <span class="at">-S</span> <span class="at">-c</span> plus.ml</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> plus.s <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> cfi <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> align <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> type <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> size <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-C5</span> lea</span></code></pre></div>
+<pre class="example"><code> .file	1	&quot;plus.ml&quot;
+ .loc	1	1	9
+ .loc	1	1	15
+.L100:
+ .loc	1	1	15
+ leaq	-1(%rax,%rbx), %rax
+ ret
+ .text
+ .globl	camlPlus__entry
+camlPlus__entry:
+.L101:
+</code></pre>
+<h3 id="performance-of-addition">Performance of addition</h3>
+<div class="sourceCode" id="cb15" data-noeval="yes" data-tangle="intadd.ml"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> () =</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> niter = <span class="dt">int_of_string</span> <span class="dt">Sys</span>.argv.(<span class="dv">1</span>) <span class="kw">in</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> x = <span class="dt">ref</span> <span class="dv">0</span> <span class="kw">in</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> i = <span class="dv">0</span> <span class="kw">to</span> niter <span class="kw">do</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    x := !x + <span class="dv">1</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">done</span>;</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">exit</span> !x</span></code></pre></div>
+<div class="sourceCode" id="cb16" data-tangle="cintadd.c" data-noeval="yes"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span><span class="op">*</span> argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> niter <span class="op">=</span> atol<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> x <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">long</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> niter<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> x <span class="op">+</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x<span class="op">;</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb17" data-results="output" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;OCaml:&quot;</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">opam</span> exec <span class="at">--switch</span><span class="op">=</span>4.14.1 <span class="at">--</span> ocamlopt <span class="at">-O2</span> intadd.ml <span class="at">-o</span> intadd</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./intadd 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;C:&quot;</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-O2</span> cintadd.c <span class="at">-o</span> cintadd</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./cintadd 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span></code></pre></div>
+<pre class="example"><code>OCaml:
+Command exited with non-zero status 1
+0.24user 0.00system 0:00.24elapsed 100%CPU (0avgtext+0avgdata 1664maxresident)k
+0inputs+0outputs (0major+103minor)pagefaults 0swaps
+C:
+0.00user 0.00system 0:00.00elapsed 80%CPU (0avgtext+0avgdata 1152maxresident)k
+0inputs+0outputs (0major+65minor)pagefaults 0swaps
+</code></pre>
+<h3 id="performance-of-multiplication">Performance of multiplication</h3>
+<div class="sourceCode" id="cb19" data-tangle="intmul.ml" data-noeval="yes"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> () =</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> niter = <span class="dt">int_of_string</span> <span class="dt">Sys</span>.argv.(<span class="dv">1</span>) <span class="kw">in</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> x = <span class="dt">ref</span> <span class="dv">1</span> <span class="kw">in</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> i = <span class="dv">0</span> <span class="kw">to</span> niter <span class="kw">do</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    x := !x * <span class="dv">86</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">done</span>;</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">exit</span> !x</span></code></pre></div>
+<div class="sourceCode" id="cb20" data-tangle="cintmul.c" data-noeval="yes"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span><span class="op">*</span> argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> niter <span class="op">=</span> atol<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> x <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">long</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> niter<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> x <span class="op">*</span> <span class="dv">86</span><span class="op">;</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x<span class="op">;</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb21" data-results="verbatim" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;OCaml:&quot;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="ex">opam</span> exec <span class="at">--switch</span><span class="op">=</span>4.14.1 <span class="at">--</span> ocamlopt <span class="at">-O2</span> intmul.ml <span class="at">-o</span> intmul</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./intmul 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;C:&quot;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-O2</span> cintmul.c <span class="at">-o</span> cintmul</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./cintmul 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span></code></pre></div>
+<pre class="example"><code>OCaml:
+0.96user 0.00system 0:00.96elapsed 99%CPU (0avgtext+0avgdata 1664maxresident)k
+0inputs+0outputs (0major+104minor)pagefaults 0swaps
+C:
+0.71user 0.00system 0:00.71elapsed 99%CPU (0avgtext+0avgdata 1024maxresident)k
+0inputs+0outputs (0major+63minor)pagefaults 0swaps
+</code></pre>
+<h2 id="floats">Floats</h2>
+<h3 id="memory-representation-1">Memory representation</h3>
+<div class="sourceCode" id="cb23" data-exports="both"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> v = <span class="dv">0</span>. <span class="kw">in</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> vr = Obj.repr v <span class="kw">in</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>Obj.is_block vr, Obj.reachable_words vr, Obj.tag vr</span></code></pre></div>
+<pre class="example"><code>(true, 2, 253)
+</code></pre>
+<h3 id="performance-of-direct-addition">Performance of direct addition</h3>
+<div class="sourceCode" id="cb25" data-tangle="floatadd.ml" data-noeval="yes"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> () =</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> niter = <span class="dt">int_of_string</span> <span class="dt">Sys</span>.argv.(<span class="dv">1</span>) <span class="kw">in</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> x = <span class="dt">ref</span> <span class="dv">0</span>. <span class="kw">in</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> i = <span class="dv">0</span> <span class="kw">to</span> niter <span class="kw">do</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    x := !x +. <span class="dv">86</span>.</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">done</span>;</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">exit</span> (Int.of_float !x)</span></code></pre></div>
+<div class="sourceCode" id="cb26" data-tangle="cfloatadd.c" data-noeval="yes"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span><span class="op">*</span> argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> niter <span class="op">=</span> atol<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> x <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">long</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> niter<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> x <span class="op">+</span> <span class="fl">86.</span><span class="op">;</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">(</span><span class="dt">int</span><span class="op">)</span>x<span class="op">;</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb27" data-results="output" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;OCaml:&quot;</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="ex">opam</span> exec <span class="at">--switch</span><span class="op">=</span>4.14.1 <span class="at">--</span> ocamlopt <span class="at">-O2</span> floatadd.ml <span class="at">-o</span> floatadd</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./floatadd 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;C:&quot;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-O2</span> cfloatadd.c <span class="at">-o</span> cfloatadd</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./cfloatadd 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span></code></pre></div>
+<pre class="example"><code>OCaml:
+Command exited with non-zero status 86
+0.73user 0.00system 0:00.73elapsed 99%CPU (0avgtext+0avgdata 1792maxresident)k
+0inputs+0outputs (0major+105minor)pagefaults 0swaps
+C:
+0.72user 0.00system 0:00.72elapsed 99%CPU (0avgtext+0avgdata 1024maxresident)k
+0inputs+0outputs (0major+64minor)pagefaults 0swaps
+</code></pre>
+<h3 id="performance-of-direct-multiplication">Performance of direct multiplication</h3>
+<div class="sourceCode" id="cb29" data-tangle="floatmul.ml" data-noeval="yes"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> () =</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> niter = <span class="dt">int_of_string</span> <span class="dt">Sys</span>.argv.(<span class="dv">1</span>) <span class="kw">in</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> x = <span class="dt">ref</span> <span class="dv">1</span>. <span class="kw">in</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> i = <span class="dv">0</span> <span class="kw">to</span> niter <span class="kw">do</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    x := !x *. <span class="dv">86</span>.</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">done</span>;</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">exit</span> (Int.of_float !x)</span></code></pre></div>
+<div class="sourceCode" id="cb30" data-tangle="cfloatmul.c" data-noeval="yes"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span><span class="op">*</span> argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> niter <span class="op">=</span> atol<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> x <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">long</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> niter<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> x <span class="op">*</span> <span class="fl">86.</span><span class="op">;</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">(</span><span class="dt">int</span><span class="op">)</span>x<span class="op">;</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb31" data-results="verbatim" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;OCaml:&quot;</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="ex">opam</span> exec <span class="at">--switch</span><span class="op">=</span>4.14.1 <span class="at">--</span> ocamlopt <span class="at">-O2</span> floatmul.ml <span class="at">-o</span> floatmul</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./floatmul 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;C:&quot;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-O1</span> cfloatmul.c <span class="at">-o</span> cfloatmul</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./cfloatmul 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span></code></pre></div>
+<pre class="example"><code>OCaml:
+0.72user 0.00system 0:00.72elapsed 99%CPU (0avgtext+0avgdata 1664maxresident)k
+0inputs+0outputs (0major+105minor)pagefaults 0swaps
+C:
+0.71user 0.00system 0:00.72elapsed 99%CPU (0avgtext+0avgdata 1152maxresident)k
+0inputs+0outputs (0major+65minor)pagefaults 0swaps
+</code></pre>
+<h3 id="performance-of-indirect-addition">Performance of indirect addition</h3>
+<div class="sourceCode" id="cb33" data-tangle="floataddf.ml" data-noeval="yes"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> [@inline never] plusf x = x +. <span class="dv">86</span>.</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> () =</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> niter = <span class="dt">int_of_string</span> <span class="dt">Sys</span>.argv.(<span class="dv">1</span>) <span class="kw">in</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> x = <span class="dt">ref</span> <span class="dv">0</span>. <span class="kw">in</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> i = <span class="dv">0</span> <span class="kw">to</span> niter <span class="kw">do</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    x := plusf !x</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">done</span>;</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">exit</span> (Int.of_float !x)</span></code></pre></div>
+<div class="sourceCode" id="cb34" data-tangle="cfloataddf.c" data-noeval="yes"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>noinline<span class="op">))</span> <span class="dt">double</span> plusf<span class="op">(</span><span class="dt">double</span> x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x <span class="op">+</span> <span class="fl">86.</span><span class="op">;</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span><span class="op">*</span> argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> niter <span class="op">=</span> atol<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> x <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">long</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> niter<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> plusf<span class="op">(</span>x<span class="op">);</span></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">(</span><span class="dt">int</span><span class="op">)</span>x<span class="op">;</span></span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb35" data-results="output" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;OCaml:&quot;</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="ex">opam</span> exec <span class="at">--switch</span><span class="op">=</span>4.14.1 <span class="at">--</span> ocamlopt <span class="at">-O2</span> floataddf.ml <span class="at">-o</span> floataddf</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./floataddf 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;C:&quot;</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-O2</span> cfloataddf.c <span class="at">-o</span> cfloataddf</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./cfloataddf 1000000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span></code></pre></div>
+<pre class="example"><code>OCaml:
+Command exited with non-zero status 86
+4.87user 0.00system 0:04.88elapsed 99%CPU (0avgtext+0avgdata 3712maxresident)k
+0inputs+0outputs (0major+621minor)pagefaults 0swaps
+C:
+1.22user 0.00system 0:01.22elapsed 99%CPU (0avgtext+0avgdata 1152maxresident)k
+0inputs+0outputs (0major+66minor)pagefaults 0swaps
+</code></pre>
+<h3 id="performance-of-indirect-multiplication">Performance of indirect multiplication</h3>
+<div class="sourceCode" id="cb37" data-tangle="floatmulf.ml" data-noeval="yes"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> [@inline never] mulf x = x *. <span class="dv">86</span>.</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> () =</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> niter = <span class="dt">int_of_string</span> <span class="dt">Sys</span>.argv.(<span class="dv">1</span>) <span class="kw">in</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> x = <span class="dt">ref</span> <span class="dv">1</span>. <span class="kw">in</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> i = <span class="dv">0</span> <span class="kw">to</span> niter <span class="kw">do</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    x := mulf !x</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">done</span>;</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">exit</span> (Int.of_float !x)</span></code></pre></div>
+<div class="sourceCode" id="cb38" data-tangle="cfloatmulf.c" data-noeval="yes"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>noinline<span class="op">))</span> <span class="dt">double</span> mulf<span class="op">(</span><span class="dt">double</span> x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x <span class="op">*</span> <span class="fl">86.</span><span class="op">;</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span><span class="op">*</span> argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> niter <span class="op">=</span> atol<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> x <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">long</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> niter<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> mulf<span class="op">(</span>x<span class="op">);</span></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">(</span><span class="dt">int</span><span class="op">)</span>x<span class="op">;</span></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb39" data-results="verbatim" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;OCaml:&quot;</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="ex">opam</span> exec <span class="at">--switch</span><span class="op">=</span>4.14.1 <span class="at">--</span> ocamlopt <span class="at">-O2</span> floatmulf.ml <span class="at">-o</span> floatmulf</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./floatmulf 100000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;C:&quot;</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-O2</span> cfloatmulf.c <span class="at">-o</span> cfloatmulf</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./cfloatmulf 100000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span></code></pre></div>
+<pre class="example"><code>OCaml:
+0.48user 0.00system 0:00.48elapsed 99%CPU (0avgtext+0avgdata 3840maxresident)k
+0inputs+0outputs (0major+621minor)pagefaults 0swaps
+C:
+0.12user 0.00system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 1024maxresident)k
+0inputs+0outputs (0major+61minor)pagefaults 0swaps
+</code></pre>
+<h2 id="integers-again-int64.t">Integers again, <code>Int64.t</code></h2>
+<div class="sourceCode" id="cb41" data-tangle="int64add.ml" data-noeval="yes"><pre class="sourceCode ocaml"><code class="sourceCode ocaml"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> [@inline never] plus64 x = <span class="dt">Int64</span>.add x <span class="dv">86</span>L</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> () =</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> niter = <span class="dt">int_of_string</span> <span class="dt">Sys</span>.argv.(<span class="dv">1</span>) <span class="kw">in</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> x = <span class="dt">ref</span> <span class="dv">0</span>L <span class="kw">in</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> i = <span class="dv">0</span> <span class="kw">to</span> niter <span class="kw">do</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    x := plus64 !x</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">done</span>;</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">exit</span> (<span class="dt">Int64</span>.to_int !x)</span></code></pre></div>
+<div class="sourceCode" id="cb42" data-tangle="cint64add.c" data-noeval="yes"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>noinline<span class="op">))</span> <span class="dt">long</span> plus<span class="op">(</span><span class="dt">long</span> x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> x <span class="op">+</span> <span class="dv">86</span><span class="op">;</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">int</span> argc<span class="op">,</span> <span class="dt">char</span><span class="op">*</span> argv<span class="op">[])</span> <span class="op">{</span></span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> niter <span class="op">=</span> atol<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">]);</span></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">long</span> x <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">long</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> niter<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> plus<span class="op">(</span>x<span class="op">);</span></span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">(</span><span class="dt">int</span><span class="op">)</span>x<span class="op">;</span></span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb43" data-results="output" data-exports="both"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;OCaml:&quot;</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="ex">opam</span> exec <span class="at">--switch</span><span class="op">=</span>4.14.1 <span class="at">--</span> ocamlopt <span class="at">-O2</span> int64add.ml <span class="at">-o</span> int64add</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./int64add 100000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;C:&quot;</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-O1</span> cint64add.c <span class="at">-o</span> cint64add</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/time</span> ./cint64add 100000000 <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span></span></code></pre></div>
+<pre class="example"><code>OCaml:
+Command exited with non-zero status 86
+0.37user 0.00system 0:00.37elapsed 99%CPU (0avgtext+0avgdata 3712maxresident)k
+0inputs+0outputs (0major+619minor)pagefaults 0swaps
+C:
+0.12user 0.00system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 896maxresident)k
+0inputs+0outputs (0major+60minor)pagefaults 0swaps
+</code></pre>
+    </section>
+</article>
+
+  </main>
+
+  <footer>
+    <nav class="footer-nav">
+
+      <a class="footer-nav-item" href="../">
+        <span class="fa fa-home fa-lg"></span>
+      </a>
+
+      <a class="footer-nav-item" href="https://github.com/artempyanykh">
+        <span class="fa fa-github fa-lg"></span>
+      </a>
+
+      <a class="footer-nav-item" href="https://ru.linkedin.com/in/artempyanykh/en">
+        <span class="fa fa-linkedin fa-lg"></span>
+      </a>
+
+      <a class="footer-nav-item" href="https://twitter.com/artem_pyanykh">
+        <span class="fa fa-twitter fa-lg"></span>
+      </a>
+
+      <a class="footer-nav-item" href="../about.html">
+        <span class="fa fa-question fa-lg"></span>
+      </a>
+    </nav>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+
+</body>
+
+</html>
