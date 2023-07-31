@@ -1,0 +1,331 @@
+---
+title: How complicated numbers can really be? OCaml version.
+category: ocaml runtime
+date: 2023-07-30
+---
+
+TODO
+
+#+BEGIN_EXPORT html
+<!--more-->
+#+END_EXPORT
+
+* Integers
+
+** Memory representation
+
+#+begin_src ocaml
+  let x = 42 ;;
+  #show x
+#+end_src
+
+#+begin_src ocaml
+  let x = 42 in
+  let xr = Obj.repr x in
+  Obj.is_block xr, Obj.reachable_words xr, Obj.tag xr
+#+end_src
+
+#+begin_src ocaml
+  let i64 = Int64.of_int 42 in
+  let i64r = Obj.repr i64 in
+  Obj.is_block i64r, Obj.reachable_words i64r, Obj.tag i64r
+#+end_src
+
+** Peaking into assembly
+
+#+begin_src ocaml :results none :tangle plus_one.ml
+  let plus_one x = x + 1
+#+end_src
+
+#+begin_src shell :results verbatim
+  opam exec --switch=4.14.1 -- ocamlopt -g -O2 -S -c plus_one.ml
+  cat plus_one.s | grep -v cfi | grep -v align | grep -v type | grep -v size | grep -C5 addq
+#+end_src
+
+#+begin_src ocaml :results none :tangle plus.ml
+  let plus x y = x + y
+#+end_src
+
+#+begin_src shell :results verbatim
+  opam exec --switch=4.14.1 -- ocamlopt -g -O2 -S -c plus.ml
+  cat plus.s | grep -v cfi | grep -v align | grep -v type | grep -v size | grep -C5 lea
+#+end_src
+
+** Performance of addition
+
+#+begin_src ocaml :tangle intadd.ml :results none
+  let () =
+    let niter = int_of_string Sys.argv.(1) in
+    let x = ref 0 in
+    for i = 0 to niter do
+      x := !x + 1
+    done;
+    exit !x
+#+end_src
+
+#+begin_src c :tangle cintadd.c
+  #include <stdlib.h>
+
+  int main(int argc, char* argv[]) {
+    long niter = atol(argv[1]);
+
+    long x = 0;
+    for (long i = 0; i < niter; i++) {
+      x = x + 1;
+    }
+
+    return x;
+  }
+#+end_src
+
+#+begin_src shell :results output
+  echo "OCaml:"
+  opam exec --switch=4.14.1 -- ocamlopt -O2 intadd.ml -o intadd
+  /bin/time ./intadd 1000000000 2>&1
+  echo "C:"
+  cc -O2 cintadd.c -o cintadd
+  /bin/time ./cintadd 1000000000 2>&1
+#+end_src
+
+** Performance of multiplication
+
+#+begin_src ocaml :tangle intmul.ml
+  let () =
+    let niter = int_of_string Sys.argv.(1) in
+    let x = ref 1 in
+    for i = 0 to niter do
+      x := !x * 86
+    done;
+    exit !x
+#+end_src
+
+#+begin_src c :tangle cintmul.c
+  #include <stdlib.h>
+
+  int main(int argc, char* argv[]) {
+    long niter = atol(argv[1]);
+
+    long x = 1;
+    for (long i = 0; i < niter; i++) {
+      x = x * 86;
+    }
+
+    return x;
+  }
+#+end_src
+
+#+begin_src shell :results verbatim
+  echo "OCaml:"
+  opam exec --switch=4.14.1 -- ocamlopt -O2 intmul.ml -o intmul
+  /bin/time ./intmul 1000000000 2>&1
+  echo "C:"
+  cc -O2 cintmul.c -o cintmul
+  /bin/time ./cintmul 1000000000 2>&1
+#+end_src
+
+* Floats
+
+** Memory representation
+
+#+begin_src ocaml
+  let v = 0. in
+  let vr = Obj.repr v in
+  Obj.is_block vr, Obj.reachable_words vr, Obj.tag vr
+#+end_src
+
+** Performance of direct addition
+
+#+begin_src ocaml :tangle floatadd.ml
+  let () =
+    let niter = int_of_string Sys.argv.(1) in
+    let x = ref 0. in
+    for i = 0 to niter do
+      x := !x +. 86.
+    done;
+    exit (Int.of_float !x)
+#+end_src
+
+#+begin_src c :tangle cfloatadd.c
+  #include <stdlib.h>
+
+  int main(int argc, char* argv[]) {
+    long niter = atol(argv[1]);
+    
+    double x = 0;
+    for (long i = 0; i < niter; i++) {
+      x = x + 86.;
+    }
+
+    return (int)x;
+  }
+#+end_src
+
+#+begin_src shell :results output
+  echo "OCaml:"
+  opam exec --switch=4.14.1 -- ocamlopt -O2 floatadd.ml -o floatadd
+  /bin/time ./floatadd 1000000000 2>&1
+  echo "C:"
+  cc -O2 cfloatadd.c -o cfloatadd
+  /bin/time ./cfloatadd 1000000000 2>&1
+#+end_src
+
+** Performance of direct multiplication
+
+#+begin_src ocaml :tangle floatmul.ml
+  let () =
+    let niter = int_of_string Sys.argv.(1) in
+    let x = ref 1. in
+    for i = 0 to niter do
+      x := !x *. 86.
+    done;
+    exit (Int.of_float !x)
+#+end_src
+
+#+begin_src c :tangle cfloatmul.c
+  #include <stdlib.h>
+
+  int main(int argc, char* argv[]) {
+    long niter = atol(argv[1]);
+
+    double x = 1;
+    for (long i = 0; i < niter; i++) {
+      x = x * 86.;
+    }
+
+    return (int)x;
+  }
+#+end_src
+
+#+begin_src shell :results verbatim
+  echo "OCaml:"
+  opam exec --switch=4.14.1 -- ocamlopt -O2 floatmul.ml -o floatmul
+  /bin/time ./floatmul 1000000000 2>&1
+  echo "C:"
+  cc -O1 cfloatmul.c -o cfloatmul
+  /bin/time ./cfloatmul 1000000000 2>&1
+#+end_src
+
+** Performance of indirect addition
+
+#+begin_src ocaml :tangle floataddf.ml
+  let [@inline never] plusf x = x +. 86.
+
+  let () =
+    let niter = int_of_string Sys.argv.(1) in
+    let x = ref 0. in
+    for i = 0 to niter do
+      x := plusf !x
+    done;
+    exit (Int.of_float !x)
+#+end_src
+
+#+begin_src c :tangle cfloataddf.c
+  #include <stdlib.h>
+
+  __attribute__((noinline)) double plusf(double x) {
+    return x + 86.;
+  }
+
+  int main(int argc, char* argv[]) {
+    long niter = atol(argv[1]);
+  
+    double x = 0;
+    for (long i = 0; i < niter; i++) {
+      x = plusf(x);
+    }
+
+    return (int)x;
+  }
+#+end_src
+
+#+begin_src shell :results output
+  echo "OCaml:"
+  opam exec --switch=4.14.1 -- ocamlopt -O2 floataddf.ml -o floataddf
+  /bin/time ./floataddf 1000000000 2>&1
+  echo "C:"
+  cc -O2 cfloataddf.c -o cfloataddf
+  /bin/time ./cfloataddf 1000000000 2>&1
+#+end_src
+
+** Performance of indirect multiplication
+
+#+begin_src ocaml :tangle floatmulf.ml
+  let [@inline never] mulf x = x *. 86.
+
+  let () =
+    let niter = int_of_string Sys.argv.(1) in
+    let x = ref 1. in
+    for i = 0 to niter do
+      x := mulf !x
+    done;
+    exit (Int.of_float !x)
+#+end_src
+
+#+begin_src c :tangle cfloatmulf.c
+  #include <stdlib.h>
+
+  __attribute__((noinline)) double mulf(double x) {
+    return x * 86.;
+  }
+
+  int main(int argc, char* argv[]) {
+    long niter = atol(argv[1]);
+
+    double x = 1;
+    for (long i = 0; i < niter; i++) {
+      x = mulf(x);
+    }
+
+    return (int)x;
+  }
+#+end_src
+
+#+begin_src shell :results verbatim
+  echo "OCaml:"
+  opam exec --switch=4.14.1 -- ocamlopt -O2 floatmulf.ml -o floatmulf
+  /bin/time ./floatmulf 100000000 2>&1
+  echo "C:"
+  cc -O2 cfloatmulf.c -o cfloatmulf
+  /bin/time ./cfloatmulf 100000000 2>&1
+#+end_src
+* Integers again, ~Int64.t~
+
+#+begin_src ocaml :tangle int64add.ml
+  let [@inline never] plus64 x = Int64.add x 86L
+
+  let () =
+    let niter = int_of_string Sys.argv.(1) in
+    let x = ref 0L in
+    for i = 0 to niter do
+      x := plus64 !x
+    done;
+    exit (Int64.to_int !x)
+#+end_src
+
+#+begin_src c :tangle cint64add.c
+  #include <stdlib.h>
+
+  __attribute__((noinline)) long plus(long x) {
+    return x + 86;
+  }
+
+  int main(int argc, char* argv[]) {
+    long niter = atol(argv[1]);
+
+    long x = 0;
+    for (long i = 0; i < niter; i++) {
+      x = plus(x);
+    }
+
+    return (int)x;
+  }
+#+end_src
+
+#+begin_src shell :results output
+  echo "OCaml:"
+  opam exec --switch=4.14.1 -- ocamlopt -O2 int64add.ml -o int64add
+  /bin/time ./int64add 100000000 2>&1
+  echo "C:"
+  cc -O1 cint64add.c -o cint64add
+  /bin/time ./cint64add 100000000 2>&1
+#+end_src
