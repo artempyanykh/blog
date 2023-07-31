@@ -4,31 +4,49 @@ category: ocaml runtime
 date: 2023-07-30
 ---
 
-How complicated numbers can really be? Turns out quite a bit: sometimes '1' turns up as '2' in the
-assembly or a 64 bit number suddenly takes up 192 bits of space.
+How complicated can numbers really be? In OCaml, turns out, quite a bit: sometimes '1' turns up as
+'2' in the assembly or a 64 bit number suddenly takes up 192 bits of space. But is it necessarily a
+/bad thing/?
 
 #+BEGIN_EXPORT html
 <!--more-->
 #+END_EXPORT
 
-* Setup
+In this video I do a deeper dive into how numbers are implemented in OCaml looking both at the
+runtime's source code and the generated assembly to support the findings. I also run a number of
+benchmarks to get a better feel for the overhead the comes from using a universal representation of
+values in OCaml.
 
-#+begin_src shell :results verbatim
+#+BEGIN_EXPORT html
+<div class="video-container">
+<iframe class="video" src="https://www.youtube.com/embed/EblI_VXaeIk" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+#+END_EXPORT
+
+The text below severaly lacks prose and for now can be considered an appendix for the video. I hope
+to get back to it and re-work as a proper post at some point.
+
+* Appendix
+** Setup
+
+#+begin_src bash :results verbatim :exports both
   uname -ro
   lscpu | grep 'Model name'
   cc --version | head -n1
 #+end_src
 
 #+RESULTS:
+#+begin_example
 : 6.4.6-100.fc37.x86_64 GNU/Linux
 : Model name:                      AMD Ryzen 5 3600 6-Core Processor
 : cc (GCC) 12.3.1 20230508 (Red Hat 12.3.1-1)
+#+end_example
 
-* Integers
+** Integers
 
-** Memory representation
+*** Memory representation
 
-#+begin_src ocaml
+#+begin_src ocaml :exports both
   let x = 42 ;;
   #show x
 #+end_src
@@ -36,7 +54,7 @@ assembly or a 64 bit number suddenly takes up 192 bits of space.
 #+RESULTS:
 : val x : int
 
-#+begin_src ocaml
+#+begin_src ocaml :exports both
   let x = 42 in
   let xr = Obj.repr x in
   Obj.is_block xr, Obj.reachable_words xr, Obj.tag xr
@@ -45,7 +63,7 @@ assembly or a 64 bit number suddenly takes up 192 bits of space.
 #+RESULTS:
 : (false, 0, 1000)
 
-#+begin_src ocaml
+#+begin_src ocaml :exports both
   let i64 = Int64.of_int 42 in
   let i64r = Obj.repr i64 in
   Obj.is_block i64r, Obj.reachable_words i64r, Obj.tag i64r
@@ -54,13 +72,13 @@ assembly or a 64 bit number suddenly takes up 192 bits of space.
 #+RESULTS:
 : (true, 3, 255)
 
-** Peaking into assembly
+*** Peaking into assembly
 
 #+begin_src ocaml :noeval :tangle plus_one.ml
   let plus_one x = x + 1
 #+end_src
 
-#+begin_src shell :results verbatim
+#+begin_src bash :results verbatim :exports both
   opam exec --switch=4.14.1 -- ocamlopt -g -O2 -S -c plus_one.ml
   cat plus_one.s | grep -v cfi | grep -v align | grep -v type | grep -v size | grep -C5 addq
 #+end_src
@@ -84,7 +102,7 @@ camlPlus_one__entry:
   let plus x y = x + y
 #+end_src
 
-#+begin_src shell :results verbatim
+#+begin_src bash :results verbatim :exports both
   opam exec --switch=4.14.1 -- ocamlopt -g -O2 -S -c plus.ml
   cat plus.s | grep -v cfi | grep -v align | grep -v type | grep -v size | grep -C5 lea
 #+end_src
@@ -104,7 +122,7 @@ camlPlus__entry:
 .L101:
 #+end_example
 
-** Performance of addition
+*** Performance of addition
 
 #+begin_src ocaml :noeval :tangle intadd.ml
   let () =
@@ -131,7 +149,7 @@ camlPlus__entry:
   }
 #+end_src
 
-#+begin_src shell :results output
+#+begin_src bash :results output :exports both
   echo "OCaml:"
   opam exec --switch=4.14.1 -- ocamlopt -O2 intadd.ml -o intadd
   /bin/time ./intadd 1000000000 2>&1
@@ -149,7 +167,7 @@ camlPlus__entry:
 : 0.00user 0.00system 0:00.00elapsed 80%CPU (0avgtext+0avgdata 1152maxresident)k
 : 0inputs+0outputs (0major+65minor)pagefaults 0swaps
 
-** Performance of multiplication
+*** Performance of multiplication
 
 #+begin_src ocaml :tangle intmul.ml :noeval
   let () =
@@ -176,7 +194,7 @@ camlPlus__entry:
   }
 #+end_src
 
-#+begin_src shell :results verbatim
+#+begin_src bash :results verbatim :exports both
   echo "OCaml:"
   opam exec --switch=4.14.1 -- ocamlopt -O2 intmul.ml -o intmul
   /bin/time ./intmul 1000000000 2>&1
@@ -193,11 +211,11 @@ camlPlus__entry:
 : 0.71user 0.00system 0:00.71elapsed 99%CPU (0avgtext+0avgdata 1024maxresident)k
 : 0inputs+0outputs (0major+63minor)pagefaults 0swaps
 
-* Floats
+** Floats
 
-** Memory representation
+*** Memory representation
 
-#+begin_src ocaml
+#+begin_src ocaml :exports both
   let v = 0. in
   let vr = Obj.repr v in
   Obj.is_block vr, Obj.reachable_words vr, Obj.tag vr
@@ -206,7 +224,7 @@ camlPlus__entry:
 #+RESULTS:
 : (true, 2, 253)
 
-** Performance of direct addition
+*** Performance of direct addition
 
 #+begin_src ocaml :tangle floatadd.ml :noeval
   let () =
@@ -233,7 +251,7 @@ camlPlus__entry:
   }
 #+end_src
 
-#+begin_src shell :results output
+#+begin_src bash :results output :exports both
   echo "OCaml:"
   opam exec --switch=4.14.1 -- ocamlopt -O2 floatadd.ml -o floatadd
   /bin/time ./floatadd 1000000000 2>&1
@@ -251,7 +269,7 @@ camlPlus__entry:
 : 0.72user 0.00system 0:00.72elapsed 99%CPU (0avgtext+0avgdata 1024maxresident)k
 : 0inputs+0outputs (0major+64minor)pagefaults 0swaps
 
-** Performance of direct multiplication
+*** Performance of direct multiplication
 
 #+begin_src ocaml :tangle floatmul.ml :noeval
   let () =
@@ -278,7 +296,7 @@ camlPlus__entry:
   }
 #+end_src
 
-#+begin_src shell :results verbatim
+#+begin_src bash :results verbatim :exports both
   echo "OCaml:"
   opam exec --switch=4.14.1 -- ocamlopt -O2 floatmul.ml -o floatmul
   /bin/time ./floatmul 1000000000 2>&1
@@ -295,7 +313,7 @@ camlPlus__entry:
 : 0.71user 0.00system 0:00.72elapsed 99%CPU (0avgtext+0avgdata 1152maxresident)k
 : 0inputs+0outputs (0major+65minor)pagefaults 0swaps
 
-** Performance of indirect addition
+*** Performance of indirect addition
 
 #+begin_src ocaml :tangle floataddf.ml :noeval
   let [@inline never] plusf x = x +. 86.
@@ -328,7 +346,7 @@ camlPlus__entry:
   }
 #+end_src
 
-#+begin_src shell :results output
+#+begin_src bash :results output :exports both
   echo "OCaml:"
   opam exec --switch=4.14.1 -- ocamlopt -O2 floataddf.ml -o floataddf
   /bin/time ./floataddf 1000000000 2>&1
@@ -346,7 +364,7 @@ camlPlus__entry:
 : 1.22user 0.00system 0:01.22elapsed 99%CPU (0avgtext+0avgdata 1152maxresident)k
 : 0inputs+0outputs (0major+66minor)pagefaults 0swaps
 
-** Performance of indirect multiplication
+*** Performance of indirect multiplication
 
 #+begin_src ocaml :tangle floatmulf.ml :noeval
   let [@inline never] mulf x = x *. 86.
@@ -379,7 +397,7 @@ camlPlus__entry:
   }
 #+end_src
 
-#+begin_src shell :results verbatim
+#+begin_src bash :results verbatim :exports both
   echo "OCaml:"
   opam exec --switch=4.14.1 -- ocamlopt -O2 floatmulf.ml -o floatmulf
   /bin/time ./floatmulf 100000000 2>&1
@@ -396,7 +414,7 @@ camlPlus__entry:
 : 0.12user 0.00system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 1024maxresident)k
 : 0inputs+0outputs (0major+61minor)pagefaults 0swaps
 
-* Integers again, ~Int64.t~
+** Integers again, ~Int64.t~
 
 #+begin_src ocaml :tangle int64add.ml :noeval
   let [@inline never] plus64 x = Int64.add x 86L
@@ -429,7 +447,7 @@ camlPlus__entry:
   }
 #+end_src
 
-#+begin_src shell :results output
+#+begin_src bash :results output :exports both
   echo "OCaml:"
   opam exec --switch=4.14.1 -- ocamlopt -O2 int64add.ml -o int64add
   /bin/time ./int64add 100000000 2>&1

@@ -21,6 +21,7 @@ div.sourceCode[data-tangle]::before {
   display: inline-block;
   text-align: left;
   font-family: monospace;
+  -webkit-text-decoration: overline dotted gray;
   text-decoration: overline dotted gray;
 }
 /* div.sourceCode:not([data-tangle=''])::before { */
