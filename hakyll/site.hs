@@ -16,6 +16,10 @@ main =
       route idRoute
       compile copyFileCompiler
 
+    match "scripts/**" $ do
+      route idRoute
+      compile copyFileCompiler
+
     match "css/*" $ do
       route idRoute
       compile compressCssCompiler

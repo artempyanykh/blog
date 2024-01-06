@@ -7,3 +7,6 @@ _site/
 _cache/
 
 .ignore
+__pycache__
+
+lab/advantage/media
