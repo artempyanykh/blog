@@ -5,8 +5,8 @@ cabal-version:      >= 1.10
 
 executable site
   main-is:          site.hs
-  build-depends:    base == 4.16.*
-                  , hakyll == 4.15.*
+  build-depends:    base
+                  , hakyll
                   , pandoc
                   , directory
                   , filepath
