@@ -98,6 +98,10 @@ img {
   max-width: 100%;
 }
 
+video {
+  max-width: 100%;
+}
+
 ul.post-list {
   padding-inline-start: 0;
   list-style-type: none;

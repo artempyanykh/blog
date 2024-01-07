@@ -12,15 +12,7 @@
   <link rel="stylesheet" href="../css/syntax.css" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
   <link rel="icon" type="image/png" href="../images/favicon.png">
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-X0Q4TM37FN"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-
-    gtag('config', 'G-X0Q4TM37FN');
-</script>
+  
 </head>
 
 <body>
@@ -863,7 +855,7 @@ performant, right? Well, yes… maybe. Let’s find out!</p>
 <span id="cb42-11"><a href="#cb42-11"></a></span>
 <span id="cb42-12"><a href="#cb42-12"></a>        <span class="dt">char</span> <span class="op">*</span>endptr<span class="op">;</span></span>
 <span id="cb42-13"><a href="#cb42-13"></a>        <span class="dt">long</span> n <span class="op">=</span> strtol<span class="op">(</span>argv<span class="op">[</span><span class="dv">1</span><span class="op">],</span> <span class="op">&amp;</span>endptr<span class="op">,</span> <span class="dv">10</span><span class="op">);</span></span>
-<span id="cb42-14"><a href="#cb42-14"></a>        <span class="cf">if</span> <span class="op">(</span>endptr<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">!=</span> <span class="ch">'\0'</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb42-14"><a href="#cb42-14"></a>        <span class="cf">if</span> <span class="op">(</span>endptr<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">!=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">)</span> <span class="op">{</span></span>
 <span id="cb42-15"><a href="#cb42-15"></a>                printf<span class="op">(</span><span class="st">&quot;Error: not a number</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
 <span id="cb42-16"><a href="#cb42-16"></a>                <span class="cf">return</span> <span class="dv">1</span><span class="op">;</span></span>
 <span id="cb42-17"><a href="#cb42-17"></a>        <span class="op">}</span></span>
@@ -878,7 +870,7 @@ performant, right? Well, yes… maybe. Let’s find out!</p>
 <span id="cb42-26"><a href="#cb42-26"></a>                        printf<span class="op">(</span><span class="st">&quot;Buzz&quot;</span><span class="op">);</span></span>
 <span id="cb42-27"><a href="#cb42-27"></a>                <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
 <span id="cb42-28"><a href="#cb42-28"></a>                        <span class="cf">if</span> <span class="op">(</span>rem3 <span class="op">!=</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span id="cb42-29"><a href="#cb42-29"></a>                                printf<span class="op">(</span><span class="st">&quot;%ld&quot;</span><span class="op">,</span> i<span class="op">);</span></span>
+<span id="cb42-29"><a href="#cb42-29"></a>                                printf<span class="op">(</span><span class="st">&quot;</span><span class="sc">%ld</span><span class="st">&quot;</span><span class="op">,</span> i<span class="op">);</span></span>
 <span id="cb42-30"><a href="#cb42-30"></a>                        <span class="op">}</span></span>
 <span id="cb42-31"><a href="#cb42-31"></a>                <span class="op">}</span></span>
 <span id="cb42-32"><a href="#cb42-32"></a>                printf<span class="op">(</span><span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span><span class="op">);</span></span>
@@ -1044,24 +1036,24 @@ Haskell’s version and 10x slower then C:</p>
 0m14.858s 0m0.039s
 </code></pre>
 <h1 id="footnotes">Footnotes</h1>
-<section class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1" role="doc-endnote"><p>There <strong>are</strong> instructions in <code class="verbatim">printf</code> that require memory
+<li id="fn1"><p>There <strong>are</strong> instructions in <code class="verbatim">printf</code> that require memory
 alignment, but this code path is not taken during execution due to
 absence of floating point arguments.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2" role="doc-endnote"><p>Loosely speaking, the assembler doesn’t know the final address of a
+<li id="fn2"><p>Loosely speaking, the assembler doesn’t know the final address of a
 symbol in memory. So, it puts a placeholder in the object file, and
 instructs the linker to put the final address there when the linker
 builds an executable. This process is called <strong>relocation</strong>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3" role="doc-endnote"><p>Or more specifically, a program counter (PC) relative
+<li id="fn3"><p>Or more specifically, a program counter (PC) relative
 displacement.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4" role="doc-endnote"><p><code class="verbatim">__la_...</code> stands for lazy and <code class="verbatim">_nl_...</code> — for non-lazy and
+<li id="fn4"><p><code class="verbatim">__la_...</code> stands for lazy and <code class="verbatim">_nl_...</code> — for non-lazy and
 describe the type of binding performed by the dynamic linker.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn5" role="doc-endnote"><p>The actual memory content is <code class="verbatim">f41f0000</code> but due to
+<li id="fn5"><p>The actual memory content is <code class="verbatim">f41f0000</code> but due to
 little-endianness byte order is reversed and the least significant
 byte comes first.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn6" role="doc-endnote"><p>Remainder from division by 3 or by 5 can be found more
+<li id="fn6"><p>Remainder from division by 3 or by 5 can be found more
 efficiently using a combination of multiplication and shifts. See
 <a href="https://www.hackersdelight.org/hdcodetxt/remuc.c.txt">Hacker’s delight</a> for more details. Looks like in this particular case
 <code class="verbatim">remu3m</code> and <code class="verbatim">remu5m</code> methods were used.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
