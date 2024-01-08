@@ -53,7 +53,7 @@ Usually, to do an <strong>ability check</strong> you roll a 20-sided die (<code>
 <p>But what if you roll the die <strong>two</strong> times and then pick either the higher or the lower number?
 This is called respectively an <strong>advantage</strong> and <strong>disadvantage</strong> in D&amp;D.
 It feels that the effects of advantage and disadvantage on the chance of success should be similar.
-Yet, it couldn’t be further from the truth!<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+Yet, it couldn’t be further from the truth!</p>
 <!-- <video controls src="/images/posts/advantage/ProbAll.mp4" -->
 <!--                 poster="/images/posts/advantage/ProbAll.png"/> -->
 <!--more-->
@@ -64,7 +64,7 @@ Yet, it couldn’t be further from the truth!<a href="#fn1" class="footnote-ref"
 <p><span class="math display">\[
 \mathbb{P}(\mathrm{success})_\mathrm{adv} = 1 - (1 - p)^2 = 2p - p^2
 \]</span></p>
-<p>Since <span class="math inline">\(2p \geq p^2\)</span> when <span class="math inline">\(p \in [0,1]\)</span>, you get a nice boost to your chance of success.
+<p>Since <span class="math inline">\(p \geq p^2\)</span> when <span class="math inline">\(p \in [0,1]\)</span>, you get a nice boost to your chance of success compared to the one-shot probability <span class="math inline">\(p\)</span>.
 This can be illustrated with the following chart:</p>
 <video playsinline controls src="../images/posts/advantage/Prob2.mp4" poster="../images/posts/advantage/Prob2.png"></video>
 <p>Finally, when it comes to <strong>disadvantage</strong>, you succeed only when you succeed both your one-shot checks which gives us:</p>
@@ -75,7 +75,7 @@ This can be illustrated with the following chart:</p>
 <p>The charts for <strong>advantage</strong> and <strong>disadvantage</strong> look <em>somewhat</em> symmetrical.
 What the fuss is about?</p>
 <h2 id="relative-effect">Relative effect</h2>
-<p>Things start to get interesting when we look at the <em>relative</em> effects of advantage and disadvantage<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
+<p>Things start to get interesting when we look at the <em>relative</em> effects of advantage and disadvantage<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
 <p>First, let’s look at the change in the chance of success relative to the <em>one-shot</em> chance of success:</p>
 <p><span class="math display">\[
 \mathbb{P}(\mathrm{success})_\mathrm{adv} / p = 2 - p
@@ -92,14 +92,16 @@ p / \mathbb{P}(\mathrm{success})_\mathrm{dis} = p / p^2 = 1/p
 <p>Plotting these charts side-by-side, there’s much less symmetry than originally anticipated:</p>
 <video playsinline controls src="../images/posts/advantage/ProbUpDownSide.mp4" poster="../images/posts/advantage/ProbUpDownSide.png"></video>
 <h2 id="conclusion">Conclusion</h2>
-<p>In the best/worst-case scenario, when a one-shot chance of success is <span class="math inline">\(1\)</span> out of <span class="math inline">\(20\)</span>, having <strong>advantage</strong> would <em>almost</em> double your chances, but with <strong>disadvantage</strong> you’d be <span class="math inline">\(20\)</span> times less likely to succeed!</p>
-<p>This is an interesting asymmetry in what — at first glance — supposed to be symmetric game mechanics.
-I’m not sure if it’s particularly useful outside of the world of Dungeons &amp; Dragons, but the next time I play Baldur’s Gate 3, I’ll be more serious about picking <em>disadvantage</em>-inducing spells to debuff enemies rather than just throwing fireballs at them.</p>
+<p>In the best/worst-case scenario, when a one-shot chance of success is <span class="math inline">\(1\)</span> out of <span class="math inline">\(20\)</span>, having <strong>advantage</strong> would <em>almost</em> double your chances, but with <strong>disadvantage</strong> you’d be <span class="math inline">\(20\)</span> times less likely to succeed!
+Overall, <strong>disadvantage</strong> has a disproportionally large impact on the odds of success compared to the effect of <strong>advantage</strong>.
+This is true for the whole range of one-shot probabilities <span class="math inline">\(p \in (0, 1)\)</span>, with the gap becoming visible at <span class="math inline">\(p\)</span> around <span class="math inline">\(\frac{3}{4}\)</span> and apparent at <span class="math inline">\(p \leq \frac{1}{2}\)</span>.</p>
+<p>This is an interesting asymmetry in what — at first glance — supposed to be a symmetric game mechanics.
+I’m not sure if it’s particularly useful outside of the world of Dungeons &amp; Dragons, but the next time I play Baldur’s Gate 3, I’ll be more serious about picking <em>disadvantage</em>-inducing spells to debuff enemies rather than just throwing fireballs at them.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
 <section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1"><p>The animated charts were produced with <a href="https://github.com/3b1b/manim">manim</a> library.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p>Just don’t mind the case when <span class="math inline">\(p = 0\)</span> which is not particularly interesting but would complicate the formulas.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1"><p>Just don’t mind the case when <span class="math inline">\(p = 0\)</span> which is not particularly interesting but would complicate the formulas.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>The animated charts were produced with <a href="https://github.com/3b1b/manim">manim</a> library.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
     </section>

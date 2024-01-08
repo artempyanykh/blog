@@ -12,7 +12,7 @@ Usually, to do an **ability check** you roll a 20-sided die (`d20`), compare wha
 But what if you roll the die **two** times and then pick either the higher or the lower number?
 This is called respectively an **advantage** and **disadvantage** in D&D.
 It feels that the effects of advantage and disadvantage on the chance of success should be similar.
-Yet, it couldn't be further from the truth![^manim]
+Yet, it couldn't be further from the truth!
 
 <!-- <video controls src="/images/posts/advantage/ProbAll.mp4" -->
 <!--                 poster="/images/posts/advantage/ProbAll.png"/> -->
@@ -32,7 +32,7 @@ $$
 \mathbb{P}(\mathrm{success})_\mathrm{adv} = 1 - (1 - p)^2 = 2p - p^2
 $$
 
-Since $2p \geq p^2$ when $p \in [0,1]$, you get a nice boost to your chance of success.
+Since $p \geq p^2$ when $p \in [0,1]$, you get a nice boost to your chance of success compared to the one-shot probability $p$.
 This can be illustrated with the following chart:
 
 <video playsinline controls src="/images/posts/advantage/Prob2.mp4"
@@ -85,9 +85,11 @@ Plotting these charts side-by-side, there's much less symmetry than originally a
 ## Conclusion
 
 In the best/worst-case scenario, when a one-shot chance of success is $1$ out of $20$, having **advantage** would *almost* double your chances, but with **disadvantage** you'd be $20$ times less likely to succeed!
+Overall, **disadvantage** has a disproportionally large impact on the odds of success compared to the effect of **advantage**.
+This is true for the whole range of one-shot probabilities $p \in (0, 1)$, with the gap becoming visible at $p$ around $\frac{3}{4}$ and apparent at $p \leq \frac{1}{2}$.
 
-This is an interesting asymmetry in what --- at first glance --- supposed to be symmetric game mechanics.
-I'm not sure if it's particularly useful outside of the world of Dungeons & Dragons, but the next time I play Baldur's Gate 3, I'll be more serious about picking *disadvantage*-inducing spells to debuff enemies rather than just throwing fireballs at them.
+This is an interesting asymmetry in what --- at first glance --- supposed to be a symmetric game mechanics.
+I'm not sure if it's particularly useful outside of the world of Dungeons & Dragons, but the next time I play Baldur's Gate 3, I'll be more serious about picking *disadvantage*-inducing spells to debuff enemies rather than just throwing fireballs at them.[^manim]
 
 ---
 ---
