@@ -59,19 +59,19 @@ Yet, it couldn’t be further from the truth!<a href="#fn1" class="footnote-ref"
 <!--more-->
 <h2 id="probabilities">Probabilities</h2>
 <p>Let’s abstract from a physical die and imagine that a one-shot chance of succeeding a check is <span class="math inline">\(p \in [0,1]\)</span>. In other words, <span class="math inline">\(\mathbb{P}(\mathrm{success})_\mathrm{default}=p\)</span> which gives us a nice straight-line chart.</p>
-<video controls src="../images/posts/advantage/Prob1.mp4" poster="../images/posts/advantage/Prob1.png"></video>
+<video playsinline controls src="../images/posts/advantage/Prob1.mp4" poster="../images/posts/advantage/Prob1.png"></video>
 <p>Now, let’s consider what happens when we add the <strong>advantage</strong>. You fail a check <em>with advantage</em> when you fail your one-shot checks both times. Success is a complementary event, which means that</p>
 <p><span class="math display">\[
 \mathbb{P}(\mathrm{success})_\mathrm{adv} = 1 - (1 - p)^2 = 2p - p^2
 \]</span></p>
 <p>Since <span class="math inline">\(2p \geq p^2\)</span> when <span class="math inline">\(p \in [0,1]\)</span>, you get a nice boost to your chance of success.
 This can be illustrated with the following chart:</p>
-<video controls src="../images/posts/advantage/Prob2.mp4" poster="../images/posts/advantage/Prob2.png"></video>
+<video playsinline controls src="../images/posts/advantage/Prob2.mp4" poster="../images/posts/advantage/Prob2.png"></video>
 <p>Finally, when it comes to <strong>disadvantage</strong>, you succeed only when you succeed both your one-shot checks which gives us:</p>
 <p><span class="math display">\[
 \mathbb{P}(\mathrm{success})_\mathrm{dis} = p^2
 \]</span></p>
-<video controls src="../images/posts/advantage/Prob3.mp4" poster="../images/posts/advantage/Prob3.png"></video>
+<video playsinline controls src="../images/posts/advantage/Prob3.mp4" poster="../images/posts/advantage/Prob3.png"></video>
 <p>The charts for <strong>advantage</strong> and <strong>disadvantage</strong> look <em>somewhat</em> symmetrical.
 What the fuss is about?</p>
 <h2 id="relative-effect">Relative effect</h2>
@@ -82,19 +82,19 @@ What the fuss is about?</p>
 \]</span></p>
 <p>The improvement that comes from the <em>advantage</em> is clamped between <span class="math inline">\(1\)</span> and <span class="math inline">\(2\)</span>, which is a nice bump but nothing extraodinary.
 Exactly, as you would expect from a mature game system.</p>
-<video controls src="../images/posts/advantage/ProbUpside.mp4" poster="../images/posts/advantage/ProbUpside.png"></video>
+<video playsinline controls src="../images/posts/advantage/ProbUpside.mp4" poster="../images/posts/advantage/ProbUpside.png"></video>
 <p>Now, let’s look at the effect of the disadvantage, in particular at <em>how much worse things get with disadvantage compared to the one-shot probability</em>.</p>
 <p><span class="math display">\[
 p / \mathbb{P}(\mathrm{success})_\mathrm{dis} = p / p^2 = 1/p
 \]</span></p>
 <p>Just by looking at this formula, it’s clear that things are not looking good. And even more so the smaller <span class="math inline">\(p\)</span> is!</p>
-<video controls src="../images/posts/advantage/ProbDownside.mp4" poster="../images/posts/advantage/ProbDownside.png"></video>
+<video playsinline controls src="../images/posts/advantage/ProbDownside.mp4" poster="../images/posts/advantage/ProbDownside.png"></video>
 <p>Plotting these charts side-by-side, there’s much less symmetry than originally anticipated:</p>
-<video controls src="../images/posts/advantage/ProbUpDownSide.mp4" poster="../images/posts/advantage/ProbUpDownSide.png"></video>
+<video playsinline controls src="../images/posts/advantage/ProbUpDownSide.mp4" poster="../images/posts/advantage/ProbUpDownSide.png"></video>
 <h2 id="conclusion">Conclusion</h2>
 <p>In the best/worst-case scenario, when a one-shot chance of success is <span class="math inline">\(1\)</span> out of <span class="math inline">\(20\)</span>, having <strong>advantage</strong> would <em>almost</em> double your chances, but with <strong>disadvantage</strong> you’d be <span class="math inline">\(20\)</span> times less likely to succeed!</p>
 <p>This is an interesting asymmetry in what — at first glance — supposed to be symmetric game mechanics.
-Can’t say that I learned something useful outside of the world of Dungeons &amp; Dragons, but next time I play Baldur’s Gate 3, I’ll more seriously consider picking <em>disadvantage</em>-inducing spells to debuff enemies rather than just throwing fireballs at them.</p>
+I’m not sure if it’s particularly useful outside of the world of Dungeons &amp; Dragons, but the next time I play Baldur’s Gate 3, I’ll be more serious about picking <em>disadvantage</em>-inducing spells to debuff enemies rather than just throwing fireballs at them.</p>
 <section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
