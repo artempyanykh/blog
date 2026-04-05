@@ -1,10 +1,10 @@
 <ul class="post-list">
   $for(posts)$
   <li>
-    <a href="$url$"><h2>$title$</h2></a>
+    <a href="$if(redirect)$$redirect$$else$$url$$endif$"><h2>$title$</h2></a>
     <span class="post-list-date">$date$</span>
     <div class="post-list-teaser">$teaser$</div>
-    <p class="post-list-continue"><a href="$url$">&hellip;continue reading&hellip;</a></p>
+    <p class="post-list-continue"><a href="$if(redirect)$$redirect$$else$$url$$endif$">&hellip;continue reading&hellip;</a></p>
   </li>
   $endfor$
 </ul>
