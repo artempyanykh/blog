@@ -20,7 +20,7 @@ main =
       route idRoute
       compile copyFileCompiler
 
-    match "talks/*" $ do
+    match "talks/**" $ do
       route idRoute
       compile copyFileCompiler
 
