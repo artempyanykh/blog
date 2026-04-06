@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attack of the Clones: Speeding Up Coroutine Compilation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #141622;
+    --bg-card: #1c1e30;
+    --bg-code: #1a1c2e;
+    --blue: #5ba8f5;
+    --blue-bright: #7ec8f7;
+    --cyan: #56d4c0;
+    --green: #4caf50;
+    --green-bright: #66cc6a;
+    --coral: #f47067;
+    --coral-light: #ff8a80;
+    --yellow: #e0a545;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --text-bright: #ecf0f4;
+    --border: #30364050;
+  }
+
+  :root.light {
+    --bg: #f5f5f7;
+    --bg-card: #ffffff;
+    --bg-code: #f0f1f4;
+    --blue: #2563eb;
+    --blue-bright: #1d4ed8;
+    --cyan: #0d9488;
+    --green: #16a34a;
+    --green-bright: #15803d;
+    --coral: #dc2626;
+    --coral-light: #ef4444;
+    --yellow: #ca8a04;
+    --text: #374151;
+    --text-dim: #6b7280;
+    --text-bright: #111827;
+    --border: #d1d5db80;
+  }
+
+  :root.light .terminal {
+    background: #f0f1f4;
+    border-color: #d1d5db80;
+    color: var(--text);
+  }
+  :root.light .terminal::before {
+    background: #dc2626;
+    box-shadow: 18px 0 0 #ca8a04, 36px 0 0 #16a34a;
+  }
+  :root.light .terminal .prompt { color: var(--green); }
+  :root.light .terminal .cursor { background: var(--text); }
+  :root.light .code-block { background: #f8f9fb; border-color: #d1d5db60; }
+  :root.light .di-node-module {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(220, 38, 38, 0.3);
+  }
+  :root.light .di-node-function {
+    background: rgba(22, 163, 74, 0.08);
+    border-color: rgba(22, 163, 74, 0.3);
+  }
+  :root.light .bar-fill { color: #fff; }
+
+  .toolbar {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 100;
+    display: flex;
+    gap: 8px;
+  }
+  .toolbar button {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--text-dim);
+    transition: opacity 0.2s;
+    opacity: 0.5;
+  }
+  .toolbar button:hover { opacity: 1; }
+
+  .home-link {
+    position: fixed;
+    top: 14px;
+    left: 16px;
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    text-decoration: none;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--text-dim);
+  }
+  .home-link:hover { opacity: 1; }
+  .home-link svg {
+    width: 16px;
+    height: 16px;
+  }
+  .home-link svg rect { fill: var(--text); }
+  .home-link svg path { fill: var(--bg); }
+
+  .reveal-viewport { background: var(--bg); }
+
+  /* Starfield canvas */
+  #starfield {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Star Wars crawl perspective — applied to title text only */
+  .sw-crawl {
+    perspective: 450px;
+    perspective-origin: 50% 100%;
+    display: inline-block;
+  }
+  .sw-crawl-title {
+    transform: rotateX(15deg);
+    transform-origin: 50% 100%;
+  }
+  .sw-crawl-title .sw-main {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 1.15em;
+    line-height: 1.15;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .sw-crawl-title .sw-sub {
+    font-size: 0.7em;
+    letter-spacing: 0.02em;
+    display: block;
+  }
+
+  .sw-tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7em;
+    color: var(--text-dim);
+    font-style: italic;
+    letter-spacing: 0.05em;
+  }
+
+  .reveal {
+    font-family: 'Inter', 'JetBrains Mono', monospace;
+    font-size: 28px;
+    color: var(--text);
+  }
+
+  .reveal h1, .reveal h2, .reveal h3 {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--blue);
+    text-transform: none;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .reveal h1 { font-size: 2.2em; }
+  .reveal h2 { font-size: 1.5em; margin-bottom: 0.6em; }
+  .reveal h3 { font-size: 1.1em; color: var(--text-bright); }
+
+  .reveal .slides { text-align: left; }
+
+  .reveal .slides section {
+    padding: 40px 60px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .slide-title {
+    border-bottom: 2px solid var(--coral);
+    padding-bottom: 12px;
+    margin-bottom: 40px;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin: 12px 0;
+  }
+  .card-accent { border-left: 3px solid var(--blue); }
+  .card-coral  { border-left: 3px solid var(--coral); }
+  .card-green  { border-left: 3px solid var(--green); }
+  .card-yellow { border-left: 3px solid var(--yellow); }
+
+  .cols { display: flex; gap: 40px; align-items: flex-start; }
+  .col  { flex: 1; }
+
+  .code-block {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72em;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .code-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55em;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--yellow);
+    background: var(--yellow)18;
+    padding: 3px 10px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+
+  .kw   { color: var(--coral); }
+  .fn   { color: var(--blue-bright); }
+  .cm   { color: var(--text-dim); font-style: italic; }
+  .ty   { color: var(--cyan); }
+  .param { color: var(--yellow); font-style: italic; }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55em;
+    padding: 3px 10px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .tag-core      { background: var(--blue)30; color: var(--blue); }
+  .tag-client    { background: var(--green)30; color: var(--green); }
+  .tag-abandoned { background: var(--yellow)30; color: var(--yellow); }
+
+  .big-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 5em;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--coral);
+  }
+  .big-number-green { color: var(--green-bright); }
+
+  .big-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6em;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .terminal {
+    background: #0d1117;
+    border: 1px solid #30364080;
+    border-radius: 8px;
+    padding: 16px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78em;
+    position: relative;
+  }
+  .terminal::before {
+    content: '';
+    display: inline-block;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #f47067;
+    box-shadow: 18px 0 0 #e0a545, 36px 0 0 #4caf50;
+    position: absolute;
+    top: 12px; left: 16px;
+  }
+  .terminal-content { margin-top: 20px; }
+  .prompt { color: var(--green); }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 1.1em;
+    background: var(--text);
+    vertical-align: text-bottom;
+    animation: blink 1.2s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Bar chart */
+  .bar-row {
+    display: flex;
+    align-items: center;
+    margin: 14px 0;
+    gap: 16px;
+  }
+  .bar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75em;
+    width: 100px;
+    text-align: right;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .bar-track {
+    flex: 1;
+    height: 32px;
+    background: var(--bg-card);
+    border-radius: 4px;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65em;
+    font-weight: 600;
+    color: var(--bg);
+    white-space: nowrap;
+  }
+  .bar-fill-coral  { background: var(--coral); }
+  .bar-fill-green  { background: var(--green); }
+  .bar-fill-yellow { background: var(--yellow); }
+  .bar-fill-blue   { background: var(--blue); }
+  .bar-value-outside {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65em;
+    font-weight: 600;
+    margin-left: 10px;
+    white-space: nowrap;
+  }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 40px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 14px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .tl-item {
+    position: relative;
+    margin: 18px 0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .tl-dot {
+    position: absolute;
+    left: -33px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5em;
+    font-weight: 700;
+  }
+  .tl-dot-gray   { background: var(--text-dim); color: var(--bg); }
+  .tl-dot-blue   { background: var(--blue); color: var(--bg); }
+  .tl-dot-yellow { background: var(--yellow); color: var(--bg); }
+  .tl-dot-green  { background: var(--green); color: var(--bg); }
+  .tl-card {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tl-card-highlight { border-color: var(--green)60; background: var(--green)08; }
+  .tl-card-dim       { border-color: var(--yellow)40; background: var(--yellow)06; }
+  .tl-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.85em;
+    color: var(--text-bright);
+  }
+  .tl-desc { font-size: 0.7em; color: var(--text-dim); margin-top: 2px; }
+  .tl-metric { text-align: right; flex-shrink: 0; }
+  .tl-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1em;
+    color: var(--text-bright);
+  }
+  .tl-speedup {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65em;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-top: 4px;
+    display: inline-block;
+  }
+  .speedup-gray   { background: var(--text-dim)30; color: var(--text-dim); }
+  .speedup-blue   { background: var(--blue)25; color: var(--blue); }
+  .speedup-yellow { background: var(--yellow)25; color: var(--yellow); }
+  .speedup-green  { background: var(--green)25; color: var(--green); }
+
+  /* CoroSplit diagram */
+  .split-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin: 30px 0;
+  }
+  .split-box {
+    border-radius: 8px;
+    padding: 16px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    min-width: 160px;
+  }
+  .split-box-input  { background: var(--bg-card); border: 2px solid var(--blue)60; }
+  .split-box-pass   { background: transparent; border: 2px dashed var(--coral)80; font-size: 0.85em; min-width: auto; padding: 10px 18px; }
+  .split-box-output { background: var(--bg-card); border: 2px solid var(--green)60; font-size: 0.85em; padding: 12px 20px; min-width: 180px; text-align: left; }
+  .split-arrow { font-size: 1.5em; color: var(--text-dim); }
+  .split-box-title { font-weight: 600; font-size: 0.9em; margin-bottom: 4px; }
+  .split-box-desc  { font-size: 0.65em; color: var(--text-dim); }
+
+  .mark-x  { color: var(--coral); font-weight: 600; }
+  .mark-ok { color: var(--green); font-weight: 600; }
+
+  .reveal ul { list-style: none; padding: 0; margin: 0; }
+  .reveal ul li {
+    padding: 6px 0 6px 20px;
+    position: relative;
+    font-size: 0.88em;
+    line-height: 1.5;
+  }
+  .reveal ul li::before {
+    content: '\25B8';
+    color: var(--blue);
+    position: absolute;
+    left: 0;
+  }
+
+  .speaker-info { font-family: 'JetBrains Mono', monospace; }
+  .speaker-name { color: var(--coral); font-weight: 700; font-size: 0.9em; }
+  .speaker-org  { color: var(--text-dim); font-size: 0.75em; }
+  .conf-info    { font-family: 'JetBrains Mono', monospace; text-align: right; }
+  .conf-name    { color: var(--blue); font-weight: 700; font-size: 0.9em; }
+  .conf-date    { color: var(--text-dim); font-size: 0.75em; }
+
+  .title-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: absolute;
+    bottom: 50px; left: 60px; right: 60px;
+  }
+
+  .result-banner {
+    background: var(--green)12;
+    border: 1px solid var(--green)40;
+    border-radius: 8px;
+    padding: 16px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+  }
+  .result-banner-text  { font-size: 1.1em; font-weight: 700; color: var(--green-bright); }
+  .result-banner-label { font-size: 0.75em; color: var(--text-dim); }
+
+  .ref-list { font-family: 'JetBrains Mono', monospace; font-size: 0.7em; }
+  .ref-list .ref-tag { display: inline-block; width: 36px; color: var(--blue); font-weight: 600; }
+  .ref-list .ref-item { padding: 6px 0; display: flex; gap: 12px; color: var(--text-dim); }
+
+  .text-coral  { color: var(--coral); }
+  .text-blue   { color: var(--blue); }
+  .text-green  { color: var(--green-bright); }
+  .text-yellow { color: var(--yellow); }
+  .text-dim    { color: var(--text-dim); }
+  .text-bright { color: var(--text-bright); }
+  .text-mono   { font-family: 'JetBrains Mono', monospace; }
+  .text-bold   { font-weight: 700; }
+  .text-small  { font-size: 0.75em; }
+
+  .pass-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .pass-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green)80;
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pass-name { font-weight: 600; font-size: 0.8em; color: var(--green-bright); }
+  .pass-desc { font-size: 0.65em; color: var(--text-dim); margin-top: 4px; }
+
+  .reveal .slide-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--text-dim);
+    background: transparent;
+  }
+
+  /* DI tree */
+  .di-tree {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68em;
+    line-height: 1.4;
+    padding: 16px 20px;
+  }
+  .di-node {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 5px;
+    font-weight: 500;
+    margin: 2px 0;
+  }
+  .di-node-module {
+    background: rgba(244, 112, 103, 0.15);
+    border: 1px solid rgba(244, 112, 103, 0.4);
+    color: var(--coral-light);
+  }
+  .di-node-function {
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid rgba(76, 175, 80, 0.4);
+    color: var(--green-bright);
+  }
+  .di-brace {
+    border-left: 2px solid rgba(244, 112, 103, 0.3);
+    padding-left: 16px;
+    margin-left: 20px;
+  }
+  .di-brace-fn {
+    border-left: 2px solid rgba(76, 175, 80, 0.3);
+    padding-left: 16px;
+    margin-left: 20px;
+  }
+
+  /* Context icons */
+  .context-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .context-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    text-align: center;
+  }
+  .context-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6em;
+    font-weight: 800;
+    color: var(--blue-bright);
+    line-height: 1.2;
+  }
+  .context-label {
+    font-size: 0.72em;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  /* Meme slide */
+  .meme-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+  .meme-img {
+    max-height: 680px;
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  /* Outline/roadmap */
+  .roadmap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .roadmap-step {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .roadmap-step-highlight {
+    border-color: var(--green)60;
+    background: var(--green)08;
+  }
+  .roadmap-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .roadmap-arrow {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 1.2em;
+    padding: 0 0 0 22px;
+  }
+  .roadmap-text {
+    flex: 1;
+    font-size: 0.82em;
+  }
+  .roadmap-detail {
+    font-size: 0.68em;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .roadmap-badge {
+    font-size: 0.65em;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  html.reveal-print .reveal .slides section {
+    padding: 40px 60px !important;
+  }
+
+  html.reveal-print .home-link,
+  html.reveal-print .toolbar { display: none; }
+
+  @media print {
+    .home-link, .toolbar { display: none; }
+    .reveal .slides section { page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<a class="home-link" href="/" title="Lab notes">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 726 726">
+    <rect width="726" height="726" rx="47.41" ry="47.41"/>
+    <path d="M1533.7,1732.64c-9.79-25.5-19.58-51-28.48-81.14h-4.45c-6.23,24.73-17.8,53.32-27.59,78.82l-88.1,216.38h-81.87L1459,1600.49c3.56-8.5,5.34-13.91,5.34-17.77,0-4.64-1.78-11.59-6.23-20.87-27.59-65.68-59.62-117.46-112.12-117.46a105.24,105.24,0,0,0-15.13.77l7.12-52.55c7.12-2.32,19.58-3.09,30.26-3.09,84.54,0,124.58,70.32,170.85,177l164.62,380.2h-82.76Z" transform="translate(-1144 -1314)"/>
+  </svg>
+  <span>Home</span>
+</a>
+<div class="toolbar">
+  <button onclick="Reveal.toggleOverview()" title="Toggle overview (O)">&#9638;</button>
+  <button onclick="Reveal.slide(0)" title="Go to first slide">&#8962;</button>
+  <button onclick="document.documentElement.classList.toggle('light'); this.textContent = document.documentElement.classList.contains('light') ? '&#9790; dark' : '&#9788; light'">&#9790; dark</button>
+</div>
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: TITLE                                               -->
+<!-- ============================================================ -->
+<section>
+  <div style="display:flex; flex-direction:column; justify-content:center; height:100%; text-align:center;">
+    <div class="sw-crawl">
+      <h1 class="sw-crawl-title" style="margin-bottom:16px; font-size:2.6em;">
+        <span class="sw-main">Attack of the Clones</span>
+        <span class="sw-sub">Speeding Up Coroutine Compilation</span>
+      </h1>
+    </div>
+    <div style="margin-bottom:50px;"></div>
+    <div class="terminal" style="max-width:560px; margin:0 auto 0;">
+      <div class="terminal-content">
+        <span class="prompt">$ </span>clang++ -std=c++20 <span class="text-coral">-g2</span> -c coroutine.cpp<span class="cursor"></span>
+      </div>
+    </div>
+    <div class="title-footer">
+      <div class="speaker-info">
+        <div class="speaker-name">Artem Pianykh</div>
+        <div class="speaker-org">Meta &mdash; Dev Infra</div>
+      </div>
+      <div class="conf-info">
+        <div class="conf-name">EuroLLVM 2026</div>
+        <div class="conf-date">April 14-15, 2026</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: CONTEXT                                             -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Context</h2>
+
+  <div style="font-size:0.92em; margin-bottom:32px; color:var(--text-dim);">At Meta:</div>
+
+  <div style="max-width:800px; display:flex; flex-direction:column; gap:20px; font-size:0.92em;">
+    <div style="border-left:2px solid var(--blue); padding-left:20px;">
+      <div style="color:var(--text-bright); font-weight:600;">Large C++ codebase</div>
+      <div style="color:var(--text-dim); font-size:0.85em; margin-top:4px;">Backend services, infrastructure, and more</div>
+    </div>
+    <div style="border-left:2px solid var(--blue); padding-left:20px;">
+      <div style="color:var(--text-bright); font-weight:600;">Thousands of engineers writing, building, and debugging C++ daily</div>
+    </div>
+    <div style="border-left:2px solid var(--cyan); padding-left:20px;">
+      <div style="color:var(--text-bright); font-weight:600;">C++20 coroutines as the standard async pattern</div>
+    </div>
+    <div style="border-left:2px solid var(--coral); padding-left:20px;">
+      <div style="color:var(--text-bright); font-weight:600;">Centralized developer infrastructure</div>
+      <div style="color:var(--text-dim); font-size:0.85em; margin-top:4px;">Every change is felt globally</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: THE PROBLEM                                         -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">The Problem</h2>
+
+  <div style="font-size:0.88em; margin-bottom:28px;">
+    To improve the dev workflow, we wanted to switch from
+    <span class="text-mono">-g1</span> to <span class="text-mono text-coral text-bold">-g2</span>
+    in dev builds &mdash; any binary debuggable out of the box.
+  </div>
+
+  <div style="font-size:0.85em; margin-bottom:28px;">
+    This required work across the stack:
+  </div>
+
+  <div class="cols" style="align-items:flex-start; gap:24px;">
+    <div class="col" style="flex:1;">
+      <div style="font-size:0.82em; display:flex; flex-direction:column; gap:10px;">
+        <div class="card card-green" style="padding:12px 18px; opacity:0.6;">
+          <span class="text-green">&#10003;</span> Build-level optimizations
+        </div>
+        <div class="card card-green" style="padding:12px 18px; opacity:0.6;">
+          <span class="text-green">&#10003;</span> Split DWARF rollout
+        </div>
+        <div class="card card-green" style="padding:12px 18px; opacity:0.6;">
+          <span class="text-green">&#10003;</span> LLDB performance improvements
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="flex:1.4;">
+      <div class="card card-coral" style="padding:16px 20px; margin-bottom:20px;">
+        <div style="font-size:0.85em;">
+          <span class="text-coral text-bold">&#10007; Compile times for sources with coroutines</span>
+        </div>
+      </div>
+
+      <div style="width:100%;">
+        <div class="bar-row" style="margin:14px 0;">
+          <div class="bar-label" style="width:110px;">
+            <span class="text-mono">-g1</span>
+            <div style="font-size:0.8em; color:var(--text-dim);">line tables</div>
+          </div>
+          <div class="bar-track" style="height:40px;">
+            <div class="bar-fill bar-fill-green" style="width:35%; font-size:0.72em;">baseline</div>
+          </div>
+        </div>
+        <div class="bar-row" style="margin:14px 0;">
+          <div class="bar-label" style="width:110px;">
+            <span class="text-mono text-coral" style="font-weight:700;">-g2</span>
+            <div style="font-size:0.8em; color:var(--text-dim);">full debug info</div>
+          </div>
+          <div class="bar-track" style="height:40px;">
+            <div class="bar-fill bar-fill-coral" style="width:100%; font-size:0.72em;">2&ndash;3x slower</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:0.78em; color:var(--text-dim); margin-top:8px;">
+        Simulations showed a significant end-to-end build time regression.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: PROFILING                                           -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Profiling: Narrowing to a Pass</h2>
+
+  <p style="font-size:0.85em; color:var(--text-dim); margin-bottom:30px;">
+    Profiling pointed to a single pass. A representative file:
+  </p>
+
+  <div class="cols" style="align-items:center;">
+    <div class="col">
+      <div class="card" style="margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <span class="text-mono text-bold" style="background:var(--text-dim)25; padding:3px 10px; border-radius:4px; font-size:0.8em;">-g1</span>
+          <span class="text-mono text-green" style="font-size:1.5em; font-weight:700;">~3 ms</span>
+        </div>
+        <div style="height:6px; background:var(--bg); border-radius:3px; overflow:hidden;">
+          <div style="width:1%; height:100%; background:var(--green); border-radius:3px;"></div>
+        </div>
+        <div class="text-dim text-small" style="margin-top:6px;">CoroSplitPass with line tables</div>
+      </div>
+      <div class="card" style="border:1px solid var(--coral)30;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <span class="text-mono text-bold" style="background:var(--coral)20; padding:3px 10px; border-radius:4px; font-size:0.8em; color:var(--coral);">-g2</span>
+          <span class="text-mono text-coral" style="font-size:1.5em; font-weight:700;">~306 ms</span>
+        </div>
+        <div style="height:6px; background:var(--bg); border-radius:3px; overflow:hidden;">
+          <div style="width:100%; height:100%; background:var(--coral); border-radius:3px;"></div>
+        </div>
+        <div class="text-dim text-small" style="margin-top:6px;">CoroSplitPass with full debug info</div>
+      </div>
+    </div>
+
+    <div class="col" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px;">
+      <div style="text-align:center;">
+        <div class="big-number">100x</div>
+        <div class="big-label">slower</div>
+      </div>
+      <div style="font-size:0.85em; color:var(--text-dim); text-align:center;">
+        What is CoroSplitPass doing that is<br>so much more expensive with <span class="text-mono text-coral text-bold">-g2</span>?
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: ROOT CAUSE — COROSPLIT                              -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">CoroSplit: One Coroutine Becomes Many</h2>
+
+  <div style="display:flex; align-items:center; gap:24px; margin:16px 0;">
+    <!-- Left: initial function -->
+    <div class="split-box split-box-input" style="min-width:180px; padding:24px;">
+      <div class="split-box-title text-blue">coro [initial]</div>
+      <div class="split-box-desc">Function with<br>coroutine intrinsics</div>
+    </div>
+
+    <!-- Middle: arrows with labels -->
+    <div style="display:flex; flex-direction:column; gap:8px; font-family:'JetBrains Mono',monospace; font-size:0.72em; min-width:180px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="text-dim">transform</span>
+        <span class="text-dim">&rarr;</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span><span class="text-coral text-bold">clone</span> <span class="text-dim">+ transform</span></span>
+        <span class="text-dim">&rarr;</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span><span class="text-coral text-bold">clone</span> <span class="text-dim">+ transform</span></span>
+        <span class="text-dim">&rarr;</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span><span class="text-coral text-bold">clone</span> <span class="text-dim">+ transform</span></span>
+        <span class="text-dim">&rarr;</span>
+      </div>
+    </div>
+
+    <!-- Right: output functions -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div class="split-box split-box-output" style="border-color:var(--blue)60;">
+        <div class="split-box-title text-blue">coro [ramp]</div>
+        <div class="split-box-desc">Entry point, runs until first suspend</div>
+      </div>
+      <div class="split-box split-box-output">
+        <div class="split-box-title text-green">coro.resume</div>
+        <div class="split-box-desc">Coroutine body (state machine)</div>
+      </div>
+      <div class="split-box split-box-output">
+        <div class="split-box-title text-green">coro.destroy</div>
+        <div class="split-box-desc">Destroy coroutine state</div>
+      </div>
+      <div class="split-box split-box-output">
+        <div class="split-box-title text-green">coro.cleanup</div>
+        <div class="split-box-desc">Cleanup coroutine resources</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin:20px 0; font-family:'JetBrains Mono',monospace;">
+    <div style="text-align:center;">
+      <div style="font-size:1.8em; font-weight:800; color:var(--coral);">3 clones</div>
+      <div style="font-size:0.65em; color:var(--text-dim);">per coroutine*</div>
+    </div>
+    <div style="font-size:1.5em; color:var(--text-dim);">&times;</div>
+    <div style="text-align:center;">
+      <div style="font-size:1.8em; font-weight:800; color:var(--coral);">100s</div>
+      <div style="font-size:0.65em; color:var(--text-dim);">of coroutines</div>
+    </div>
+    <div style="font-size:1.5em; color:var(--text-dim);">=</div>
+    <div style="text-align:center;">
+      <div style="font-size:1.8em; font-weight:800; color:var(--text-bright);">1000s of clones</div>
+      <div style="font-size:0.65em; color:var(--text-dim);">via <span class="text-mono">CloneFunctionInto</span></div>
+    </div>
+  </div>
+
+  <div style="font-size:0.88em; text-align:center; margin-top:8px;">
+    The slowdown was <span class="text-coral text-bold">not</span> in the coroutine transformation &mdash;
+    it was in <span class="text-coral text-bold">cloning</span>.
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:60px; font-size:0.68em; color:var(--text-dim); font-style:italic;">
+    * Switch ABI (C++). Other ABIs (e.g. Swift retcon) may produce more clones.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: ROOT CAUSE — FUNCTION CLONING & DEBUG INFO          -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Function Cloning &amp; Debug Info</h2>
+
+  <!-- Row 1: Contrast cards — full width -->
+  <div style="display:flex; gap:12px; margin-bottom:24px;">
+    <div class="card card-green" style="flex:1; padding:14px 18px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:0.72em; font-weight:600; color:var(--green-bright); margin-bottom:4px;">Instructions, BBs</div>
+      <div style="font-size:0.75em; color:var(--text-dim);">Explicit ownership</div>
+    </div>
+    <div class="card card-coral" style="flex:1; padding:14px 18px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:0.72em; font-weight:600; color:var(--coral); margin-bottom:4px;">Debug info metadata</div>
+      <div style="font-size:0.75em; color:var(--text-dim);">"Sea of nodes" &mdash; implicit ownership, discovered by traversal</div>
+    </div>
+  </div>
+
+  <!-- Row 2: Traversal diagram + Cloning policy -->
+  <div class="cols">
+    <div class="col">
+      <div class="card" style="padding:18px 22px;">
+        <div class="section-label" style="margin-bottom:10px;">To clone a function, traverse from&hellip;</div>
+        <div style="display:flex; align-items:flex-start; gap:16px; font-family:'JetBrains Mono',monospace; font-size:0.72em;">
+          <!-- Start: subprogram -->
+          <div style="text-align:center; flex-shrink:0;">
+            <span class="di-node di-node-function">DISubprogram</span>
+            <div style="color:var(--text-dim); font-size:0.85em; margin-top:4px;">this fn</div>
+          </div>
+          <!-- Two arrows fanning out from subprogram -->
+          <div style="display:flex; flex-direction:column; gap:14px; flex-shrink:0; padding-top:2px;">
+            <div style="color:var(--text-dim); font-size:1.4em;">&rarr;</div>
+            <div style="color:var(--text-dim); font-size:1.4em;">&searr;</div>
+          </div>
+          <!-- Two targets -->
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <!-- Path 1: directly reachable from subprogram -->
+            <div style="display:flex; flex-direction:column; gap:3px;">
+              <span class="di-node di-node-module" style="font-size:0.92em;">DIType</span>
+              <span class="di-node di-node-module" style="font-size:0.92em;">DISubprogram</span>
+              <div style="color:var(--text-dim); font-size:0.82em; margin-top:1px;">reachable from fn <span style="font-size:0.9em;">(e.g. inlined)</span></div>
+            </div>
+            <!-- Path 2: up to compile unit, then fan out -->
+            <div style="display:flex; align-items:flex-start; gap:14px; border-top:1px dashed var(--border); padding-top:10px;">
+              <div style="text-align:center; flex-shrink:0;">
+                <span class="di-node di-node-module">DICompileUnit</span>
+                <div style="color:var(--text-dim); font-size:0.85em; margin-top:4px;">owning CU</div>
+              </div>
+              <div style="color:var(--text-dim); font-size:1.4em; padding-top:4px;">&rarr;</div>
+              <div style="display:flex; flex-direction:column; gap:3px;">
+                <span class="di-node di-node-module" style="font-size:0.92em;">DIType</span>
+                <span class="di-node di-node-module" style="font-size:0.92em;">DISubprogram</span>
+                <span class="di-node di-node-module" style="font-size:0.92em;">DIGlobal</span>
+                <div style="color:var(--text-dim); font-size:0.82em; margin-top:1px;">retained types, imports, enums, &hellip;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="display:flex; flex-direction:column; justify-content:center; gap:20px;">
+      <div class="section-label">Cloning policy</div>
+
+      <div style="font-size:0.85em; line-height:1.7;">
+        Clone only the function's
+        <span class="di-node di-node-function" style="padding:2px 8px; font-size:0.82em;">own</span>
+        metadata.<br>
+        Keep everything else
+        <span class="di-node di-node-module" style="padding:2px 8px; font-size:0.82em;">not ours</span>
+        as-is.
+      </div>
+
+      <div class="card card-yellow" style="padding:16px 20px;">
+        <div style="font-size:0.85em;">
+          <span class="text-bold">Non-trivial for metadata:</span> ownership is implicit,
+          so implementing this policy requires eagerly traversing the graph to discover
+          what's <span class="text-mono">not ours</span>.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 7: ROOT CAUSE — O(MODULE) PER CLONE                    -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">The Root Cause: O(CompileUnit) Per Clone</h2>
+
+  <div class="cols">
+    <div class="col">
+      <div class="section-label" style="margin-bottom:12px;">How the cloning policy was implemented</div>
+      <div class="code-block" style="font-size:0.7em;"><span class="cm">// For each clone:</span>
+
+<span class="cm">// 1. Traverse from subprogram — cascades into</span>
+<span class="cm">//    processCompileUnit, pulling in everything</span>
+<span class="ty">DIFinder</span>.<span class="fn">processSubprogram</span>(SP);  <span class="cm">// O(CU)</span>
+
+<span class="cm">// 2. Identity-map "not ours" into VMap</span>
+<span class="kw">for</span> (<span class="kw">auto</span> *Ty : DIFinder.<span class="fn">types</span>())
+  VMap[Ty] = Ty;
+<span class="kw">for</span> (<span class="kw">auto</span> *S : DIFinder.<span class="fn">subprograms</span>())
+  <span class="kw">if</span> (S != SP)
+    VMap[S] = S;
+<span class="cm">// ...more categories</span>
+
+<span class="cm">// 3. Clone the function</span>
+<span class="fn">CloneFunctionInto</span>(NewFn, OldFn, VMap, ...);</div>
+    </div>
+
+    <div class="col" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px;">
+      <div style="text-align:center;">
+        <div class="text-mono text-coral" style="font-size:2.8em; font-weight:800;">O(CU)</div>
+        <div class="big-label">per clone</div>
+        <div class="text-dim" style="font-size:0.85em; margin-top:8px;">should be O(Function)</div>
+      </div>
+
+      <div style="font-size:0.78em; color:var(--text-dim);">
+        <span class="mark-x">&times;</span> <span class="text-mono">processSubprogram</span> cascades into the entire CU<br>
+        <span class="mark-x">&times;</span> Pointer chasing across scattered heap nodes<br>
+        <span class="mark-x">&times;</span> Clone policy baked into mutable VMap &mdash; can't share
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 8: OPTIMIZATION — OVERVIEW                            -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">The Optimization Journey: Four Iterations</h2>
+
+  <div class="timeline" style="max-width:850px; margin:0 auto;">
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-gray"></div>
+      <div class="tl-card">
+        <div>
+          <div class="tl-title">Baseline</div>
+          <div class="tl-desc">Eager VMap pre-population &mdash; O(CU) per clone</div>
+        </div>
+        <div class="tl-metric">
+          <div class="tl-time">306 ms</div>
+          <div class="tl-speedup speedup-gray">1x</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-blue">1</div>
+      <div class="tl-card">
+        <div>
+          <div class="tl-title">Step 1: Decouple</div>
+          <div class="tl-desc">Separate IdentityMD set, lazy identity-mapping via ValueMapper</div>
+        </div>
+        <div class="tl-metric">
+          <div class="tl-time">221 ms</div>
+          <div class="tl-speedup speedup-blue">1.4x</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-blue">2</div>
+      <div class="tl-card">
+        <div>
+          <div class="tl-title">Step 2: Reuse</div>
+          <div class="tl-desc">Build the set once, share across all clones of a coroutine</div>
+        </div>
+        <div class="tl-metric">
+          <div class="tl-time">68 ms</div>
+          <div class="tl-speedup speedup-blue">4.5x</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-yellow">?</div>
+      <div class="tl-card tl-card-dim">
+        <div>
+          <div class="tl-title">Detour: Cache <span class="tag tag-abandoned">superseded</span></div>
+          <div class="tl-desc">Module-level analysis pass &mdash; worked, but invalidation was unclear</div>
+        </div>
+        <div class="tl-metric">
+          <div class="tl-time">17 ms</div>
+          <div class="tl-speedup speedup-yellow">18x</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-green" style="font-size:0.7em;">&#10003;</div>
+      <div class="tl-card tl-card-highlight">
+        <div>
+          <div class="tl-title text-green">Step 3: Simplify</div>
+          <div class="tl-desc">From set to predicate &mdash; no traversal. O(Function) restored.</div>
+        </div>
+        <div class="tl-metric">
+          <div class="tl-time text-green">3.8 ms</div>
+          <div class="tl-speedup speedup-green">80x</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 9: OPTIMIZATION — STEP 1                              -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Step 1: Decouple Clone Policy From Remapping State</h2>
+
+  <div class="cols">
+    <div class="col" style="display:flex; flex-direction:column; gap:16px;">
+      <div>
+        <div class="code-label">Before: identity nodes stuffed into VMap</div>
+        <div class="code-block" style="font-size:0.7em;"><span class="cm">// Insert identity nodes into VMap upfront</span>
+<span class="kw">for</span> (Node <span class="kw">in</span> <span class="fn">FindDebugInfoToIdentityMap</span>(Fn)) {
+  VMap[Node] = Node;  <span class="cm">// expensive tracking</span>
+}
+<span class="fn">CloneFunctionInto</span>(NewFn, Fn, VMap, ...);</div>
+      </div>
+
+      <div>
+        <div class="code-label" style="color:var(--blue); background:var(--blue)18;">After: separate immutable set, lazy mapping</div>
+        <div class="code-block" style="border-color:var(--blue)30; font-size:0.7em;"><span class="cm">// Build set separately (still O(CU))</span>
+IdentityMD = <span class="fn">FindDebugInfoToIdentityMap</span>(Fn);
+
+<span class="cm">// New parameter flows through to ValueMapper</span>
+<span class="fn">CloneFunctionInto</span>(NewFn, Fn, VMap,
+    ..., &amp;IdentityMD);
+  &darr;
+<span class="fn">ValueMapper</span>(VMap, ..., &amp;IdentityMD);
+  <span class="cm">// identity-maps matching metadata on first use</span></div>
+      </div>
+    </div>
+
+    <div class="col" style="display:flex; flex-direction:column; justify-content:center; gap:20px;">
+      <div style="font-size:0.85em;">
+        <span class="mark-ok">&#10003;</span> <span class="text-mono">IdentityMD</span> is <span class="text-blue text-bold">immutable</span> &mdash; decoupled from VMap<br>
+        <span class="mark-ok">&#10003;</span> Can now be <span class="text-blue text-bold">shared</span> across clones (enables Step 2)<br>
+        <span class="mark-x">&times;</span> Still traverses module to build the set per clone
+      </div>
+
+      <div class="card" style="text-align:center; padding:14px;">
+        <span class="text-mono" style="font-size:0.9em;">306ms &rarr; <span class="text-blue text-bold">221ms</span></span>
+        <span class="tl-speedup speedup-blue" style="margin-left:12px;">1.4x</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 10: OPTIMIZATION — STEP 2                              -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Step 2: Reuse Policy Across Clones</h2>
+
+  <div class="cols">
+    <div class="col" style="display:flex; flex-direction:column; gap:16px;">
+      <div>
+        <div class="code-label">Before: set rebuilt inside clone loop</div>
+        <div class="code-block" style="font-size:0.7em;"><span class="kw">for</span> (CloneKind : {Ramp, Resume, Destroy}) {
+  <span class="cm">// O(CU) traversal — once per clone!</span>
+  IdentityMD = <span class="fn">CollectCommonDebugInfo</span>(Fn);
+  <span class="fn">CloneFunctionInto</span>(Clone, Fn, VMap,
+      IdentityMD, ...);
+}</div>
+      </div>
+
+      <div>
+        <div class="code-label" style="color:var(--blue); background:var(--blue)18;">After: build once, share across clones</div>
+        <div class="code-block" style="border-color:var(--blue)30; font-size:0.7em;"><span class="cm">// O(CU) traversal — once per coroutine</span>
+CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
+
+<span class="kw">for</span> (CloneKind : {Ramp, Resume, Destroy}) {
+  <span class="fn">CloneFunctionInto</span>(Clone, Fn, VMap,
+      <span class="param">/*IdentityMD=*/</span>CommonDI, ...);
+}</div>
+      </div>
+    </div>
+
+    <div class="col" style="display:flex; flex-direction:column; justify-content:center; gap:20px;">
+      <div style="font-size:0.85em;">
+        <span class="text-bold">Key observation:</span> all clones of the same coroutine share
+        the same module-level metadata. No reason to rebuild the set for each clone.
+      </div>
+
+      <div style="font-size:0.85em;">
+        <span class="mark-ok">&#10003;</span> Eliminates redundant traversals per coroutine<br>
+        <span class="mark-x">&times;</span> Still O(CU) once per coroutine<br>
+        <span class="mark-x">&times;</span> Hundreds of coroutines &times; O(CU) still adds up
+      </div>
+
+      <div class="card" style="text-align:center; padding:14px;">
+        <span class="text-mono" style="font-size:0.9em;">306ms &rarr; <span class="text-blue text-bold">68ms</span></span>
+        <span class="tl-speedup speedup-blue" style="margin-left:12px;">4.5x</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 11: STEP 3 — CACHING                                   -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Detour: Cache It <span class="tag tag-abandoned" style="vertical-align:middle; margin-left:12px;">superseded</span></h2>
+
+  <!-- Top: the cache, computed once -->
+  <div style="text-align:center; margin-bottom:8px;">
+    <div style="display:inline-block; background:var(--bg-card); border:2px solid var(--yellow)60; border-radius:10px; padding:18px 40px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:0.65em; color:var(--yellow); font-weight:700; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px;">DebugInfoCacheAnalysis</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:0.82em; color:var(--text-bright);">
+        Primed <span class="text-yellow">DIFinder</span> per compile unit
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:0.68em; color:var(--text-dim); margin-top:4px;">
+        computed once at module level
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrows fanning down -->
+  <div style="text-align:center; font-family:'JetBrains Mono',monospace; color:var(--text-dim); font-size:0.75em; line-height:1.8; margin-bottom:8px;">
+    <span style="letter-spacing:0.8em;">&darr;&ensp;&darr;&ensp;&darr;&ensp;&darr;</span><br>
+    copy &amp; reuse
+  </div>
+
+  <!-- Bottom: coroutine clones in a row -->
+  <div style="display:flex; justify-content:center; gap:14px; margin-bottom:24px;">
+    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:10px 18px; font-family:'JetBrains Mono',monospace; font-size:0.7em; text-align:center;">
+      <div class="text-green">coro_1</div>
+      <div style="color:var(--text-dim); font-size:0.85em;">.resume .destroy .cleanup</div>
+    </div>
+    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:10px 18px; font-family:'JetBrains Mono',monospace; font-size:0.7em; text-align:center;">
+      <div class="text-green">coro_2</div>
+      <div style="color:var(--text-dim); font-size:0.85em;">.resume .destroy .cleanup</div>
+    </div>
+    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:10px 18px; font-family:'JetBrains Mono',monospace; font-size:0.7em; text-align:center;">
+      <div class="text-green">coro_3</div>
+      <div style="color:var(--text-dim); font-size:0.85em;">.resume .destroy .cleanup</div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:0.8em; color:var(--text-dim); display:flex; align-items:center;">&hellip;</div>
+    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:10px 18px; font-family:'JetBrains Mono',monospace; font-size:0.7em; text-align:center;">
+      <div class="text-green">coro_N</div>
+      <div style="color:var(--text-dim); font-size:0.85em;">.resume .destroy .cleanup</div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div style="display:flex; align-items:center; justify-content:center; gap:32px; margin-bottom:10px;">
+    <div class="card" style="padding:10px 20px;">
+      <span class="text-mono" style="font-size:0.9em;">306ms &rarr; <span class="text-yellow text-bold">17ms</span></span>
+      <span class="tl-speedup speedup-yellow" style="margin-left:12px;">18x</span>
+    </div>
+    <div style="font-size:0.88em; line-height:1.8;">
+      <span class="mark-ok">&#10003;</span> Fast in practice<br>
+      <span class="mark-x">&times;</span> No clean invalidation story
+    </div>
+  </div>
+
+  <div style="text-align:center; font-size:0.82em; color:var(--text-dim); font-style:italic;">
+    They say there are two hard problems in CS&hellip;
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:60px; font-size:0.68em; color:var(--text-dim); font-style:italic;">
+    Thanks to @felipepiovezan for the invalidation question that prompted rethinking this approach
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 12: THE KEY INSIGHT                                    -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Step 3: Express Policy as a Predicate</h2>
+
+  <div style="display:flex; justify-content:center; margin-bottom:20px;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:0.78em; display:flex; align-items:center; gap:20px;">
+      <div class="card" style="padding:10px 18px; border-left:3px solid var(--coral);">
+        <div style="color:var(--text-dim); font-size:0.8em; margin-bottom:2px;">Before</div>
+        <span class="kw">const</span> <span class="ty">MetadataSetTy</span> *IdentityMD</div>
+      <div style="font-size:1.5em; color:var(--text-dim);">&rarr;</div>
+      <div class="card" style="padding:10px 18px; border-left:3px solid var(--green);">
+        <div style="color:var(--text-dim); font-size:0.8em; margin-bottom:2px;">After</div>
+        <span class="kw">const</span> <span class="ty">MetadataPredicate</span> *IdentityMD</div>
+    </div>
+  </div>
+
+  <div class="cols" style="align-items:center;">
+    <div class="col">
+      <div style="font-size:0.88em; line-height:2; margin-bottom:24px;">
+        <span class="mark-x">&times;</span> No eager CU traversal<br>
+        <span class="mark-x">&times;</span> No Set<br>
+        <span class="mark-x">&times;</span> No Cache<br>
+        <span class="mark-ok">&#10003;</span> <span class="text-green text-bold">O(Function)</span>
+      </div>
+
+      <div style="text-align:center;">
+        <div class="text-mono text-green" style="font-size:2.2em; font-weight:800;">80x</div>
+        <div style="font-size:0.85em; color:var(--text-dim); margin-top:4px;">306ms &rarr; 3.8ms</div>
+      </div>
+    </div>
+
+    <div class="col" style="display:flex; flex-direction:column; gap:16px;">
+      <div>
+        <div class="code-label" style="color:var(--green); background:var(--green)18;">Conceptual sketch of the predicate</div>
+        <div class="code-block" style="border-color:var(--green)30; font-size:0.66em;"><span class="kw">auto</span> <span class="fn">createIdentityMDPredicate</span>(<span class="kw">const</span> <span class="ty">Function</span> &amp;F, Changes) {
+  <span class="kw">auto</span> *SP = F.<span class="fn">getSubprogram</span>();
+  <span class="kw">return</span> [=](<span class="kw">const</span> <span class="ty">Metadata</span> *MD) {
+    <span class="kw">if</span> (<span class="fn">isa</span>&lt;<span class="ty">DICompileUnit</span>&gt;(MD) || <span class="fn">isa</span>&lt;<span class="ty">DIType</span>&gt;(MD))
+      <span class="kw">return true</span>;
+    <span class="kw">if</span> (<span class="kw">auto</span> *S = <span class="fn">dyn_cast</span>&lt;<span class="ty">DISubprogram</span>&gt;(MD))
+      <span class="kw">return</span> S != SP;
+    <span class="kw">if</span> (<span class="kw">auto</span> *LS = <span class="fn">dyn_cast</span>&lt;<span class="ty">DILocalScope</span>&gt;(MD))
+      <span class="kw">return</span> LS-&gt;<span class="fn">getSubprogram</span>() != SP;
+
+    <span class="kw">return false</span>;
+  };
+}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 13: RESULTS & TAKEAWAYS — PERFORMANCE                  -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Performance Results</h2>
+
+  <div class="cols">
+    <div class="col">
+      <div class="section-label">CoroSplitPass time (sample file, full debug info)</div>
+
+      <div class="bar-row">
+        <div class="bar-label" style="width:160px;">Baseline<div style="font-size:0.75em; color:var(--text-dim);">eager VMap</div></div>
+        <div class="bar-track">
+          <div class="bar-fill bar-fill-coral" style="width:100%;">306 ms</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="width:160px;">Step 1<div style="font-size:0.75em; color:var(--text-dim);">decouple policy</div></div>
+        <div class="bar-track">
+          <div class="bar-fill bar-fill-blue" style="width:72%;">221 ms</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="width:160px;">Step 2<div style="font-size:0.75em; color:var(--text-dim);">reuse policy</div></div>
+        <div class="bar-track">
+          <div class="bar-fill bar-fill-blue" style="width:22%;">68 ms</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label text-yellow" style="width:160px;">Detour<div style="font-size:0.75em; color:var(--text-dim);">cache</div></div>
+        <div class="bar-track">
+          <div class="bar-fill bar-fill-yellow" style="width:5.5%;"></div>
+          <span class="bar-value-outside text-yellow">17 ms</span>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label text-green" style="width:160px;">Step 3<div style="font-size:0.75em; color:var(--text-dim);">predicate</div></div>
+        <div class="bar-track">
+          <div class="bar-fill bar-fill-green" style="width:1.2%;"></div>
+          <span class="bar-value-outside text-green">3.8 ms</span>
+        </div>
+      </div>
+
+      <div class="bar-row" style="margin-top:6px; border-top:1px dashed var(--border); padding-top:14px;">
+        <div class="bar-label" style="width:160px;"><span class="text-mono" style="font-weight:600;">-g1</span><div style="font-size:0.75em; color:var(--text-dim);">line tables only</div></div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:1%; background:var(--text-dim);"></div>
+          <span class="bar-value-outside text-dim">~3 ms</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:30px;">
+      <div style="text-align:center;">
+        <div class="big-number big-number-green" style="font-size:4em;">80x</div>
+        <div class="big-label">faster</div>
+      </div>
+
+      <div style="font-size:0.85em; text-align:center; color:var(--text-dim);">
+        Full debug info, nearly as fast as <span class="text-mono text-bold" style="color:var(--text-bright);">-g1</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 14: RESULTS & TAKEAWAYS — GENERALIZATION               -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Not Just Coroutines</h2>
+
+  <div style="max-width:1120px; margin:0 auto;">
+    <div style="display:flex; align-items:stretch; justify-content:center; gap:22px; margin:12px 0;">
+      <div class="card card-accent" style="flex:1; padding:22px 24px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:1.15em; font-weight:700; color:var(--blue); margin-bottom:10px;">CoroSplit</div>
+        <div style="font-size:0.82em; color:var(--text-dim); line-height:1.5;">
+          Primary motivation &mdash; high clone volume made the O(CU) cost painfully visible.
+        </div>
+      </div>
+
+      <div class="card" style="flex:1; padding:22px 24px; border-left:3px solid var(--text-dim);">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:0.88em; font-weight:600; color:var(--text-bright); margin-bottom:12px;">Also benefits</div>
+        <div style="font-size:0.78em; color:var(--text-dim); line-height:1.8;">
+          <span class="text-mono" style="color:var(--yellow);">FunctionSpecialization</span> &mdash; IPSCCP-driven specialization in default O1+ pipelines<br>
+          <span class="text-mono" style="color:var(--text-bright);">ThinLTO function aliases</span> &mdash; imported aliases are materialized via cloning<br>
+          <span class="text-mono" style="color:var(--cyan);">MemProf cloning</span> &mdash; context-specific clones when enabled
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:60px; right:60px; font-size:0.68em; color:var(--text-dim); font-style:italic;">
+    * The fix landed in CloneFunctionInto / ValueMapper &mdash; generic same-module cloning infrastructure, not a coroutine-specific fast path.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 15: RESULTS & TAKEAWAYS — KEY TAKEAWAYS                -->
+<!-- ============================================================ -->
+<section>
+  <h2 class="slide-title">Takeaways</h2>
+
+  <div style="max-width:850px; margin:0 auto;">
+    <div class="card card-green" style="margin-bottom:20px;">
+      <div class="text-bold" style="font-size:1.05em;">Cloning was cheap. Ownership recovery was expensive.</div>
+      <div style="font-size:0.82em; color:var(--text-dim); margin-top:6px;">
+        The O(CU) cost came from reconstructing <span class="text-mono">"not ours"</span> from debug-info graph shape.
+      </div>
+    </div>
+
+    <div class="card card-coral" style="margin-bottom:20px;">
+      <div class="text-bold" style="font-size:1.05em;">Separate remapping state from clone policy.</div>
+      <div style="font-size:0.82em; color:var(--text-dim); margin-top:6px;">
+        Once policy stopped living inside <span class="text-mono">VMap</span>, it became immutable, shareable, and finally a predicate.
+      </div>
+    </div>
+
+    <div class="card card-yellow">
+      <div class="text-bold" style="font-size:1.05em;">The sharp edges are still in the representation.</div>
+      <div style="font-size:0.82em; color:var(--text-dim); margin-top:6px;">
+        Metadata ownership is still implicit, so cloning still relies on node-kind heuristics and special cases.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 16: THANK YOU                                          -->
+<!-- ============================================================ -->
+<section>
+  <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; text-align:center;">
+    <h1 style="margin-bottom:12px; font-size:2.4em;">Thank You!</h1>
+    <div class="sw-tagline">May the source be with you</div>
+
+    <div style="margin-bottom:10px; margin-top:16px;">
+      <div class="speaker-name" style="font-size:1.1em;">Artem Pianykh</div>
+      <div class="speaker-org" style="font-size:0.85em;">Meta &mdash; Dev Infra</div>
+    </div>
+
+    <div>&nbsp;</div>
+
+    <div style="max-width:700px; width:100%;">
+      <div class="section-label" style="margin-bottom:12px;">References</div>
+      <div class="ref-list">
+        <div class="ref-item">
+          <span class="ref-tag">RFC</span>
+          <span><a href="https://discourse.llvm.org/t/rfc-amortizing-debug-info-processing-cost-in-corosplit/81275" style="color: var(--blue);">discourse.llvm.org</a> &mdash; "Amortizing debug info processing cost in CoroSplit"</span>
+        </div>
+        <div class="ref-item">
+          <span class="ref-tag">PR</span>
+          <span><a href="https://github.com/llvm/llvm-project/pull/109032" style="color: var(--blue);">#109032</a> &mdash; Umbrella PR</span>
+        </div>
+        <div class="ref-item">
+          <span class="ref-tag">PR</span>
+          <span><a href="https://github.com/llvm/llvm-project/pull/118627" style="color: var(--blue);">#118627</a>, <a href="https://github.com/llvm/llvm-project/pull/129147" style="color: var(--blue);">#129147</a>, <a href="https://github.com/llvm/llvm-project/pull/129148" style="color: var(--blue);">#129148</a> &mdash; Key upstream patches</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: true,
+    width: 1440,
+    height: 810,
+    margin: 0,
+    center: false,
+    transition: 'none',
+    backgroundTransition: 'none',
+    pdfSeparateFragments: false,
+  });
+
+  // Starfield with parallax
+  (function() {
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    const STAR_COUNT = 200;
+    const stars = [];
+    let parallaxY = 0;
+    let parallaxTarget = 0;
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    for (let i = 0; i < STAR_COUNT; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        z: Math.random(),
+        size: 0.5 + Math.random() * 1.5,
+        twinkleSpeed: 0.5 + Math.random() * 2,
+        twinkleOffset: Math.random() * Math.PI * 2,
+      });
+    }
+
+    // Parallax: shift stars horizontally when slides change
+    Reveal.on('slidechanged', function(event) {
+      parallaxTarget = -event.indexh * 60;
+    });
+
+    function isLight() {
+      return document.documentElement.classList.contains('light');
+    }
+
+    function draw(time) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const light = isLight();
+
+      // Ease toward target
+      parallaxY += (parallaxTarget - parallaxY) * 0.08;
+
+      for (const s of stars) {
+        const twinkle = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(time * 0.001 * s.twinkleSpeed + s.twinkleOffset));
+        const alpha = (0.15 + 0.85 * s.z) * twinkle * (light ? 0.45 : 0.7);
+        const r = s.size * (0.5 + 0.5 * s.z);
+
+        // Deeper stars (low z) shift less — horizontal parallax
+        const drift = parallaxY * (0.3 + 0.7 * s.z);
+        const dx = ((s.x + drift) % canvas.width + canvas.width) % canvas.width;
+
+        ctx.beginPath();
+        ctx.arc(dx, s.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = light
+          ? `rgba(100, 100, 160, ${alpha})`
+          : `rgba(255, 255, 255, ${alpha})`;
+        ctx.fill();
+      }
+
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  })();
+</script>
+</body>
+</html>

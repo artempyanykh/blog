@@ -43,6 +43,15 @@
       <ul class="post-list">
   
   <li>
+    <a href="./talks/eurollvm26.html"><h2>EuroLLVM '26: Attack of the Clones: Speeding Up Coroutine Compilation</h2></a>
+    <span class="post-list-date">April  5, 2026</span>
+    <div class="post-list-teaser"><p>Here are the slides for my EuroLLVM ’26 talk. The abstract follows:</p>
+<p>Compiling coroutines with full debug information shouldn’t be dramatically slower than with line tables — but we found CoroSplitPass running over 100x slower, adding minutes to compilation time. The cause traced back to LLVM’s function cloning, where processing debug info metadata was O(Module) rather than O(Function). This talk covers the investigation, the upstream patches, and how the fix ended up benefiting all users of the function cloning API.</p>
+</div>
+    <p class="post-list-continue"><a href="./talks/eurollvm26.html">&hellip;continue reading&hellip;</a></p>
+  </li>
+  
+  <li>
     <a href="./posts/2024-01-07-advantage-and-disadvantage.html"><h2>Advantage and disadvantage</h2></a>
     <span class="post-list-date">January  7, 2024</span>
     <div class="post-list-teaser"><p>Let’s talk Dungeons &amp; Dragons!
@@ -60,7 +69,7 @@ Yet, it couldn’t be further from the truth!</p>
   </li>
   
   <li>
-    <a href="./posts/2023-07-30-ocaml-numbers.html"><h2>When 1 is 2 and 8 turns into 24</h2></a>
+    <a href="./posts/2023-07-30-ocaml-numbers.html"><h2>Runtime representation of numbers in OCaml</h2></a>
     <span class="post-list-date">July 30, 2023</span>
     <div class="post-list-teaser"><p>How complicated can numbers really be? In OCaml, turns out, quite a bit: sometimes ‘1’ turns up as
 ‘2’ in the assembly or a 64 bit number suddenly takes up 192 bits of space. But is it necessarily a
