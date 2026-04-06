@@ -726,102 +726,99 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 2: ICE BREAKER — SCOOBY DOO MEME                      -->
-<!-- ============================================================ -->
-<section>
-  <div class="meme-container">
-    <img class="meme-img" src="images/eurollvm26-scooby-doo-meta.jpg" alt="Scooby Doo meme: Everyone thinks Meta is PHP, it's actually C++">
-  </div>
-</section>
-
-<!-- ============================================================ -->
-<!-- SLIDE 3: CONTEXT                                             -->
+<!-- SLIDE 2: CONTEXT                                             -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">Context</h2>
 
-  <div style="display:flex; flex-direction:column; gap:16px; max-width:900px; margin:0 auto;">
+  <div style="font-size:0.92em; margin-bottom:32px; color:var(--text-dim);">At Meta:</div>
 
-    <div style="display:flex; align-items:center; gap:20px; background:var(--bg-card); border:1px solid var(--border); border-left:3px solid var(--blue); border-radius:8px; padding:24px 28px;">
-      <div style="font-family:'JetBrains Mono',monospace; font-size:1.3em; font-weight:800; color:var(--blue); min-width:180px;">Thousands</div>
-      <div>
-        <div style="font-size:0.95em; color:var(--text-bright); font-weight:600;">C++ developers at Meta</div>
-        <div style="font-size:0.75em; color:var(--text-dim); margin-top:2px;">Backend services, infrastructure, and more</div>
-      </div>
+  <div style="max-width:800px; display:flex; flex-direction:column; gap:20px; font-size:0.92em;">
+    <div style="border-left:2px solid var(--blue); padding-left:20px;">
+      <div style="color:var(--text-bright); font-weight:600;">Large C++ codebase</div>
+      <div style="color:var(--text-dim); font-size:0.85em; margin-top:4px;">Backend services, infrastructure, and more</div>
     </div>
-
-    <div style="display:flex; align-items:center; gap:20px; background:var(--bg-card); border:1px solid var(--border); border-left:3px solid var(--cyan); border-radius:8px; padding:24px 28px;">
-      <div style="font-family:'JetBrains Mono',monospace; font-size:1.3em; font-weight:800; color:var(--cyan); min-width:180px;">co_await</div>
-      <div>
-        <div style="font-size:0.95em; color:var(--text-bright); font-weight:600;">C++20 coroutines everywhere</div>
-        <div style="font-size:0.75em; color:var(--text-dim); margin-top:2px;">The standard pattern for async code</div>
-      </div>
+    <div style="border-left:2px solid var(--blue); padding-left:20px;">
+      <div style="color:var(--text-bright); font-weight:600;">Thousands of engineers writing, building, and debugging C++ daily</div>
     </div>
-
-    <div style="display:flex; align-items:center; gap:20px; background:var(--bg-card); border:1px solid var(--border); border-left:3px solid var(--coral); border-radius:8px; padding:24px 28px;">
-      <div style="font-family:'JetBrains Mono',monospace; font-size:1.1em; font-weight:800; color:var(--coral); min-width:180px;">Dev Infra</div>
-      <div>
-        <div style="font-size:0.95em; color:var(--text-bright); font-weight:600;">Centralized developer infrastructure</div>
-        <div style="font-size:0.75em; color:var(--text-dim); margin-top:2px;">Every improvement (and every regression) is global &mdash; felt by everyone</div>
-      </div>
+    <div style="border-left:2px solid var(--cyan); padding-left:20px;">
+      <div style="color:var(--text-bright); font-weight:600;">C++20 coroutines as the standard async pattern</div>
     </div>
-
+    <div style="border-left:2px solid var(--coral); padding-left:20px;">
+      <div style="color:var(--text-bright); font-weight:600;">Centralized developer infrastructure</div>
+      <div style="color:var(--text-dim); font-size:0.85em; margin-top:4px;">Every change is felt globally</div>
+    </div>
   </div>
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 4: THE PROBLEM                                         -->
+<!-- SLIDE 3: THE PROBLEM                                         -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">The Problem</h2>
 
-  <div class="cols" style="align-items:center;">
-    <div class="col" style="flex:1.2;">
-      <div class="card card-accent" style="margin-bottom:24px; padding:18px 24px;">
-        <div style="font-size:0.88em;">
-          <span class="text-bold">The goal:</span> switch from <span class="text-mono">-g1</span> (line tables)
-          to <span class="text-mono text-coral text-bold">-g2</span> (full debug info) in dev builds &mdash;
-          making it straightforward to debug any binary without extra configuration.
-        </div>
-      </div>
+  <div style="font-size:0.88em; margin-bottom:28px;">
+    To improve the dev workflow, we wanted to switch from
+    <span class="text-mono">-g1</span> to <span class="text-mono text-coral text-bold">-g2</span>
+    in dev builds &mdash; any binary debuggable out of the box.
+  </div>
 
-      <div style="font-size:0.88em; margin-bottom:24px;">
-        <span class="text-bold">The blocker:</span> we estimated up to
-        <span class="text-coral text-bold">2&ndash;3x compile time regression</span>
-        on source files with coroutines.
-      </div>
+  <div style="font-size:0.85em; margin-bottom:28px;">
+    This required work across the stack:
+  </div>
 
-      <div style="width:100%; margin-bottom:20px;">
-        <div class="bar-row" style="margin:18px 0;">
-          <div class="bar-label" style="width:130px;">
-            <span class="text-mono">-g1</span>
-            <div style="font-size:0.8em; color:var(--text-dim);">line tables</div>
-          </div>
-          <div class="bar-track" style="height:44px;">
-            <div class="bar-fill bar-fill-green" style="width:35%; font-size:0.75em;">baseline</div>
-          </div>
+  <div class="cols" style="align-items:flex-start; gap:24px;">
+    <div class="col" style="flex:1;">
+      <div style="font-size:0.82em; display:flex; flex-direction:column; gap:10px;">
+        <div class="card card-green" style="padding:12px 18px; opacity:0.6;">
+          <span class="text-green">&#10003;</span> Build-level optimizations
         </div>
-        <div class="bar-row" style="margin:18px 0;">
-          <div class="bar-label" style="width:130px;">
-            <span class="text-mono text-coral" style="font-weight:700;">-g2</span>
-            <div style="font-size:0.8em; color:var(--text-dim);">full debug info</div>
-          </div>
-          <div class="bar-track" style="height:44px;">
-            <div class="bar-fill bar-fill-coral" style="width:100%; font-size:0.75em;">2&ndash;3x slower</div>
-          </div>
+        <div class="card card-green" style="padding:12px 18px; opacity:0.6;">
+          <span class="text-green">&#10003;</span> Split DWARF rollout
         </div>
-      </div>
-
-      <div style="font-size:0.82em; color:var(--text-dim);">
-        At this scale, that regression was not acceptable.
+        <div class="card card-green" style="padding:12px 18px; opacity:0.6;">
+          <span class="text-green">&#10003;</span> LLDB performance improvements
+        </div>
       </div>
     </div>
 
+    <div class="col" style="flex:1.4;">
+      <div class="card card-coral" style="padding:16px 20px; margin-bottom:20px;">
+        <div style="font-size:0.85em;">
+          <span class="text-coral text-bold">&#10007; Compile times for sources with coroutines</span>
+        </div>
+      </div>
+
+      <div style="width:100%;">
+        <div class="bar-row" style="margin:14px 0;">
+          <div class="bar-label" style="width:110px;">
+            <span class="text-mono">-g1</span>
+            <div style="font-size:0.8em; color:var(--text-dim);">line tables</div>
+          </div>
+          <div class="bar-track" style="height:40px;">
+            <div class="bar-fill bar-fill-green" style="width:35%; font-size:0.72em;">baseline</div>
+          </div>
+        </div>
+        <div class="bar-row" style="margin:14px 0;">
+          <div class="bar-label" style="width:110px;">
+            <span class="text-mono text-coral" style="font-weight:700;">-g2</span>
+            <div style="font-size:0.8em; color:var(--text-dim);">full debug info</div>
+          </div>
+          <div class="bar-track" style="height:40px;">
+            <div class="bar-fill bar-fill-coral" style="width:100%; font-size:0.72em;">2&ndash;3x slower</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:0.78em; color:var(--text-dim); margin-top:8px;">
+        Simulations showed a significant end-to-end build time regression.
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 5: PROFILING                                           -->
+<!-- SLIDE 4: PROFILING                                           -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">Profiling: Narrowing to a Pass</h2>
@@ -867,7 +864,7 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 7: ROOT CAUSE — COROSPLIT                              -->
+<!-- SLIDE 5: ROOT CAUSE — COROSPLIT                              -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">CoroSplit: One Coroutine Becomes Many</h2>
@@ -948,7 +945,7 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 8: ROOT CAUSE — FUNCTION CLONING & DEBUG INFO          -->
+<!-- SLIDE 6: ROOT CAUSE — FUNCTION CLONING & DEBUG INFO          -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">Function Cloning &amp; Debug Info</h2>
@@ -1032,7 +1029,7 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 9: ROOT CAUSE — O(MODULE) PER CLONE                    -->
+<!-- SLIDE 7: ROOT CAUSE — O(MODULE) PER CLONE                    -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">The Root Cause: O(CompileUnit) Per Clone</h2>
@@ -1075,7 +1072,7 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 10: OPTIMIZATION — OVERVIEW                            -->
+<!-- SLIDE 8: OPTIMIZATION — OVERVIEW                            -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">The Optimization Journey: Four Iterations</h2>
@@ -1113,7 +1110,7 @@
       <div class="tl-dot tl-dot-blue">2</div>
       <div class="tl-card">
         <div>
-          <div class="tl-title">Step 2: Share</div>
+          <div class="tl-title">Step 2: Reuse</div>
           <div class="tl-desc">Build the set once, share across all clones of a coroutine</div>
         </div>
         <div class="tl-metric">
@@ -1141,7 +1138,7 @@
       <div class="tl-dot tl-dot-green" style="font-size:0.7em;">&#10003;</div>
       <div class="tl-card tl-card-highlight">
         <div>
-          <div class="tl-title text-green">Step 3: Predicate</div>
+          <div class="tl-title text-green">Step 3: Simplify</div>
           <div class="tl-desc">From set to predicate &mdash; no traversal. O(Function) restored.</div>
         </div>
         <div class="tl-metric">
@@ -1154,10 +1151,10 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 11: OPTIMIZATION — STEP 1                              -->
+<!-- SLIDE 9: OPTIMIZATION — STEP 1                              -->
 <!-- ============================================================ -->
 <section>
-  <h2 class="slide-title">Step 1: Decouple Identity Mapping From VMap</h2>
+  <h2 class="slide-title">Step 1: Decouple Clone Policy From Remapping State</h2>
 
   <div class="cols">
     <div class="col" style="display:flex; flex-direction:column; gap:16px;">
@@ -1200,10 +1197,10 @@ IdentityMD = <span class="fn">FindDebugInfoToIdentityMap</span>(Fn);
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 12: OPTIMIZATION — STEP 2                              -->
+<!-- SLIDE 10: OPTIMIZATION — STEP 2                              -->
 <!-- ============================================================ -->
 <section>
-  <h2 class="slide-title">Step 2: Share the Set Across Clones</h2>
+  <h2 class="slide-title">Step 2: Reuse Policy Across Clones</h2>
 
   <div class="cols">
     <div class="col" style="display:flex; flex-direction:column; gap:16px;">
@@ -1250,7 +1247,7 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 13: STEP 3 — CACHING                                   -->
+<!-- SLIDE 11: STEP 3 — CACHING                                   -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">Detour: Cache It <span class="tag tag-abandoned" style="vertical-align:middle; margin-left:12px;">superseded</span></h2>
@@ -1317,10 +1314,10 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 14: THE KEY INSIGHT                                    -->
+<!-- SLIDE 12: THE KEY INSIGHT                                    -->
 <!-- ============================================================ -->
 <section>
-  <h2 class="slide-title">Step 3: From Set to Predicate</h2>
+  <h2 class="slide-title">Step 3: Express Policy as a Predicate</h2>
 
   <div style="display:flex; justify-content:center; margin-bottom:20px;">
     <div style="font-family:'JetBrains Mono',monospace; font-size:0.78em; display:flex; align-items:center; gap:20px;">
@@ -1353,8 +1350,6 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
       <div>
         <div class="code-label" style="color:var(--green); background:var(--green)18;">Conceptual sketch of the predicate</div>
         <div class="code-block" style="border-color:var(--green)30; font-size:0.66em;"><span class="kw">auto</span> <span class="fn">createIdentityMDPredicate</span>(<span class="kw">const</span> <span class="ty">Function</span> &amp;F, Changes) {
-  <span class="kw">if</span> (Changes == DifferentModule)
-    <span class="kw">return false</span>;  <span class="cm">// clone everything</span>
   <span class="kw">auto</span> *SP = F.<span class="fn">getSubprogram</span>();
   <span class="kw">return</span> [=](<span class="kw">const</span> <span class="ty">Metadata</span> *MD) {
     <span class="kw">if</span> (<span class="fn">isa</span>&lt;<span class="ty">DICompileUnit</span>&gt;(MD) || <span class="fn">isa</span>&lt;<span class="ty">DIType</span>&gt;(MD))
@@ -1363,6 +1358,7 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
       <span class="kw">return</span> S != SP;
     <span class="kw">if</span> (<span class="kw">auto</span> *LS = <span class="fn">dyn_cast</span>&lt;<span class="ty">DILocalScope</span>&gt;(MD))
       <span class="kw">return</span> LS-&gt;<span class="fn">getSubprogram</span>() != SP;
+
     <span class="kw">return false</span>;
   };
 }</div>
@@ -1372,7 +1368,7 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 15: RESULTS & TAKEAWAYS — PERFORMANCE                  -->
+<!-- SLIDE 13: RESULTS & TAKEAWAYS — PERFORMANCE                  -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">Performance Results</h2>
@@ -1388,13 +1384,13 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
         </div>
       </div>
       <div class="bar-row">
-        <div class="bar-label" style="width:160px;">Step 1<div style="font-size:0.75em; color:var(--text-dim);">decouple</div></div>
+        <div class="bar-label" style="width:160px;">Step 1<div style="font-size:0.75em; color:var(--text-dim);">decouple policy</div></div>
         <div class="bar-track">
           <div class="bar-fill bar-fill-blue" style="width:72%;">221 ms</div>
         </div>
       </div>
       <div class="bar-row">
-        <div class="bar-label" style="width:160px;">Step 2<div style="font-size:0.75em; color:var(--text-dim);">share</div></div>
+        <div class="bar-label" style="width:160px;">Step 2<div style="font-size:0.75em; color:var(--text-dim);">reuse policy</div></div>
         <div class="bar-track">
           <div class="bar-fill bar-fill-blue" style="width:22%;">68 ms</div>
         </div>
@@ -1437,7 +1433,7 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 16: RESULTS & TAKEAWAYS — GENERALIZATION               -->
+<!-- SLIDE 14: RESULTS & TAKEAWAYS — GENERALIZATION               -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">Not Just Coroutines</h2>
@@ -1469,7 +1465,7 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 17: RESULTS & TAKEAWAYS — KEY TAKEAWAYS                -->
+<!-- SLIDE 15: RESULTS & TAKEAWAYS — KEY TAKEAWAYS                -->
 <!-- ============================================================ -->
 <section>
   <h2 class="slide-title">Takeaways</h2>
@@ -1499,7 +1495,7 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
 </section>
 
 <!-- ============================================================ -->
-<!-- SLIDE 18: THANK YOU                                          -->
+<!-- SLIDE 16: THANK YOU                                          -->
 <!-- ============================================================ -->
 <section>
   <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; text-align:center;">
