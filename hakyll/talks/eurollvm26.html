@@ -688,7 +688,6 @@
   <span>Home</span>
 </a>
 <div class="toolbar">
-  <button onclick="Reveal.toggleOverview()" title="Toggle overview (O)">&#9638;</button>
   <button onclick="Reveal.slide(0)" title="Go to first slide">&#8962;</button>
   <button onclick="document.documentElement.classList.toggle('light'); this.textContent = document.documentElement.classList.contains('light') ? '&#9790; dark' : '&#9788; light'">&#9790; dark</button>
 </div>
@@ -717,9 +716,12 @@
         <div class="speaker-name">Artem Pianykh</div>
         <div class="speaker-org">Meta &mdash; Dev Infra</div>
       </div>
-      <div class="conf-info">
-        <div class="conf-name">EuroLLVM 2026</div>
-        <div class="conf-date">April 14-15, 2026</div>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div class="conf-info">
+          <div class="conf-name">EuroLLVM 2026</div>
+          <div class="conf-date">April 14-15, 2026</div>
+        </div>
+        <div id="qr-title" style="background:#fff; padding:4px; border-radius:4px; line-height:0;"></div>
       </div>
     </div>
   </div>
@@ -1507,7 +1509,10 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
       <div class="speaker-org" style="font-size:0.85em;">Meta &mdash; Dev Infra</div>
     </div>
 
-    <div>&nbsp;</div>
+    <div style="margin-top:16px; margin-bottom:16px;">
+      <div id="qr-end" style="background:#fff; padding:4px; border-radius:4px; line-height:0; display:inline-block;"></div>
+      <div style="font-size:0.55em; color:var(--text-dim); margin-top:6px;">pianykh.com/blog/talks/eurollvm26.html</div>
+    </div>
 
     <div style="max-width:700px; width:100%;">
       <div class="section-label" style="margin-bottom:12px;">References</div>
@@ -1532,6 +1537,7 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
 </div><!-- /slides -->
 </div><!-- /reveal -->
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
 <script>
   Reveal.initialize({
@@ -1545,6 +1551,16 @@ CommonDI = <span class="fn">CollectCommonDebugInfo</span>(Fn);
     backgroundTransition: 'none',
     pdfSeparateFragments: false,
   });
+
+  // QR codes
+  (function() {
+    var qr = qrcode(0, 'M');
+    qr.addData('https://pianykh.com/blog/talks/eurollvm26.html');
+    qr.make();
+    var imgTag = function(size) { return qr.createImgTag(size, 0); };
+    document.getElementById('qr-title').innerHTML = imgTag(2);
+    document.getElementById('qr-end').innerHTML = imgTag(3);
+  })();
 
   // Starfield with parallax
   (function() {
