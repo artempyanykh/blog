@@ -44,6 +44,16 @@
 <ul class="post-list">
   
   <li>
+    <a href="./talks/ocaml-workshop-2026.html"><h2>OCaml Workshop '26: JSON parsing in OxCaml: fast, but not too fast</h2></a>
+    <span class="post-list-date">August 24, 2026</span>
+    <div class="post-list-teaser"><p>OxCaml provides stack allocation, unboxed types and layouts, SIMD vector types, and bit-manipulation intrinsics. These features promise more explicit control over allocation, representation, and SIMD code than OCaml programmers usually have. In our parser, that control was valuable, but the result was not C++ in OCaml syntax; it was a faster OCaml program with OCaml-shaped tradeoffs.</p>
+<p>This talk describes lessons learned while implementing a simdjson-style JSON parser in OxCaml. The resulting parser is over 5x faster than existing OCaml parsers such as Yojson and Jsont, while still exposing a conventional <code>Json.t</code> API that users can pattern match on. In our benchmarks, the convenient tree API reaches 76% of RapidJSON’s throughput, though it remains roughly 4x slower than the C++ simdjson implementation; a lower-level tape representation edges past RapidJSON and reaches 38% of simdjson throughput.</p>
+<p>We report which features worked directly, where integration required extra care, and which language and library extensions would help downstream users build performance-critical OCaml applications.</p>
+</div>
+    <p class="post-list-continue"><a href="./talks/ocaml-workshop-2026.html">&hellip;continue reading&hellip;</a></p>
+  </li>
+  
+  <li>
     <a href="./talks/eurollvm26.html"><h2>EuroLLVM '26: Attack of the Clones: Speeding Up Coroutine Compilation</h2></a>
     <span class="post-list-date">April  5, 2026</span>
     <div class="post-list-teaser"><p>Here are the slides for my EuroLLVM ’26 talk. The abstract follows:</p>
