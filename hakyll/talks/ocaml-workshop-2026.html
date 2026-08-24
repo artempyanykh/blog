@@ -1,0 +1,1534 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSON parsing in OxCaml: fast, but not too fast</title>
+  <meta name="description" content="OCaml Workshop 2026 talk">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/plugin/highlight/monokai.css">
+  <style>
+    :root {
+      --paper: #f7f3eb;
+      --ink: #17191d;
+      --muted: #68665f;
+      --line: #d8d1c5;
+      --orange: #e85d2a;
+      --orange-soft: #f6c7b5;
+      --cyan: #0b8793;
+      --cyan-soft: #bce0df;
+      --violet: #654fb4;
+      --violet-soft: #d8d0f3;
+      --lime: #c8dd70;
+      --dark: #191a20;
+    }
+
+    * { box-sizing: border-box; }
+    .reveal { font-family: "DM Sans", sans-serif; font-size: 46px; color: var(--ink); background: var(--paper); }
+    .reveal .slides { text-align: left; }
+    .reveal .slides section { height: 100%; padding: 62px 82px 56px; }
+    .reveal h1, .reveal h2, .reveal h3 { font-family: "DM Sans", sans-serif; text-transform: none; letter-spacing: -0.045em; color: var(--ink); margin: 0; }
+    .reveal h1 { font-size: 2.05em; line-height: .98; font-weight: 700; max-width: 1180px; }
+    .reveal h2 { font-size: 1.42em; line-height: 1.05; font-weight: 650; max-width: 1300px; }
+    .reveal h3 { font-size: .76em; letter-spacing: -.02em; }
+    .reveal p, .reveal li { font-size: .62em; line-height: 1.35; }
+    .reveal code, .reveal pre { font-family: "JetBrains Mono", monospace; }
+    .reveal pre { width: 100%; margin: 0; box-shadow: none; font-size: .5em; line-height: 1.45; }
+    .reveal pre code { padding: 24px 28px; border-radius: 14px; max-height: none; }
+    .reveal blockquote { width: auto; margin: 0; padding: 0; box-shadow: none; background: none; font-style: normal; }
+    .reveal aside.notes { display: none; }
+
+    .eyebrow { font: 600 .36em/1 "JetBrains Mono", monospace; letter-spacing: .11em; text-transform: uppercase; color: var(--cyan); margin-bottom: 20px; }
+    .eyebrow.orange { color: var(--orange); }
+    .eyebrow.violet { color: var(--violet); }
+    .dek { margin: 22px 0 0; max-width: 1120px; font-size: .62em; color: var(--muted); }
+    .footer { position: absolute; left: 82px; right: 170px; bottom: 27px; display: flex; justify-content: space-between; align-items: center; gap: 24px; font: 500 .34em/1.2 "JetBrains Mono", monospace; color: #79766e; }
+    .section-no::before { content: attr(data-label); }
+    .accent { color: var(--orange); }
+    .cyan { color: var(--cyan); }
+    .violet { color: var(--violet); }
+    .quiet { color: var(--muted); }
+    .mono { font-family: "JetBrains Mono", monospace; }
+    .tiny { font-size: .4em !important; }
+    .nowrap { white-space: nowrap; }
+
+    .hero { display: flex !important; flex-direction: column; justify-content: center; }
+    .hero h1 { max-width: 1010px; position: relative; z-index: 1; }
+    .hero .hero-art { position: absolute; z-index: 0; width: 500px; height: 500px; right: 42px; top: 150px; transform: translate(-48px, 55px); object-fit: contain; filter: saturate(.88) contrast(1.02); }
+    .hero .subtitle { position: relative; z-index: 1; margin-top: 28px; width: 790px; font-size: .58em; line-height: 1.35; color: var(--muted); }
+    .hero .byline { margin-top: 76px; font-size: .48em; }
+    .hero .repo { margin-top: 10px; font: .36em "JetBrains Mono", monospace; color: var(--cyan); }
+
+    .section-divider { display: flex !important; flex-direction: column; justify-content: center; background: var(--dark) !important; color: #f7f2e9; }
+    .section-divider::after { content: ""; position: absolute; right: 92px; top: 108px; width: 250px; height: 250px; border: 38px solid currentColor; opacity: .07; border-radius: 50%; }
+    .section-divider.violet-divider { color: #f7f2e9; }
+    .section-divider h1 { color: #f7f2e9; font-size: 2.35em; }
+    .section-divider .divider-sub { margin-top: 28px; font: 500 .42em/1.5 "JetBrains Mono", monospace; color: #aeb3bd; }
+    .section-divider .divider-rule { margin-top: 54px; width: 180px; height: 8px; background: var(--orange); }
+    .section-divider.violet-divider .divider-rule { background: #9d84ef; }
+
+    .flow { display: flex; align-items: center; justify-content: center; gap: 28px; margin-top: 130px; }
+    .flow .node { font: 600 .54em "JetBrains Mono", monospace; padding: 28px 34px; border: 2px solid var(--ink); border-radius: 13px; background: rgba(255,255,255,.42); }
+    .flow .node.target { border-color: var(--orange); background: var(--orange-soft); }
+    .flow .arrow { font-size: .8em; color: var(--cyan); }
+    .feature-caption { text-align: center; margin-top: 34px; font: 500 .37em "JetBrains Mono", monospace; color: var(--muted); }
+
+    .experiment-map { margin-top: 92px; display: grid; grid-template-columns: 220px 54px 1fr 54px 220px; align-items: center; gap: 18px; }
+    .experiment-end { font: 600 .42em/1.45 "JetBrains Mono", monospace; text-align: center; }
+    .experiment-end code { display: block; margin-top: 10px; color: var(--orange); font-size: 1.18em; }
+    .experiment-arrow { color: var(--orange); font-size: 1.1em; text-align: center; }
+    .parser-system { padding: 40px 42px 34px; border-top: 5px solid var(--cyan); border-bottom: 5px solid var(--cyan); }
+    .parser-system-title { font: 650 .46em "JetBrains Mono", monospace; text-align: center; margin-bottom: 30px; }
+    .parser-pipeline { display: flex; align-items: center; justify-content: center; gap: 22px; font: 600 .35em "JetBrains Mono", monospace; }
+    .parser-pipeline .stage { padding: 15px 18px; background: var(--cyan-soft); }
+    .parser-pipeline .pipe-arrow { color: var(--orange); font-size: 1.35em; }
+    .feature-feeds { margin-top: 28px; display: flex; justify-content: center; gap: 24px; font: 500 .27em "JetBrains Mono", monospace; color: var(--muted); }
+    .feature-feeds span::before { content: "↑ "; color: var(--orange); font-weight: 700; }
+
+    .big-number { font-size: 3.1em; line-height: .9; font-weight: 700; letter-spacing: -.08em; margin-top: 120px; }
+    .big-number small { display: block; margin-top: 28px; font: 500 22px/1.35 "JetBrains Mono", monospace; letter-spacing: 0; color: var(--muted); }
+    .big-number.orange { color: var(--orange); }
+    .big-number.cyan { color: var(--cyan); }
+
+    .chart { margin-top: 32px; display: grid; gap: 10px; }
+    .bar-row { display: grid; grid-template-columns: 360px 1fr 155px; gap: 18px; align-items: center; font-size: .4em; }
+    .bar-label { text-align: right; color: var(--ink); }
+    .bar-track { height: 28px; background: #e7e0d5; border-radius: 4px; overflow: hidden; }
+    .bar { width: var(--w); height: 100%; background: #a8a39a; }
+    .bar.dom { background: var(--orange); }
+    .bar.tape { background: var(--violet); }
+    .bar-value { font: 600 1em "JetBrains Mono", monospace; }
+
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; margin-top: 72px; }
+    .split.top { align-items: start; }
+    .panel { padding: 30px 32px; border-top: 4px solid var(--cyan); background: rgba(255,255,255,.44); }
+    .panel.orange { border-color: var(--orange); }
+    .panel.violet { border-color: var(--violet); }
+    .panel h3 { margin-bottom: 18px; }
+    .panel p { margin: 0; }
+    .compare-code { font: 500 .56em/1.55 "JetBrains Mono", monospace; padding: 28px 32px; background: var(--dark); color: #f6f1e8; border-radius: 14px; }
+    .compare-code .comment { color: #9198a5; }
+    .compare-code .hot { color: #ff8b61; }
+    .compare-code .cool { color: #77d2d0; }
+
+    .repr-grid { margin-top: 42px; display: grid; grid-template-columns: 1fr 1fr; gap: 72px; }
+    .repr-side h3 { margin: 0 0 14px; font: 600 .38em "JetBrains Mono", monospace; color: var(--muted); }
+    .repr-side pre { font-size: .40em; }
+    .repr-side pre code { padding: 18px 22px; }
+    .storage-diagram { margin-top: 28px; min-height: 205px; font-family: "JetBrains Mono", monospace; }
+    .storage-label { margin-bottom: 9px; font-size: .28em; color: var(--muted); }
+    .storage-heads { display: grid; grid-template-columns: 190px 38px 1fr; gap: 17px; margin-bottom: 9px; font-size: .28em; color: var(--muted); }
+    .storage-row { display: flex; align-items: center; gap: 17px; }
+    .memory-word { display: flex; align-items: center; justify-content: center; height: 62px; min-width: 190px; padding: 0 18px; border: 3px solid var(--cyan); background: var(--cyan-soft); font-size: .36em; font-weight: 650; }
+    .memory-word.pointer { color: var(--cyan); }
+    .memory-word.raw { min-width: 270px; border-color: var(--orange); background: var(--orange-soft); color: var(--orange); }
+    .memory-arrow { font-size: .72em; line-height: 1; color: var(--orange); }
+    .heap-area { margin-top: 20px; }
+    .heap-block { display: grid; grid-template-columns: 1.12fr 1fr; width: 365px; border: 3px solid var(--orange); background: var(--orange-soft); }
+    .heap-block div { padding: 16px 13px; text-align: center; font-size: .30em; }
+    .heap-block div + div { border-left: 3px solid var(--orange); font-weight: 650; }
+    .direct-note { margin-top: 24px; font-size: .34em; color: var(--orange); font-weight: 650; }
+    .repr-foot { margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 72px; font: 500 .31em/1.35 "JetBrains Mono", monospace; color: var(--muted); }
+    .repr-foot strong { color: var(--ink); }
+
+    .stack-demo { margin-top: 30px; display: grid; grid-template-columns: 650px 1fr; gap: 54px; align-items: start; }
+    .stack-demo pre { font-size: .34em; }
+    .stack-demo pre code { padding: 20px 24px; }
+    .stack-memory { display: grid; grid-template-columns: 1.1fr 1fr; gap: 26px; }
+    .region-title { margin-bottom: 11px; font: 600 .31em "JetBrains Mono", monospace; color: var(--muted); }
+    .stack-frame { border: 3px solid var(--cyan); background: var(--cyan-soft); }
+    .frame-name { padding: 13px 18px; border-bottom: 3px solid var(--cyan); font: 650 .32em "JetBrains Mono", monospace; color: var(--cyan); }
+    .local-block { margin: 20px; border: 3px solid var(--orange); background: var(--orange-soft); }
+    .local-name { padding: 11px 15px; border-bottom: 2px solid var(--orange); font: 650 .31em "JetBrains Mono", monospace; color: var(--orange); }
+    .local-fields { display: grid; grid-template-columns: 1fr 1fr; }
+    .local-fields div { padding: 16px 10px; text-align: center; font: 500 .29em "JetBrains Mono", monospace; }
+    .local-fields div + div { border-left: 2px solid var(--orange); }
+    .heap-region { min-height: 181px; display: flex; align-items: center; justify-content: center; border: 3px solid var(--orange); background: var(--orange-soft); color: var(--ink); font: 500 .28em/1.4 "JetBrains Mono", monospace; text-align: center; }
+    .heap-pointer { color: var(--orange); font-weight: 700; }
+    .stack-return { margin-top: 20px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 26px; font: 600 .29em/1.35 "JetBrains Mono", monospace; }
+    .stack-return .popped { color: var(--cyan); }
+    .stack-return .none { color: var(--orange); }
+    .stack-return .survives { color: var(--orange); }
+
+    .check-flow { margin-top: 105px; display: grid; grid-template-columns: 1fr 90px 1fr 90px 1fr; align-items: center; text-align: center; }
+    .check-step { padding: 28px 22px; border-top: 5px solid var(--cyan); background: rgba(255,255,255,.48); font: 600 .38em/1.4 "JetBrains Mono", monospace; }
+    .check-step.final { border-color: var(--orange); }
+    .check-arrow { color: var(--orange); font-size: .72em; }
+    .check-note { margin-top: 40px; text-align: center; font: 500 .38em "JetBrains Mono", monospace; color: var(--muted); }
+    .compiler-error { margin-top: 46px; display: grid; grid-template-columns: 1fr 1fr; gap: 42px; align-items: stretch; }
+    .compiler-error pre { font-size: .43em; }
+    .error-output { padding: 30px; border-left: 7px solid var(--orange); background: #2a2020; color: #ffe9e0; font: 500 .38em/1.55 "JetBrains Mono", monospace; }
+    .error-output strong { color: #ff8b61; }
+    .two-callouts { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 42px; }
+    .two-callouts div { display: flex; align-items: baseline; gap: 22px; padding-top: 18px; border-top: 3px solid var(--cyan); }
+    .two-callouts code { color: var(--ink); font-size: .34em; font-weight: 700; }
+    .two-callouts span { color: var(--muted); font: 500 .3em/1.35 "JetBrains Mono", monospace; }
+
+    .bytes { margin-top: 95px; text-align: center; font: 600 .72em/1.7 "JetBrains Mono", monospace; letter-spacing: .06em; }
+    .bytes .hit { color: var(--orange); border-bottom: 6px solid var(--orange-soft); }
+    .mask { margin: 30px auto 0; width: fit-content; padding: 18px 28px; font: 500 .4em "JetBrains Mono", monospace; background: var(--dark); color: #fff; border-radius: 12px; }
+
+    .simd-intro { margin-top: 70px; display: grid; grid-template-columns: 430px 1fr; gap: 62px; align-items: center; }
+    .simd-type-list { font: 600 .62em/1.8 "JetBrains Mono", monospace; }
+    .simd-type-list span { color: var(--orange); }
+    .simd-code { font: 500 .46em/1.65 "JetBrains Mono", monospace; padding: 28px 32px; background: var(--dark); color: #f6f1e8; border-radius: 14px; }
+    .vector-diagram { margin-top: 42px; }
+    .vector-label { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; font: 600 .31em "JetBrains Mono", monospace; color: var(--muted); }
+    .vector-label strong { color: var(--orange); font-size: 1.16em; }
+    .lane-row { display: grid; grid-template-columns: repeat(16, 1fr); gap: 5px; }
+    .lane { height: 60px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--cyan); background: var(--cyan-soft); font: 650 .34em "JetBrains Mono", monospace; }
+    .lane.zero { border-color: var(--line); background: rgba(255,255,255,.42); color: var(--muted); }
+    .lane.hit { border-color: var(--orange); background: var(--orange-soft); color: var(--orange); }
+    .vector-op { margin: 14px auto; width: fit-content; font: 600 .32em "JetBrains Mono", monospace; color: var(--ink); }
+    .simd-result { margin-top: 26px; display: grid; grid-template-columns: 1.25fr .75fr; gap: 48px; align-items: center; }
+    .simd-result pre { font-size: .38em; }
+    .simd-result pre code { padding: 16px 22px; }
+    .mask-result { font: 600 .35em/1.5 "JetBrains Mono", monospace; color: var(--muted); }
+    .mask-result strong { display: block; color: var(--orange); font-size: 1.35em; }
+
+    .indexed-json { margin: 54px auto 0; width: 920px; font-family: "JetBrains Mono", monospace; }
+    .indexed-grid { display: grid; grid-template-columns: repeat(var(--cols, 18), 1fr); }
+    .indexed-grid div { text-align: center; }
+    .indexed-grid.indices { font-size: .26em; color: var(--muted); }
+    .indexed-grid.chars { margin-top: 8px; font-size: .58em; font-weight: 650; }
+    .indexed-grid .hit-char { color: var(--orange); border-bottom: 5px solid var(--orange-soft); }
+    .indexed-json .index-vector { margin-top: 20px; color: var(--cyan); font-size: .72em; }
+
+    .parse-walk { margin-top: 34px; display: grid; grid-template-columns: 390px 1fr; gap: 55px; align-items: start; }
+    .parse-walk .source { font: 650 .72em/1.35 "JetBrains Mono", monospace; color: var(--ink); padding: 26px 0; }
+    .parse-walk .source .hot { color: var(--orange); }
+    .parse-trace { display: grid; grid-template-columns: 90px 160px 1fr; font: 500 .31em/1.25 "JetBrains Mono", monospace; }
+    .parse-trace > div { padding: 12px 14px; border-bottom: 2px solid var(--line); }
+    .parse-trace .pos { color: var(--cyan); font-weight: 700; }
+    .parse-trace .byte { color: var(--orange); font-weight: 700; }
+    .parse-question { margin-top: 20px; padding-left: 535px; font: 600 .32em "JetBrains Mono", monospace; color: var(--orange); }
+
+    .scanner-showcase { margin-top: 28px; display: grid; grid-template-columns: 1.22fr .78fr; gap: 38px; align-items: stretch; }
+    .scanner-code { display: grid; gap: 16px; }
+    .scanner-code .cap { margin-bottom: 8px; font: 600 .28em "JetBrains Mono", monospace; color: var(--muted); }
+    .scanner-code pre { font-size: .34em; }
+    .scanner-code pre code { padding: 15px 18px; }
+    .scanner-result { display: flex; flex-direction: column; justify-content: center; padding: 28px 30px; border-left: 5px solid var(--orange); background: rgba(255,255,255,.48); font: 600 .32em/1.45 "JetBrains Mono", monospace; }
+    .scanner-result .input64 { color: var(--muted); }
+    .scanner-result .down { margin: 18px 0; color: var(--orange); font-size: 1.8em; text-align: center; }
+    .scanner-result .mask64 { color: var(--cyan); font-size: 1.13em; overflow-wrap: anywhere; }
+    .scanner-result strong { margin-top: 18px; color: var(--ink); }
+    .reaction-slide { margin-top: 38px; display: grid; grid-template-columns: .72fr 1.28fr; gap: 45px; align-items: center; }
+    .reaction-slide img { width: 100%; height: 440px; object-fit: contain; object-position: center bottom; }
+    .reaction-copy .big-number { margin-top: 0; }
+
+    .block-layout { margin-top: 48px; display: grid; grid-template-columns: 1fr 100px 1fr; gap: 18px; align-items: center; }
+    .block-layout .side { padding: 26px; border-top: 5px solid var(--orange); background: rgba(255,255,255,.48); }
+    .block-layout .side.good { border-color: var(--cyan); }
+    .block-layout .label { font: 650 .34em "JetBrains Mono", monospace; color: var(--muted); }
+    .block-layout .record { margin-top: 22px; padding: 20px; border: 3px solid var(--orange); background: var(--orange-soft); font: 600 .38em/1.45 "JetBrains Mono", monospace; text-align: center; }
+    .block-layout .good .record { border-color: var(--cyan); background: var(--cyan-soft); }
+    .block-layout .per { margin-top: 16px; font: 500 .31em/1.35 "JetBrains Mono", monospace; }
+    .loop-allocation { margin-top: 30px; display: grid; grid-template-columns: 1.55fr .65fr; gap: 38px; align-items: stretch; }
+    .reveal pre.loop-code { width: auto; border-radius: 14px; background: var(--dark); font-size: .36em; line-height: 1.48; }
+    .reveal pre.loop-code code { padding: 28px 32px; border-radius: 14px; color: #f5f1e9; }
+    .loop-cost { display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+    .loop-cost .block { padding: 22px 24px; border-left: 5px solid var(--orange); background: rgba(246,199,181,.52); font: 600 .31em/1.4 "JetBrains Mono", monospace; }
+    .loop-cost .block strong { display: block; color: var(--orange); margin-bottom: 6px; }
+    .loop-cost .after { border-color: var(--cyan); background: rgba(188,224,223,.52); }
+    .loop-cost .after strong { color: var(--cyan); }
+
+    .benchmark-table { margin-top: 30px; width: 100%; border-collapse: collapse; font: 500 .31em/1.25 "JetBrains Mono", monospace; }
+    .benchmark-table th, .benchmark-table td { padding: 13px 16px; border-bottom: 2px solid var(--line); text-align: right; }
+    .benchmark-table th:first-child, .benchmark-table td:first-child { text-align: left; }
+    .benchmark-table th { color: var(--muted); font-weight: 600; }
+    .benchmark-table .winner { color: var(--orange); font-weight: 750; }
+    .benchmark-table .bad { color: var(--violet); }
+    .table-key { margin-top: 18px; display: flex; justify-content: space-between; font: 500 .28em/1.35 "JetBrains Mono", monospace; color: var(--muted); }
+    .usage-decision { margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
+    .usage-code { font: 500 .32em/1.55 "JetBrains Mono", monospace; }
+    .decision-stats { display: grid; gap: 14px; }
+    .decision-stat { display: grid; grid-template-columns: 170px 1fr; gap: 20px; padding-bottom: 14px; border-bottom: 2px solid var(--line); font: 500 .31em/1.35 "JetBrains Mono", monospace; }
+    .decision-stat strong { color: var(--orange); font-size: 1.35em; }
+    .mode-table { margin-top: 36px; width: 100%; border-collapse: collapse; font: 500 .31em/1.3 "JetBrains Mono", monospace; }
+    .mode-table th { padding: 13px 18px; color: var(--muted); border-bottom: 3px solid var(--ink); text-align: left; }
+    .mode-table td { padding: 17px 18px; border-bottom: 2px solid var(--line); vertical-align: middle; }
+    .mode-table .api { color: var(--ink); font-weight: 650; }
+    .mode-table .packed-cell { color: var(--cyan); font-weight: 700; }
+    .mode-table .flat-win { color: var(--cyan); font-weight: 650; }
+    .mode-table .flat-loss { color: var(--orange); font-weight: 700; }
+    .capacity-compare { margin-top: 24px; display: grid; grid-template-columns: 210px 1fr 140px; gap: 18px; align-items: center; font: 600 .28em "JetBrains Mono", monospace; }
+    .capacity-track { height: 24px; background: var(--line); }
+    .capacity-fill-packed { height: 100%; width: 3.125%; min-width: 12px; background: var(--cyan); }
+    .capacity-fill-flat { height: 100%; width: 100%; background: var(--orange); }
+
+    .iterative-compare { margin-top: 48px; display: grid; grid-template-columns: 1fr 90px 1fr; align-items: center; gap: 24px; }
+    .parser-shape { padding: 26px; background: rgba(255,255,255,.5); border-top: 5px solid var(--cyan); font: 500 .34em/1.55 "JetBrains Mono", monospace; }
+    .parser-shape.bad { border-color: var(--orange); }
+    .parser-shape .shape-title { margin-bottom: 15px; font-weight: 700; color: var(--muted); }
+
+    .assoc-story { margin-top: 38px; display: grid; grid-template-columns: .82fr 1.18fr; gap: 48px; align-items: center; }
+    .assoc-story pre { font-size: .38em; }
+    .buffer-cycle { font: 600 .34em/1.4 "JetBrains Mono", monospace; }
+    .buffer-cycle .cycle { display: flex; align-items: center; gap: 13px; margin: 18px 0; }
+    .buffer-cycle .cycle span { padding: 14px 16px; background: var(--cyan-soft); border: 2px solid var(--cyan); }
+    .buffer-cycle .cycle b { color: var(--orange); }
+
+    .parser-dispatch { margin: 64px 0 0 160px; display: grid; grid-template-columns: 330px 1fr; gap: 12px 48px; align-items: baseline; font: 500 .43em/1.4 "JetBrains Mono", monospace; }
+    .parser-dispatch .token { color: var(--orange); font-weight: 600; }
+    .parser-dispatch .simd-note { color: var(--cyan); font-weight: 600; }
+
+    .timeline { margin-top: 96px; display: flex; align-items: flex-start; gap: 0; }
+    .timeline .step { width: 31%; }
+    .timeline .dot { width: 22px; height: 22px; background: var(--cyan); border-radius: 50%; margin-bottom: 22px; }
+    .timeline .rule { height: 4px; background: var(--cyan-soft); flex: 1; margin-top: 9px; }
+    .timeline .label { font-size: .45em; font-weight: 600; }
+    .timeline .sub { margin-top: 8px; font: .35em/1.35 "JetBrains Mono", monospace; color: var(--muted); }
+
+    .structural { margin-top: 88px; font: 600 .7em/1.7 "JetBrains Mono", monospace; text-align: center; }
+    .positions { margin-top: 24px; font: 500 .44em "JetBrains Mono", monospace; text-align: center; color: var(--cyan); }
+    .jump-line { margin: 38px auto 0; width: 980px; display: flex; justify-content: space-between; align-items: center; color: var(--orange); font-size: .55em; }
+
+    .tape-strip { margin-top: 82px; display: flex; justify-content: center; gap: 8px; }
+    .cell { min-width: 80px; padding: 14px 10px; text-align: center; border: 2px solid var(--violet); border-radius: 8px; font: 500 .31em/1.25 "JetBrains Mono", monospace; background: var(--violet-soft); }
+    .cell.container { background: var(--violet); color: white; }
+    .cell .idx { display: block; margin-bottom: 8px; color: var(--muted); font-size: .78em; }
+    .cell.container .idx { color: var(--violet-soft); }
+    .cell .ptr { display: block; margin-top: 8px; font-weight: 600; color: var(--orange); }
+    .cell.container .ptr { color: white; }
+    .tape-rules { margin: 26px auto 0; width: 870px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 48px; font: 500 .31em/1.35 "JetBrains Mono", monospace; color: var(--muted); }
+    .tape-rules strong { color: var(--violet); }
+
+    .borrow-sequence { margin-top: 60px; font: 500 .42em/1.7 "JetBrains Mono", monospace; }
+    .borrow-sequence .invalidated { color: var(--orange); font-weight: 600; }
+
+    .type-block { margin: 65px auto 0; max-width: 1040px; }
+    .match { margin-top: 22px; border-left: 6px solid var(--orange); }
+    .allocation-list { margin: 62px 0 0 80px; display: grid; gap: 24px; font: 500 .48em "JetBrains Mono", monospace; }
+    .allocation-list span::before { content: "×"; color: var(--orange); font-weight: 700; margin-right: 24px; }
+
+    .transform { margin-top: 110px; display: grid; grid-template-columns: 1fr 120px 1fr; align-items: center; text-align: center; }
+    .transform .from, .transform .to { padding: 35px; background: rgba(255,255,255,.5); border: 2px solid var(--line); border-radius: 14px; font: 500 .42em/1.5 "JetBrains Mono", monospace; }
+    .transform .to { border-color: var(--cyan); background: var(--cyan-soft); }
+    .transform .arr { font-size: .9em; color: var(--orange); }
+    .result-chip { margin: 34px auto 0; width: fit-content; font: 600 .42em "JetBrains Mono", monospace; color: var(--orange); }
+    .dyn-results { margin: 34px auto 0; width: 760px; display: grid; grid-template-columns: 1.45fr 1fr 1fr; font: 500 .32em/1.25 "JetBrains Mono", monospace; border-top: 2px solid var(--line); border-left: 2px solid var(--line); }
+    .dyn-results div { padding: 13px 18px; border-right: 2px solid var(--line); border-bottom: 2px solid var(--line); }
+    .dyn-results .head { color: var(--muted); font-weight: 600; }
+    .dyn-results .num { color: var(--orange); font-weight: 700; }
+
+    .callchain { margin: 65px 0 0 140px; font: 500 .48em/1.75 "JetBrains Mono", monospace; }
+    .callchain .call { color: var(--orange); }
+    .callchain .indent1 { padding-left: 60px; }
+    .callchain .indent2 { padding-left: 120px; }
+    .inline-bg { position: absolute; inset: 150px 90px 100px; font: 500 .28em/2 "JetBrains Mono", monospace; color: #c9c2b7; overflow: hidden; z-index: -1; transform: rotate(-2deg); }
+
+    .metric-row { margin-top: 85px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+    .metric { padding: 32px; border-top: 5px solid var(--cyan); background: rgba(255,255,255,.5); }
+    .metric.orange { border-color: var(--orange); }
+    .metric.violet { border-color: var(--violet); }
+    .metric .name { font: 600 .42em "JetBrains Mono", monospace; }
+    .metric .value { margin-top: 28px; font-size: .78em; font-weight: 700; letter-spacing: -.06em; }
+    .metric .sub { margin-top: 14px; font: .35em/1.35 "JetBrains Mono", monospace; color: var(--muted); }
+
+    .index-options { margin-top: 52px; display: grid; gap: 30px; }
+    .index-option { display: grid; grid-template-columns: 235px 1fr 330px; gap: 28px; align-items: center; }
+    .index-option .option-name { font: 650 .39em "JetBrains Mono", monospace; }
+    .index-option .option-note { font: 500 .31em/1.35 "JetBrains Mono", monospace; color: var(--muted); }
+    .index-words { display: flex; align-items: stretch; height: 62px; }
+    .index-word { flex: 1; min-width: 48px; display: grid; place-items: center; border: 2px solid var(--cyan); background: var(--cyan-soft); font: 600 .28em "JetBrains Mono", monospace; }
+    .index-word + .index-word { border-left: 0; }
+    .index-option.flat .index-word { border-color: var(--orange); background: var(--orange-soft); }
+    .index-option.dyn .index-word { border-color: var(--violet); background: var(--violet-soft); }
+    .index-word.meta { flex: 1.35; color: var(--violet); }
+
+    .memory { margin-top: 90px; display: grid; gap: 42px; }
+    .memory-row { display: grid; grid-template-columns: 260px 1fr 220px; align-items: center; gap: 25px; font: 500 .46em "JetBrains Mono", monospace; }
+    .memory-bar { height: 44px; background: var(--cyan); border-radius: 5px; }
+    .memory-bar.flat { width: 100%; background: var(--orange); }
+    .memory-bar.packed { width: 3.125%; min-width: 13px; }
+
+    .code-pair { margin-top: 66px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .code-card .cap { margin-bottom: 14px; font: 600 .4em "JetBrains Mono", monospace; color: var(--muted); }
+    .code-card pre { font-size: .48em; }
+
+    .fork { margin-top: 95px; text-align: center; }
+    .fork .source { font: 600 .48em "JetBrains Mono", monospace; }
+    .fork .stem { width: 4px; height: 65px; background: var(--cyan); margin: 15px auto 0; }
+    .fork .arms { margin: 0 auto; width: 560px; height: 70px; border: 4px solid var(--cyan); border-bottom: 0; }
+    .fork .ends { display: flex; justify-content: center; gap: 280px; }
+    .fork .end { min-width: 200px; padding: 20px; font: 600 .5em "JetBrains Mono", monospace; border-radius: 10px; }
+    .fork .end.tape-end { color: white; background: var(--violet); }
+    .fork .end.dom-end { color: white; background: var(--orange); }
+
+    .buffer { margin-top: 68px; display: flex; align-items: center; justify-content: center; gap: 18px; }
+    .buffer .slot { width: 100px; height: 76px; border: 2px solid var(--cyan); display: grid; place-items: center; font: .42em "JetBrains Mono", monospace; background: var(--cyan-soft); }
+    .buffer .slot.mark { border-left: 8px solid var(--orange); }
+    .buffer .nested { background: var(--orange-soft); border-color: var(--orange); }
+    .container-build { margin-top: 46px; display: grid; grid-template-columns: 300px 1fr; gap: 58px; align-items: center; }
+    .container-json { font: 700 .65em/1.4 "JetBrains Mono", monospace; }
+    .container-json .focus { color: var(--orange); }
+    .container-steps { display: grid; gap: 14px; font: 600 .31em/1.35 "JetBrains Mono", monospace; }
+    .container-step { display: grid; grid-template-columns: 135px 1fr; gap: 24px; padding: 13px 0; border-bottom: 2px solid var(--line); }
+    .container-step .when { color: var(--cyan); }
+    .container-step .what strong { color: var(--orange); }
+    .buffer-diagram { margin-top: 56px; }
+    .buffer-json { font: 600 .62em "JetBrains Mono", monospace; margin-bottom: 34px; }
+    .buffer-json .focus { color: var(--orange); }
+    .buffer-sequence { display: grid; grid-template-columns: 1fr 54px 1fr 54px 1.08fr; align-items: center; gap: 14px; }
+    .buffer-phase { min-height: 250px; padding-top: 4px; }
+    .buffer-phase .phase-label { font: 650 .31em "JetBrains Mono", monospace; color: var(--cyan); margin-bottom: 18px; }
+    .buffer-phase .phase-copy { font: 600 .3em/1.45 "JetBrains Mono", monospace; color: var(--muted); margin-top: 18px; }
+    .buffer-name { font: 600 .27em "JetBrains Mono", monospace; color: var(--muted); margin-bottom: 9px; }
+    .buffer-cells { display: flex; align-items: stretch; position: relative; padding-top: 28px; }
+    .buffer-cell { width: 112px; height: 82px; border: 2px solid var(--cyan); border-right: 0; display: grid; place-items: center; font: 600 .27em/1.2 "JetBrains Mono", monospace; background: rgba(188,224,223,.38); text-align: center; }
+    .buffer-cell:last-child { border-right: 2px solid var(--cyan); }
+    .buffer-cell.empty { color: #aaa59b; background: rgba(255,255,255,.35); }
+    .buffer-mark { position: absolute; top: 0; left: 0; font: 600 .24em "JetBrains Mono", monospace; color: var(--orange); }
+    .buffer-mark::after { content: "↓"; display: inline-block; margin-left: 5px; }
+    .buffer-end { position: absolute; top: 0; right: 0; font: 600 .24em "JetBrains Mono", monospace; color: var(--orange); }
+    .buffer-arrow { text-align: center; color: var(--orange); font-size: .9em; }
+    .exact-array { display: flex; margin-top: 36px; }
+    .exact-array .buffer-cell { border-color: var(--orange); background: var(--orange-soft); }
+    .reset-line { margin-top: 18px; font: 600 .27em "JetBrains Mono", monospace; color: var(--cyan); }
+
+    .kind-alias-layout { margin-top: 60px; display: grid; grid-template-columns: .8fr 1.2fr; gap: 70px; align-items: start; }
+    .kind-builtins { border-left: 5px solid var(--cyan); padding-left: 28px; }
+    .kind-builtins h3, .kind-template h3 { margin-bottom: 18px; }
+    .kind-builtins pre, .kind-template pre { font-size: .42em; }
+    .kind-template { border-left: 5px solid var(--orange); padding-left: 28px; }
+    .kind-status { margin-top: 24px; font: 500 .32em/1.5 "JetBrains Mono", monospace; color: var(--muted); }
+    .kind-status strong { color: var(--orange); }
+    .small-fast { margin-top: 44px; display: grid; grid-template-columns: 1fr 90px 1fr; gap: 24px; align-items: center; }
+    .small-path { padding: 26px; border-top: 5px solid var(--line); background: rgba(255,255,255,.48); font: 500 .33em/1.5 "JetBrains Mono", monospace; }
+    .small-path.good { border-color: var(--cyan); }
+    .small-path.bad { border-color: var(--orange); }
+    .small-path .path-title { margin-bottom: 14px; font-weight: 750; color: var(--muted); }
+
+    .asm-grid { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .asm-panel { background: var(--dark); color: #faf7f0; border-radius: 14px; padding: 26px 30px; }
+    .asm-panel .asm-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; font: 600 .43em "JetBrains Mono", monospace; }
+    .asm-panel .asm-n { font-size: 1.65em; color: #77d2d0; }
+    .asm-panel.ocaml .asm-n { color: #ff8b61; }
+    .asm-panel ul { margin: 0; padding-left: 1.3em; }
+    .asm-panel li { font: .36em/1.5 "JetBrains Mono", monospace; }
+    .asm-code { margin: 0 !important; font: 500 .29em/1.28 "JetBrains Mono", monospace !important; white-space: pre; }
+    .asm-code code { padding: 0 !important; background: none !important; color: #f5f1e9; }
+    .asm-code .runtime { color: #ff8b61; font-weight: 650; }
+    .asm-code .useful { color: #77d2d0; font-weight: 650; }
+    .asm-code .poll { color: #b6a1ff; font-weight: 650; }
+    .asm-lines { font: 500 .29em/1.28 "JetBrains Mono", monospace; white-space: pre; }
+    .asm-lines .useful { color: #77d2d0; font-weight: 650; }
+    .asm-lines .runtime { color: #ff8b61; font-weight: 650; }
+    .asm-lines .poll { color: #b6a1ff; font-weight: 650; }
+    .lowering-layout { margin-top: 28px; display: grid; grid-template-columns: .92fr 1.08fr; gap: 34px; align-items: stretch; }
+    .lowering-source { padding-right: 8px; }
+    .lowering-source .cap, .lowering-asm .cap { margin-bottom: 14px; font: 650 .27em "JetBrains Mono", monospace; color: var(--muted); }
+    .lowering-source pre { font-size: .34em; line-height: 1.42; }
+    .lowering-source pre + .cap { margin-top: 18px; }
+    .lowering-asm { display: grid; grid-template-rows: 1fr 1fr; gap: 16px; }
+    .asm-mini { padding: 20px 24px; border-radius: 14px; background: var(--dark); color: #f5f1e9; }
+    .asm-mini .cap { color: #aeb3bd; }
+    .asm-mini pre { font-size: .35em; line-height: 1.35; }
+    .asm-mini pre code { padding: 0; background: none; }
+    .asm-mini.bad { border-left: 6px solid var(--orange); }
+    .asm-mini.good { border-left: 6px solid var(--cyan); }
+    .asm-legend { margin-top: 18px; font: 500 .27em "JetBrains Mono", monospace; color: var(--muted); }
+    .asm-legend span { font-weight: 650; }
+    .asm-legend .l-useful { color: var(--cyan); }
+    .asm-legend .l-runtime { color: var(--orange); }
+    .asm-legend .l-poll { color: var(--violet); }
+    .assembly-slide h2 { font-size: 1.18em; max-width: 1220px; }
+    .assembly-slide .asm-legend { margin-top: 18px; }
+    .assembly-slide .dek { margin-top: 14px; font-size: .5em; max-width: 1330px; }
+
+    .stack-list { margin-top: 64px; display: grid; gap: 18px; }
+    .stack-item { display: grid; grid-template-columns: 190px 1fr; gap: 30px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .stack-item .layer { font: 600 .42em "JetBrains Mono", monospace; color: var(--cyan); }
+    .stack-item .need { font-size: .48em; }
+
+    .mode-key { margin: 30px 0 0; padding: 0; list-style: none; display: grid; gap: 14px; max-width: 1150px; font-size: .55em; color: var(--muted); }
+    .mode-key li { position: relative; padding-left: 30px; }
+    .mode-key li::before { content: ""; position: absolute; left: 4px; top: .52em; width: 11px; height: 11px; background: var(--orange); }
+    .mode-key strong { color: var(--ink); font-weight: 700; }
+
+    .lessons-asks .stack-list { margin-top: 34px; gap: 10px; }
+    .lessons-asks .stack-item { padding: 15px 0; }
+    .asks { margin-top: 24px; padding: 22px 28px; background: #f2ece1; border-left: 10px solid var(--orange); display: grid; grid-template-columns: 200px 1fr; gap: 34px; align-items: center; }
+    .asks-label { font: 700 .34em/1.25 "JetBrains Mono", monospace; color: var(--orange); text-transform: uppercase; letter-spacing: .05em; }
+    .asks-items { display: flex; flex-wrap: wrap; gap: 10px 34px; font-size: .46em; font-weight: 650; color: var(--ink); }
+    .asks-items span { position: relative; }
+    .asks-items span:not(:last-child)::after { content: "·"; position: absolute; right: -20px; color: var(--orange); }
+
+    .backup-slide .eyebrow { color: var(--violet); }
+    .backup-slide .stack-list { margin-top: 42px; }
+    .backup-slide .stack-item { padding: 16px 0; }
+    .backup-index { margin-top: 60px; max-width: 1150px; font: 500 .3em/1.7 "JetBrains Mono", monospace; color: #aeb3bd; }
+
+    .quote-slide { display: flex !important; flex-direction: column; justify-content: center; }
+    .quote-slide blockquote { font-size: 1.12em; line-height: 1.15; letter-spacing: -.05em; font-weight: 650; max-width: 1240px; }
+    .quote-slide blockquote span { color: var(--orange); }
+    .question { margin-top: 70px; font: 500 .44em "JetBrains Mono", monospace; color: var(--cyan); }
+
+    .reveal .progress { color: var(--orange); height: 4px; }
+    .reveal .controls { color: var(--orange); }
+    .reveal .slide-number { right: 28px; bottom: 23px; background: transparent; color: var(--muted); font: 500 15px "JetBrains Mono", monospace; }
+    .home-link {
+      position: fixed;
+      top: 14px;
+      left: 16px;
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      color: var(--muted);
+      font: 500 15px/1 "JetBrains Mono", monospace;
+      text-decoration: none;
+      opacity: .5;
+      transition: opacity .2s;
+    }
+    .home-link:hover { opacity: 1; }
+    .home-link svg { width: 16px; height: 16px; }
+    .home-link svg rect { fill: var(--ink); }
+    .home-link svg path { fill: var(--paper); }
+    @media print {
+      .home-link { display: none; }
+      .reveal .slides section { padding: 50px 70px; }
+    }
+  </style>
+</head>
+<body>
+<a class="home-link" href="/" title="Lab notes">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 726 726" aria-hidden="true">
+    <rect width="726" height="726" rx="47.41" ry="47.41"/>
+    <path d="M1533.7,1732.64c-9.79-25.5-19.58-51-28.48-81.14h-4.45c-6.23,24.73-17.8,53.32-27.59,78.82l-88.1,216.38h-81.87L1459,1600.49c3.56-8.5,5.34-13.91,5.34-17.77,0-4.64-1.78-11.59-6.23-20.87-27.59-65.68-59.62-117.46-112.12-117.46a105.24,105.24,0,0,0-15.13.77l7.12-52.55c7.12-2.32,19.58-3.09,30.26-3.09,84.54,0,124.58,70.32,170.85,177l164.62,380.2h-82.76Z" transform="translate(-1144 -1314)"/>
+  </svg>
+  <span>Home</span>
+</a>
+<div class="reveal">
+  <div class="slides">
+
+    <section class="hero">
+      <div class="eyebrow orange">OCaml Workshop 2026 · Experience report</div>
+      <h1>JSON parsing in OxCaml:<br><span class="accent">fast, but not too fast</span></h1>
+      <p class="subtitle">An experience report on building a simdjson-style parser with OxCaml’s performance features.</p>
+      <img class="hero-art" src="ocaml-workshop-2026-assets/ocaml-camel-rusted-gear.png" alt="A geometric orange camel framed by a rusted gear">
+      <div class="byline">Artem Pianykh</div>
+      <div class="repo">github.com/artempyanykh/simdjson-oxcaml</div>
+      <aside class="notes">This is an experience report about a complete parser, not a catalogue of compiler features.
+
+[Sources]
+- proposal.tex
+- talk-outline.md
+- ocaml-workshop-2026-assets/ocaml-camel-rusted-gear.png, generated with OpenAI image generation for this deck</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">The experiment</div>
+      <h2>Can OxCaml make the whole parser fast?</h2>
+      <div class="experiment-map">
+        <div class="experiment-end">raw bytes<code>{&quot;x&quot;:[12,true]}</code></div>
+        <div class="experiment-arrow">→</div>
+        <div class="parser-system">
+          <div class="parser-system-title">native OxCaml parser</div>
+          <div class="parser-pipeline"><span class="stage">scan</span><span class="pipe-arrow">→</span><span class="stage">parse</span><span class="pipe-arrow">→</span><span class="stage">build tree</span></div>
+          <div class="feature-feeds"><span>SIMD</span><span>unboxed types</span><span>stack allocation</span><span>zero_alloc</span></div>
+        </div>
+        <div class="experiment-arrow">→</div>
+        <div class="experiment-end"><code>Json.t</code>owned · pattern-matchable</div>
+      </div>
+      <aside class="notes">This is the system we are evaluating. Raw bytes go through a native OxCaml scanner, parser, and tree builder. SIMD, unboxed types, stack allocation, and zero-allocation checking are implementation tools—not the output contract. The result must be ordinary owned Json.t data that callers can retain and pattern-match, not only a fast scanner or a borrowed benchmark result.
+
+[Sources]
+- proposal.tex, Motivation and Design</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">The answer, first</div>
+      <h2>Ahead of OCaml parsers; behind C++</h2>
+      <div class="chart">
+        <div class="bar-row"><div class="bar-label">Jsont</div><div class="bar-track"><div class="bar" style="--w:4.1%"></div></div><div class="bar-value">136</div></div>
+        <div class="bar-row"><div class="bar-label">Yojson.Safe</div><div class="bar-track"><div class="bar" style="--w:4.5%"></div></div><div class="bar-value">150</div></div>
+        <div class="bar-row"><div class="bar-label">simdjson-ox · one-shot DOM</div><div class="bar-track"><div class="bar dom" style="--w:19.7%"></div></div><div class="bar-value">659</div></div>
+        <div class="bar-row"><div class="bar-label">simdjson-ox · reusable DOM</div><div class="bar-track"><div class="bar dom" style="--w:21.8%"></div></div><div class="bar-value">730</div></div>
+        <div class="bar-row"><div class="bar-label">RapidJSON DOM</div><div class="bar-track"><div class="bar" style="--w:31.7%"></div></div><div class="bar-value">1,060</div></div>
+        <div class="bar-row"><div class="bar-label">simdjson-ox · reusable tape</div><div class="bar-track"><div class="bar tape" style="--w:37.3%"></div></div><div class="bar-value">1,248</div></div>
+        <div class="bar-row"><div class="bar-label">sajson DOM</div><div class="bar-track"><div class="bar" style="--w:49.4%"></div></div><div class="bar-value">1,651</div></div>
+        <div class="bar-row"><div class="bar-label">C++ simdjson DOM</div><div class="bar-track"><div class="bar" style="--w:100%"></div></div><div class="bar-value">3,345 MB/s</div></div>
+      </div>
+      <ul class="mode-key">
+        <li><strong>reusable</strong> — one parser kept warm across documents</li>
+        <li><strong>one-shot</strong> — fresh buffers on every call</li>
+      </ul>
+      <div class="footer"><span>geomean · 7 fixtures · i7-12700K P-core · 2026-08-15</span><span>DOM ≠ borrowed tape</span></div>
+      <aside class="notes">Gloss the two qualifiers before anything else: reusable means one parser object warmed and reused across documents, one-shot means a fresh parse call that allocates its own buffers. Both DOM rows return an owned tree. Preview the questions: why is the scanner competitive, why does the owned tree trail the tape, and why does C++ remain ahead? DOM rows materialize trees. The tape row returns borrowed parser-owned storage and is not the same output contract. Point-in-time run: performance governor and ASLR disabled; turbo enabled; frequency not locked. Small differences are noise.
+
+[Sources]
+- simdjson-oxcaml/docs/parser-benchmark-snapshot-2026-08-15.md</aside>
+    </section>
+
+    <section class="section-divider">
+      <div class="eyebrow orange">Background</div>
+      <h1>OxCaml primer</h1>
+      <div class="divider-sub">Unboxed types · SIMD support · stack allocation · zero_alloc</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">Introduce only the OxCaml features needed to read the implementation and performance story. Each feature gets one concrete example on the following slides.
+
+[Sources]
+- proposal.tex, OxCaml features</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">OxCaml primer · 1/4</div>
+      <h2>Unboxed types</h2>
+      <div class="repr-grid">
+        <div class="repr-side">
+          <h3>ordinary OCaml</h3>
+          <pre><code class="language-ocaml">let twice (x : float) =
+  x +. x</code></pre>
+          <div class="storage-diagram">
+            <div class="storage-heads"><span>register / stack slot</span><span></span><span>OCaml heap</span></div>
+            <div class="storage-row"><div class="memory-word pointer">pointer</div><div class="memory-arrow">→</div><div class="heap-block"><div>header<br>Double_tag</div><div>3.14<br>64-bit payload</div></div></div>
+          </div>
+        </div>
+        <div class="repr-side">
+          <h3>OxCaml unboxed type</h3>
+          <pre><code class="language-ocaml">let twice (x : float#) =
+  Float_u.add x x</code></pre>
+          <div class="storage-diagram">
+            <div class="storage-label">register / stack slot</div>
+            <div class="storage-row"><div class="memory-word raw">3.14 · raw 64 bits</div></div>
+            <div class="direct-note">no pointer · no float box</div>
+          </div>
+        </div>
+      </div>
+      <div class="repr-foot"><div><strong>2-word heap block</strong> plus one indirection</div><div><strong>stored and passed directly</strong> without allocation</div></div>
+      <aside class="notes">An ordinary OCaml value occupies one machine word and is either an immediate integer or a pointer. An individual float is represented by a pointer to a heap block: one header word with Double_tag followed by one 64-bit double payload on a 64-bit machine. The diagram is about the source-level value representation and calling/storage convention; a compiler may eliminate particular boxes when optimization proves that they are unnecessary. A float# has the float64 layout and is stored without a pointer, so it can be passed directly in a floating-point register or placed directly in a stack slot. SIMD vector types use the same unboxed-types mechanism with a vector layout.
+
+[Sources]
+- proposal.tex, OxCaml features
+- https://ocaml.org/docs/memory-representation
+- https://oxcaml.org/documentation/unboxed-types/01-intro/</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">OxCaml primer · 2/4</div>
+      <h2>SIMD support</h2>
+      <div class="vector-diagram">
+        <div class="vector-label"><strong>int8x16#</strong><span>one 128-bit register · sixteen 8-bit lanes</span></div>
+        <div class="lane-row"><div class="lane">{</div><div class="lane">&quot;</div><div class="lane">a</div><div class="lane">&quot;</div><div class="lane">:</div><div class="lane">1</div><div class="lane">,</div><div class="lane">&quot;</div><div class="lane">b</div><div class="lane">&quot;</div><div class="lane">:</div><div class="lane">2</div><div class="lane">}</div><div class="lane">·</div><div class="lane">·</div><div class="lane">·</div></div>
+        <div class="vector-op">equal every lane with <span class="accent">&quot;</span> ↓</div>
+        <div class="lane-row"><div class="lane zero">00</div><div class="lane hit">FF</div><div class="lane zero">00</div><div class="lane hit">FF</div><div class="lane zero">00</div><div class="lane zero">00</div><div class="lane zero">00</div><div class="lane hit">FF</div><div class="lane zero">00</div><div class="lane hit">FF</div><div class="lane zero">00</div><div class="lane zero">00</div><div class="lane zero">00</div><div class="lane zero">00</div><div class="lane zero">00</div><div class="lane zero">00</div></div>
+      </div>
+      <div class="simd-result"><pre><code class="language-ocaml">let bytes =
+  Int8x16.String.unsafe_get input ~byte:0 in
+let quote = Int8x16.const1 #34s in
+let matches = Int8x16.equal bytes quote in
+Int8x16.movemask matches</code></pre><div class="mask-result">one bit per lane<strong>0b0000001010001010</strong></div></div>
+      <aside class="notes">This is real API shape from the project. String.unsafe_get loads sixteen bytes into one int8x16# value. const1 broadcasts the unboxed int8 literal #34s—the ASCII code for a quote—into all sixteen lanes. Int8x16.equal compares all lane pairs and produces all-one bytes for matches and zero bytes otherwise. movemask extracts one high bit from each lane into a scalar 16-bit mask; lane zero is the least-significant bit, so matches at positions 1, 3, 7, and 9 produce the mask shown. The JSON fragment is only concrete input for explaining the vector type; the simdjson algorithm comes next. OxCaml also provides 256-bit types such as int8x32# and intrinsic libraries through AVX2 on amd64.
+
+[Sources]
+- https://oxcaml.org/documentation/simd/intro/</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">OxCaml primer · 3/4</div>
+      <h2>Stack allocation</h2>
+      <div class="stack-demo">
+        <pre><code class="language-ocaml">type point = {
+  x : int;
+  y : int;
+}
+
+let make_points () =
+  let heap = { x = 1; y = 2 } in
+  let local = stack_ { x = 3; y = 4 } in
+  print_int (local.x + local.y);
+  heap</code></pre>
+        <div><div class="stack-memory"><div><div class="region-title"><code>heap</code> · returned</div><div class="heap-region"><span><span class="heap-pointer">GC-managed heap</span><br><br><code>{ x = 1; y = 2 }</code></span></div></div><div><div class="region-title"><code>local</code> · used here</div><div class="stack-frame"><div class="frame-name"><code>make_points</code> region</div><div class="local-block"><div class="local-name"><code>stack_ point</code></div><div class="local-fields"><div>x = 3</div><div>y = 4</div></div></div></div></div></div><div class="stack-return"><div class="survives">returned value must survive the call</div><div class="popped">stack region is reclaimed on return</div></div></div>
+      </div>
+      <p class="dek"><code>@ local</code> constrains where a value may <em>flow</em>; <code>stack_</code> is what forces where it is <em>allocated</em>. A heap value is accepted anywhere a local one is—so a <code>@ local</code> return type alone guarantees nothing.</p>
+      <aside class="notes">Both lines allocate the same record type. The first record is returned, so it must survive make_points and lives on the GC-managed heap. The second allocation is explicitly marked stack_. It is used inside the function and reclaimed with the function's stack region. The type checker rejects returning local instead. Stack allocation is still allocation; it changes where the block lives and when its storage is reclaimed.
+
+The visible line is the part worth saying slowly, because I got it wrong in this parser. The mode and the allocation are separate decisions. Annotating a function's return type @ local restricts how the caller may use the value; it does not oblige the callee to build it on the stack, because a heap value satisfies a local requirement perfectly well. Five intermediate records in the number scanner—sign, digit run, integer part, fraction part, exponent part—were declared @ local without stack_, and were therefore heap-allocated. The parser measured allocation-free anyway, because inlining deleted the records before anything was allocated. Adding exclave_ stack_ to those five makes them allocation-free by construction instead of by luck. There is a backup slide with that experiment.
+
+[Sources]
+- https://oxcaml.org/documentation/stack-allocation/intro/
+- simdjson-oxcaml/lib/number_parsing.ml, scan_sign / scan_digits / scan_integer
+- simdjson-oxcaml/lib/number_parsing.ml, parsed_int and parsed_float (which do use exclave_ stack_)</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">OxCaml primer · 4/4</div>
+      <h2>Zero-allocation checking</h2>
+      <div class="compiler-error"><pre><code class="language-ocaml">let[@zero_alloc] wrap x =
+  Some x
+
+(* [Some x] allocates a block *)</code></pre><div class="error-output"><strong>Error: zero_alloc check failed</strong><br><br>This function can allocate.<br>The allocation is not permitted by<br>the <code>[@zero_alloc]</code> annotation.</div></div>
+      <div class="two-callouts"><div><code>[@zero_alloc]</code><span>checked in every build</span></div><div><code>[@zero_alloc opt]</code><span>checked only in optimized builds</span></div></div>
+      <aside class="notes">Some x needs a constructor block, so the zero-allocation check fails. The plain annotation is checked by default and should be used for functions that pass in every build. The opt payload defers the check to optimized builds, where optimizations such as inlining may remove allocations. The diagnostic is shortened on the slide to its relevant content.
+
+[Sources]
+- https://oxcaml.org/documentation/miscellaneous-extensions/zero_alloc_check/</aside>
+    </section>
+
+    <section class="section-divider violet-divider">
+      <div class="eyebrow violet">Background</div>
+      <h1>simdjson primer</h1>
+      <div class="divider-sub">Structural index · top-down parser · tape-backed DOM</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">Now switch from language features to the parser design they are used to implement. Explain stage 1, stage 2, the tape, and the ownership model before comparing it with the target OCaml API.
+
+[Sources]
+- https://arxiv.org/html/1902.08318v7</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow violet">simdjson primer · scanner</div>
+      <h2>The scanner produces a structural index</h2>
+      <div class="indexed-json" style="--cols:15"><div class="indexed-grid indices"><div>0</div><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div><div>11</div><div>12</div><div>13</div><div>14</div></div><div class="indexed-grid chars"><div class="hit-char">{</div><div class="hit-char">&quot;</div><div>x</div><div>&quot;</div><div class="hit-char">:</div><div class="hit-char">[</div><div class="hit-char">1</div><div>2</div><div class="hit-char">,</div><div class="hit-char">t</div><div>r</div><div>u</div><div>e</div><div class="hit-char">]</div><div class="hit-char">}</div></div></div>
+      <p class="dek">Positions where parsing decisions can occur—not parsed values.</p>
+      <aside class="notes">Use this same document through the primer and later container slides. Orange characters are the structural index: JSON punctuation, the opening quote of a string, and the start of each scalar atom. The scanner does not parse 12 or true. It only tells the parser where decisions can occur. The positions are 0, 1, 4, 5, 6, 8, 9, 13, and 14; do not read the list aloud because the aligned position labels already show it.
+
+[Sources]
+- proposal.tex, Stage 1
+- simdjson paper / vendored implementation</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow violet">simdjson primer · parser</div>
+      <h2>The parser builds values from the index</h2>
+      <div class="parse-walk"><div class="source"><span class="hot">{</span><span class="hot">&quot;</span>x&quot;<span class="hot">:</span><span class="hot">[</span><span class="hot">1</span>2<span class="hot">,</span><span class="hot">t</span>rue<span class="hot">]</span><span class="hot">}</span></div><div class="parse-trace"><div class="pos">position</div><div class="byte">input</div><div>parser action</div><div class="pos">0</div><div class="byte">{</div><div>begin object</div><div class="pos">1</div><div class="byte">&quot;x&quot;</div><div>parse key string</div><div class="pos">4</div><div class="byte">:</div><div>require key/value separator</div><div class="pos">5</div><div class="byte">[</div><div>recurse into array</div><div class="pos">6</div><div class="byte">12</div><div>parse number</div><div class="pos">8</div><div class="byte">,</div><div>continue array</div><div class="pos">9</div><div class="byte">true</div><div>parse boolean</div><div class="pos">13</div><div class="byte">]</div><div>finish array</div><div class="pos">14</div><div class="byte">}</div><div>finish object</div></div></div>
+      <div class="parse-question">At <code>[</code>, the parser knows an array starts—not how long it will be.</div>
+      <aside class="notes">Walk down the orange characters from the previous slide. This is a normal top-down recursive parser whose cursor advances through the structural index rather than examining every input byte for grammar decisions. It parses strings and values at their starting positions, recurses for containers, and treats punctuation as grammar. SIMD remains tactical inside string validation and copying; number and grammar handling are scalar. Plant the later allocation question now: when the parser sees the opening bracket, it does not yet know that the array will contain two elements.
+
+[Sources]
+- https://arxiv.org/html/1902.08318v7, sections 3 and 3.2</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow violet">simdjson primer · representation</div>
+      <h2>The parser writes values to a tape</h2>
+      <div class="tape-strip"><div class="cell container"><span class="idx">0</span>Root<span class="ptr">→ 8</span></div><div class="cell container"><span class="idx">1</span>{<span class="ptr">→ 8</span></div><div class="cell"><span class="idx">2</span>&quot;x&quot;</div><div class="cell container"><span class="idx">3</span>[<span class="ptr">→ 7</span></div><div class="cell"><span class="idx">4</span>Int 12</div><div class="cell"><span class="idx">5</span>True</div><div class="cell container"><span class="idx">6</span>]<span class="ptr">→ 3</span></div><div class="cell container"><span class="idx">7</span>}<span class="ptr">→ 1</span></div><div class="cell container"><span class="idx">8</span>Root<span class="ptr">→ 0</span></div></div>
+      <div class="tape-rules"><div><strong>opening entry</strong> → first entry after its scope</div><div><strong>closing entry</strong> → corresponding opening entry</div></div>
+      <p class="dek">Values remain in document order; decoded strings live in a side buffer.</p>
+      <aside class="notes">This follows the tape construction in the simdjson paper. Opening arrays and objects point to the first tape position after their scope; closing entries point back to the opening entry. Integer payload packing is simplified here so the navigation structure remains legible.
+
+[Sources]
+- https://arxiv.org/html/1902.08318v7, figure 2 and section 3.2</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow violet">simdjson primer · API</div>
+      <h2>The DOM borrows the parser’s tape</h2>
+      <div class="split top">
+        <pre><code class="language-cpp">dom::parser parser;
+dom::element doc = parser.parse(json);
+auto answer = doc["answer"].get_int64();
+for (auto item : doc["items"].get_array()) {
+  use(item);
+}
+
+parser.parse(next_json); // reuses the tape</code></pre>
+        <div class="panel violet"><h3>One live document per parser</h3><p>The next parse reuses the buffers backing <code>doc</code>. Existing elements can no longer be used.</p></div>
+      </div>
+      <aside class="notes">The DOM API returns navigation handles over parser-owned tape and string storage. A parser cannot safely be reused while code is still working with elements from the previous document: the next parse invalidates them. Independent concurrent documents require independent parser instances or an owned representation.
+
+[Sources]
+- https://simdjson.org/api/1.0.0/md_doc_dom.html</aside>
+    </section>
+
+    <section class="section-divider violet-divider">
+      <div class="eyebrow violet">The implementation target</div>
+      <h1>simdjson-oxcaml</h1>
+      <div class="divider-sub">borrowed tape · owned <code>Json.t</code></div>
+      <div class="divider-rule"></div>
+      <aside class="notes">The simdjson primer established the architecture and borrowing model. Now switch to the two OCaml-facing output contracts this project implements.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">From simdjson to simdjson-oxcaml</div>
+      <h2>The project exposes both output contracts</h2>
+      <div class="code-pair" style="margin-top:40px"><div class="code-card"><div class="cap">borrowed <code>Tape.t</code></div><pre><code class="language-ocaml">let p = Tape.Parser.create ()
+let tape = Tape.Parser.parse p input |> Result.get_ok
+
+let root = Tape.tag tape 0
+let entries = Tape.length tape
+
+let _next = Tape.Parser.parse p next |> Result.get_ok
+(* [tape] is now invalid *)</code></pre></div><div class="code-card"><div class="cap">owned <code>Json.t</code></div><pre><code class="language-ocaml">let p = Parser.create ()
+let json = Parser.parse p input |> Result.get_ok
+
+match json with
+| Json.Object fields -> use fields
+| _ -> ()
+
+let _next = Parser.parse p next |> Result.get_ok
+(* [json] is still valid *)</code></pre></div></div>
+      <p class="dek">Same scanner and parsing routines; different storage and lifetime.</p>
+      <aside class="notes">This is the handoff from the simdjson primer to this project. simdjson-oxcaml deliberately exposes both contracts. Tape.Parser.parse is the borrowed benchmark-oriented API: Tape.t aliases parser-owned buffers and becomes invalid on the next parse using that parser. Parser.parse builds an ordinary owned Json.t: callers can retain it, pattern-match it, and parse another document independently. Both paths share the scanner and the underlying number, string, and grammar routines, so later comparisons isolate representation and allocation rather than comparing unrelated parsers.
+
+[Sources]
+- proposal.tex, Public API
+- simdjson-oxcaml/lib/parser.mli
+- simdjson-oxcaml/lib/tape.mli</aside>
+    </section>
+
+    <section class="section-divider">
+      <div class="eyebrow orange">Implementation · stage 1</div>
+      <h1>Building the scanner</h1>
+      <div class="divider-sub">express the paper · measure · optimize</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">The API target is clear. Start with stage 1: can OxCaml express the SIMD scanner directly, and can the resulting code compete?</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">Build stage 1</div>
+      <h2>OxCaml SIMD maps directly to the scanner</h2>
+      <div class="scanner-showcase"><div class="scanner-code"><div><div class="cap">quotes and string regions</div><pre><code class="language-ocaml">let all_quotes =
+  Int8x64.equal Int8x64.ascii_quote block in
+let quotes_mask =
+  Int64_u.(all_quotes &~ escaped_mask) in
+let string_mask =
+  Int64_u.(prefix_xor quotes_mask lxor state_mask)</code></pre></div><div><div class="cap">operators and scalar starts</div><pre><code class="language-ocaml">let low = lookup ~table:low_lut block in
+let high = lookup ~table:high_lut (high_nibbles block) in
+let klass = Int8x64.(low land high) in
+let operator_mask =
+  Int8x64.equal
+    Int8x64.(klass land vector_group_operators)
+    (Int8x64.zero ())
+  |&gt; Int64_u.lnot</code></pre></div></div><div class="scanner-result"><div class="input64">four <code>int8x16#</code> registers<br>= 64 input bytes</div><div class="down">↓</div><div class="mask64">110011101100011…</div><strong>one <code>int64#</code> structural mask<br>one bit per input byte</strong></div></div>
+      <p class="dek">Here <code>Int8x64.equal</code> returns the 64-bit lane mask directly—compare and movemask fused—so vector results compose with ordinary <code>Int64_u</code> bit operations.</p>
+      <aside class="notes">These are real excerpts from Strings.process and Chars.process. Point out the fused compare/movemask before reading the code: unlike the primer's two-step Int8x16.equal then movemask, the project's Int8x64.equal yields the 64-bit mask directly, which is why all_quotes and operator_mask flow straight into Int64_u operations. One Int8x64 block is an unboxed product of four int8x16# registers. Vector equality plus movemask identifies quotes. Prefix XOR turns quote positions into an inside-string mask. Two vector-shuffle lookups classify operators and whitespace by low and high nibble without scalar branches. The individual masks are combined and string contents removed to produce one unboxed 64-bit structural mask. The right-hand mask begins with the same fifteen decisions highlighted in the running JSON example. Regular OCaml has neither these vector types nor these intrinsic operations.
+
+[Sources]
+- proposal.tex, Scanner implementation
+- simdjson-oxcaml/lib/scanner.ml, Chars.process
+- simdjson-oxcaml/lib/simd_helpers.ml, Int8x64</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">First measurement</div>
+      <h2>The first scanner reached only 0.4 GB/s</h2>
+      <div class="reaction-slide"><div class="reaction-copy"><div class="big-number orange">0.4 GB/s<small>faithful first implementation · twitter.json</small></div><p class="dek">Correct SIMD source was not enough.</p></div><img src="ocaml-workshop-2026-assets/benchmark-reaction.png" alt="A flat orange-and-charcoal illustration of an engineer facepalming"></div>
+      <aside class="notes">The faithful implementation of the paper was correct, vectorized, and still reached only about 400 MB/s. The investigation falls into three successive themes. First, remove allocation from both the structural-index output and the fold loop. Second, remove helper-call boundaries through tactical inlining. Third, inspect how builtins lower in the final linked code.
+
+[Sources]
+- scanner benchmark history around commit 76215b1
+- ocaml-workshop-2026-assets/benchmark-reaction.png, generated with OpenAI image generation for this deck</aside>
+    </section>
+
+    <section class="section-divider">
+      <div class="eyebrow orange">Scanner bottleneck · 1/3</div>
+      <h1>Allocation</h1>
+      <div class="divider-sub">structural output · fold state</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">The first profile points to allocation in two different places: how structural positions are stored, and how state moves through the block loop.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">1 · Allocation · structural output</div>
+      <h2>Dynarray allocated per structural position</h2>
+      <div class="transform" style="margin-top:44px"><div class="from">64-byte SIMD mask<br><span class="quiet">extract each set bit</span></div><div class="arr">→</div><div class="to"><code>Dynarray.add_last</code><br><span class="quiet">branch · grow · boxed slot</span></div></div>
+      <div class="result-chip">one append—and one slot block—for every structural position</div>
+      <aside class="notes">Theme one is allocation. Profiling the first implementation pointed first at how the structural output was built. Each 64-byte SIMD result was expanded into individual positions and appended through Dynarray.add_last. That puts a branch and append operation on every structural character; growth allocates, and each live Dynarray slot is an Elem block. Do not quote the later isolated throughput numbers yet; the complete representation table appears after the scanner journey, when both production and consumption can be compared in context.
+
+[Sources]
+- prd/structural-index-representation-benchmark.md
+- scanner representation experiment commits cac1a06 and 7cb63be</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">1 · Allocation · structural output</div>
+      <h2>Packed masks removed output growth</h2>
+      <div class="transform" style="margin-top:62px"><div class="from"><code>n = (length + 63) / 64</code><br><span class="quiet">allocate <code>int64# array</code> once</span></div><div class="arr">→</div><div class="to">write one 64-bit mask<br>per 64 input bytes</div></div>
+      <div class="result-chip">no resizing · no per-index append · one bit per input byte</div>
+      <aside class="notes">Still within the allocation theme, replace the growable output with the scanner's native representation. The scanner already computes one 64-bit structural mask for every 64-byte input block. The number of masks is known from the input length, so an unboxed int64# array can be allocated at exactly the required size before scanning. Each block writes one mask directly. This removes both resizing and per-index append work; decoding the set bits is deferred to the parser and measured later.
+
+[Sources]
+- proposal.tex, Packed structural indices</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">1 · Allocation · loop state</div>
+      <h2>The fold loop still allocated twice per block</h2>
+      <div class="loop-allocation"><pre class="loop-code"><code class="language-ocaml">Simd.Int8x64.String.fold_blocks input
+  ~init:{ state = initial_state; block_idx = 0 }
+  ~f:(fun { state; block_idx } block -&gt;
+    let result = scan_block state block in
+    Structure.set_mask structure block_idx
+      result.structural_mask;
+    { state = result.state;
+      block_idx = block_idx + 1 })
+|&gt; ignore</code></pre><div class="loop-cost"><div class="block"><strong>per 64 input bytes</strong><code>scan_block</code> returns a boxed record<br>the fold returns another</div><div class="block after"><strong>after</strong>both records became <code>#{ ... }</code><br><span class="quiet">packed output <em>and</em> unboxed loop state<br>together: ≈ 2 GB/s</span></div></div></div>
+      <aside class="notes">Packing fixed allocation in the structural output, but not allocation in the loop carrying scanner state. This is the actual historical block loop before commit b918e9e. The orange lines are allocation sites. The fold starts with a boxed accumulator and constructs a fresh boxed accumulator at the end of every iteration. scan_block also returns a boxed record containing the next scanner state and structural mask. Therefore every 64 bytes creates two heap blocks before considering any other helper results. Replacing both records with unboxed products keeps their fields in the loop's machine state. Be explicit that the 2 GB/s figure belongs to the whole allocation theme, not to this slide alone: it is where the scanner landed after both the packed structural output and the unboxed loop state were in place. Neither change alone produced it.
+
+[Sources]
+- simdjson-oxcaml commit b918e9e and its parent
+- scanner benchmark history around b918e9e and 962d05b</aside>
+    </section>
+
+    <section class="section-divider">
+      <div class="eyebrow">Scanner bottleneck · 2/3</div>
+      <h1>Inlining</h1>
+      <div class="divider-sub">allocation is gone · helper calls remain</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">With the allocation work complete and throughput near 2 GB/s, profile and inspect the linked hot loop again. The next cost is function-call boundaries.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow cyan">2 · Inlining · inspect the hot loop</div>
+      <h2>Even a tiny nested helper remained a call</h2>
+      <div class="code-pair"><div class="code-card"><div class="cap">inside <code>Chars.process</code></div><pre><code class="language-ocaml" data-line-numbers="7-9">let process block =
+  let low_class = lookup ~table:low_lut block in
+  let high_class =
+    block |> high_nibbles |> lookup ~table:high_lut
+  in
+  let klass = low_class land high_class in
+  let make_group_mask group =
+    equal (klass land group) (zero ())
+    |> Int64_u.lnot
+  in
+  let operator_mask =
+    make_group_mask vector_group_operators
+  in
+  ...</code></pre></div><div class="code-card"><div class="cap">linked hot loop</div><div class="compare-code">… enter <code>Chars.process</code> …<br>… compute <code>klass</code> …<br><span class="hot">call</span> make_group_mask<br>… resume classification …</div></div></div>
+      <p class="dek">Its definition and every call site were visible inside one top-level function.</p>
+      <aside class="notes">Once allocation was gone, profiling and disassembly became the next step. This is the exact surprising example recorded in commit 962d05b. make_group_mask is not a distant abstraction: it is a tiny local function nested inside Chars.process, closes over klass, and has statically visible call sites in that same top-level function. Nevertheless, without an explicit inline-always annotation it survived as a call in the linked hot loop. The same investigation found call boundaries across Escapes.process, Strings.process, Chars.process, scalar helpers, vector helpers, and the block iterator. Source-level proximity and smallness did not guarantee the C++/LLVM-style inlining expected here.
+
+[Sources]
+- scanner commit 962d05b and its commit message
+- scanner disassembly from the same optimization sequence</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow cyan">2 · Inlining · result</div>
+      <h2>Tactical inlining doubled throughput</h2>
+      <div class="big-number orange" style="font-size:1.55em;margin-top:80px">≈ 2 → ≈ 4 GB/s<small>26 inline-always annotations in the scanner + SIMD helper path</small></div>
+      <p class="dek">Still required under <code>-O3</code>: removing them costs 11–28% and puts allocation back into a zero-allocation path.</p>
+      <aside class="notes">make_group_mask was one instance, not the whole fix. Twenty-six inline-always annotations across the scanner, SIMD helpers, block loader, and iterator removed the call boundaries and let the compiler optimize the loop end to end. For an audience used to C++ and LLVM, the surprising part is how much explicit inlining guidance was required.
+
+The obvious objection is whether an optimization preset would have done this for free, so I measured it. It would not. Under -O3 with the annotations deleted, the parser loses eleven to twenty-eight percent depending on path and fixture, and—more tellingly—the reusable tape path goes from zero allocated words per parse to about a hundred and nine thousand on numbers.json. There is a backup slide with the numbers. That closes theme two; the next disassembly check is about lowering rather than inlining.
+
+[Sources]
+- scanner commit 962d05b and its commit message ("2G/s to 4G/s")
+- scanner source and history around 962d05b</aside>
+    </section>
+
+    <section class="section-divider violet-divider">
+      <div class="eyebrow violet">Scanner bottleneck · 3/3</div>
+      <h1>Lowering</h1>
+      <div class="divider-sub">verify builtins in the linked binary</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">Inlining removed the source-level call boundaries. The final check is whether intrinsic declarations actually lower to the intended instructions.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow violet">3 · Lowering · package metadata</div>
+      <h2>Integer intrinsics lacked <code>[@@builtin]</code></h2>
+      <div class="lowering-layout">
+        <div class="lowering-source">
+          <div class="cap">installed package</div>
+          <pre><code class="language-ocaml">external count_set_bits = ...
+  [@@noalloc]
+external count_trailing_zeros = ...
+  [@@noalloc]</code></pre>
+          <div class="cap">project-local declarations</div>
+          <pre><code class="language-ocaml">external count_set_bits = ...
+  [@@noalloc] [@@builtin]
+external count_trailing_zeros = ...
+  [@@noalloc] [@@builtin]</code></pre>
+        </div>
+        <div class="lowering-asm">
+          <div class="asm-mini bad"><div class="cap">without <code>[@@builtin]</code></div><pre><code class="language-x86asm">call caml_int64_popcnt_unboxed_to_untagged@PLT
+
+caml_int64_popcnt_unboxed_to_untagged:
+  call __popcountdi2</code></pre></div>
+          <div class="asm-mini good"><div class="cap">with <code>[@@builtin]</code></div><pre><code class="language-x86asm">popcnt  %rax, %rax
+ret</code></pre></div>
+        </div>
+      </div>
+      <div class="result-chip"><code>popcount</code> → <code>popcnt</code> · <code>ctz</code> → CPU instruction · popcount case: +11%</div>
+      <aside class="notes">After allocation and call boundaries were addressed, the remaining step was to audit lowering in the linked binary. Popcount was not the only problem. The installed ocaml_intrinsics_kernel declarations for both count_set_bits and count_trailing_zeros lacked [@@builtin], even though the backend supported their hardware operations. Commit 4bdc318 added the local popcount declaration; the linked scanner then used popcnt instead of reaching __popcountdi2, improving the isolated scanner result by 11%. Commit 0e0bfbc added the analogous ctz declaration for structural-index iteration. Later these declarations were consolidated in Numeric_helpers alongside explicit clz and unsigned-high-multiply builtins used by number parsing. Do not attach the 11% figure to the other operations: it is the measured popcount experiment. The following ocaml_intrinsics_kernel package update restored the integer builtin metadata and allowed the temporary package workarounds to be removed.
+
+[Sources]
+- scanner commits 4bdc318 and 0e0bfbc
+- lib/numeric_helpers.ml history around bab1684
+- prd/popcnt-lowering-investigation.md</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">Scanner result</div>
+      <h2>The scanner reached 6 GB/s</h2>
+      <div class="split"><div class="panel"><h3>structural scanner</h3><div class="big-number cyan" style="font-size:1.55em;margin-top:24px">6 GB/s<small>produce packed masks</small></div></div><div class="panel orange"><h3>load + traverse ceiling</h3><div class="big-number orange" style="font-size:1.55em;margin-top:24px">22 GB/s<small>SIMD load + checksum · same inputs</small></div></div></div>
+      <p class="dek">That measures mask production; the parser still has to visit every structural position.</p>
+      <div class="footer"><span><code>simd-noop</code> baseline · <code>scanner_bench</code></span><span>measured on the final revision—not the product of the checkpoints above</span></div>
+      <aside class="notes">The final packed scanner reached 5,992 MB/s geometric mean, rounded here to 6 GB/s. Say explicitly that this is a fresh measurement of the finished scanner on this machine, not 0.4 compounded through 2, 4, and the 11% popcount step: those were checkpoints on earlier revisions and different harnesses, so the numbers do not multiply out. The 22 GB/s figure is the simd-noop case in bench/scanner_bench.ml, which loads the same inputs through the SIMD block reader and computes a checksum without any classification. It puts the scanner number in perspective: the scanner is doing substantial classification, quote/escape tracking, UTF-8 validation, and mask construction—not merely reading memory. Getting here required allocation inspection, tactical inlining, and auditing linked machine code. The visible final sentence raises the next question: 6 GB/s measures production of masks, while the parser needs every concrete structural position.
+
+[Sources]
+- prd/structural-index-representation-benchmark.md
+- bench/scanner_bench.ml, simd-noop case</aside>
+    </section>
+
+    <section class="section-divider">
+      <div class="eyebrow orange">Stage 1 output</div>
+      <h1>Structural indices</h1>
+      <div class="divider-sub">produce · consume · retain memory</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">The scanner is fast. Before moving into stage 2, decide how its structural output should be represented across both parser usage modes.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">Stage 1 → stage 2</div>
+      <h2>The scanner is fast; now the parser needs positions</h2>
+      <div class="index-options"><div class="index-option"><div class="option-name">packed masks</div><div class="index-words"><div class="index-word">64-bit mask</div><div class="index-word">64-bit mask</div><div class="index-word">…</div></div><div class="option-note">exact size · one bit per input byte</div></div><div class="index-option flat"><div class="option-name">flat indices</div><div class="index-words"><div class="index-word">0</div><div class="index-word">1</div><div class="index-word">4</div><div class="index-word">5</div><div class="index-word">…</div></div><div class="option-note"><strong>C++ simdjson design</strong> · reserve one int32 slot per input byte</div></div><div class="index-option dyn"><div class="option-name">Dynarray</div><div class="index-words"><div class="index-word meta">len / capacity</div><div class="index-word">0</div><div class="index-word">1</div><div class="index-word">4</div><div class="index-word">…</div></div><div class="option-note">grow and append positions as they arrive</div></div></div>
+      <aside class="notes">Reconnect this decision to the primer. The scanner naturally produces one bit mask per 64 bytes, while the parser wants to advance through concrete positions such as 0, 1, 4, and 5. Packed stores the native masks and extracts positions while the parser consumes them. Flat performs extraction during scanning and stores direct int32 positions; this follows C++ simdjson's broad design but requires capacity for the worst case. Dynarray stores positions directly without the worst-case reservation, but appends and grows on the hot path.
+
+[Sources]
+- prd/structural-index-representation-benchmark.md
+- vendored C++ simdjson implementation</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">Measure the handoff</div>
+      <h2>Producing masks and consuming positions favor different layouts</h2>
+      <table class="benchmark-table"><thead><tr><th>allocation · workload</th><th>packed</th><th>flat</th><th>Dynarray</th></tr></thead><tbody><tr><td>reusable · produce</td><td class="winner">5,992</td><td>4,103</td><td class="bad">1,022</td></tr><tr><td>reusable · produce + consume</td><td>3,168</td><td class="winner">3,499</td><td class="bad">923</td></tr><tr><td>one-shot · produce</td><td class="winner">4,947</td><td>1,050</td><td class="bad">352</td></tr><tr><td>one-shot · produce + consume</td><td class="winner">2,852</td><td>1,001</td><td class="bad">339</td></tr></tbody></table>
+      <div class="table-key"><span>MB/s · geometric mean</span><span>produce + consume charges the cost of visiting every structural index</span></div>
+      <div class="memory" style="margin-top:25px;gap:16px"><div class="memory-row"><span>Packed capacity</span><div class="memory-bar packed"></div><span>input / 8</span></div><div class="memory-row"><span>Flat capacity</span><div class="memory-bar flat"></div><span>input × 4</span></div></div>
+      <aside class="notes">This one table replaces several disconnected scanner slides. Packed wins production because it writes masks directly. Flat becomes about ten percent faster when reusable storage is warm and every index is consumed sequentially. One-shot changes the result because flat must allocate and initialize a four-times-input reservation on every call. Dynarray remains well behind in every workload. The memory bars show capacity: flat reserves 32 times as many bytes as packed.
+
+[Sources]
+- prd/structural-index-representation-benchmark.md</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">Benchmarking is part of the design</div>
+      <h2>Flat helps only when its 4× buffer is already warm</h2>
+      <table class="mode-table"><thead><tr><th>public usage mode</th><th>packed DOM</th><th>flat DOM</th><th>what changed</th></tr></thead><tbody><tr><td class="api"><code>Parser.parse p input</code><br><span class="quiet">reusable · warmed</span></td><td class="packed-cell">717 MB/s</td><td class="flat-win">742 MB/s</td><td>flat +3.5%<br><span class="quiet">effectively a tie</span></td></tr><tr><td class="api"><code>Simdjson.parse input</code><br><span class="quiet">one-shot</span></td><td class="packed-cell">646 MB/s</td><td class="flat-loss">486 MB/s</td><td class="flat-loss">flat −24.7%</td></tr></tbody></table>
+      <div class="capacity-compare"><span>packed capacity</span><div class="capacity-track"><div class="capacity-fill-packed"></div></div><span>input / 8</span><span>flat capacity</span><div class="capacity-track"><div class="capacity-fill-flat"></div></div><span>input × 4</span></div>
+      <p class="dek">Packed gives up a negligible warmed-parser win and avoids touching 32× more index storage.</p>
+      <div class="footer"><span>packed-vs-flat A/B on one revision</span><span>separate run from the opening chart—compare within rows</span></div>
+      <aside class="notes">Flag the numbers before someone else does: this is a controlled A/B between two index representations on one revision, so the packed column reads 717 and 646 rather than the 730 and 659 on the opening chart. The comparison that matters is within each row. This is the same decision expressed in the two actual public usage modes. C++ simdjson's headline path keeps one parser warm and reuses its buffers. In the comparable reusable full-DOM test, flat moves the geometric mean from 717 to 742 MB/s: a 3.5 percent difference. The one-shot convenience API must allocate and initialize flat's worst-case four-bytes-per-input-byte buffer on every call; throughput falls from 646 to 486 MB/s. Packed retains one bit per input byte, or 32 times less capacity. There is no context-free winner, but packed is the clearer overall tradeoff for both APIs.
+
+[Sources]
+- simdjson benchmark source in the vendored version
+- simdjson-oxcaml public API
+- prd/structural-index-representation-benchmark.md</aside>
+    </section>
+
+    <section class="section-divider violet-divider">
+      <div class="eyebrow violet">Implementation · stage 2</div>
+      <h1>Parsing</h1>
+      <div class="divider-sub">borrowed tape · owned <code>Json.t</code></div>
+      <div class="divider-rule"></div>
+      <aside class="notes">Packed indices are the overall choice. Now hold the scanner and parsing routines constant and compare the two output contracts.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow violet">Parse the structural stream</div>
+      <h2>With packed indices fixed, compare both output APIs</h2>
+      <div class="fork"><div class="source">structural indices<br><span class="quiet">numbers · strings · grammar</span></div><div class="stem"></div><div class="arms"></div><div class="ends"><div class="end tape-end">tape</div><div class="end dom-end">Json.t</div></div></div>
+      <aside class="notes">Both paths share the scanner and underlying atom, number, and string routines. The main controlled difference is what stage 2 materializes.
+
+[Sources]
+- proposal.tex, Parser design</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow violet">Output A · borrowed tape</div>
+      <h2>Borrowed tape peaks at 1.2 GB/s</h2>
+      <div class="big-number violet">1.2 GB/s<small>reusable borrowed tape · 0 allocated words</small></div>
+      <p class="dek">0 minor and 0 major words on all seven fixtures—<strong>measured</strong>. <code>[@zero_alloc]</code> covers the leaf helpers; the composed public path is not annotated, so the property is observed rather than certified.</p>
+      <aside class="notes">This is where the zero_alloc annotation from the primer pays off, but be careful about how far the claim reaches. Roughly eighty hot-path helpers across the tape, parser, string, and number modules carry the annotation, so those stay allocation-free by construction as the code changes. What is not annotated is the composition: Tape.Parser.parse, the recursive stage-2 functions, and the scanner entry points carry no annotation, and -zero-alloc-check all means "check every annotation present", not "check every function". So the zero words per parse on every fixture is a measurement of the whole public operation, not a certificate for it. If someone asks how I know the difference: deleting the inline annotations produced a build that still passed the zero-alloc check and allocated about a hundred and nine thousand words per parse. Zero-allocation native parsing is possible—the checker just is not currently pointed at the whole of it. The tape aliases reusable buffers and is invalidated by the next parse. This is a diagnostic result and a useful borrowed API, not a like-for-like victory over a tree producer.
+
+[Sources]
+- docs/parser-benchmark-snapshot-2026-08-15.md
+- proposal.tex, Tape API</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">Output B · owned tree</div>
+      <h2>Owned <code>Json.t</code> runs at 730 MB/s</h2>
+      <div class="split"><div class="big-number orange" style="margin-top:0;font-size:2.2em">730 MB/s<small>reusable owned Json.t</small></div><pre><code class="language-ocaml">match json with
+| Object fields -> ...
+| Array items -> ...
+| Int n -> ...
+| Float f -> ...
+| _ -> ...</code></pre></div>
+      <div class="footer"><span>3.3 → 1.2 GB/s: parser core</span><span>1.2 GB/s → 730 MB/s: owned-tree allocation</span></div>
+      <aside class="notes">The tape result establishes what the shared scanner and parsing routines can do without tree allocation. Materializing an ordinary owned Json.t lowers throughput to 730 MB/s, but it delivers the output contract established earlier: values can be retained, independently parsed, and pattern-matched. It remains substantially faster than the other OCaml parsers in the snapshot. The footer separates the two remaining questions. Follow the owned-tree cost first—beginning with how containers are built—then return to the C++ versus OxCaml parser-core gap.
+
+[Sources]
+- docs/parser-benchmark-snapshot-2026-08-15.md</aside>
+    </section>
+
+    <section class="section-divider">
+      <div class="eyebrow orange">Output cost</div>
+      <h1>Owning <code>Json.t</code></h1>
+      <div class="divider-sub">containers · scratch buffers · write barriers</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">The tape gives the shared parser-core ceiling; Json.t gives the desired owned API. Start the allocation account with container construction, which drives the scratch-buffer design and the ecosystem section that follows; numeric leaves come back at the end of that thread, next to the language extension that would fix them.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">Owned tree · container path</div>
+      <h2><code>Json.t</code> arrays use shared scratch storage</h2>
+      <div class="buffer-diagram">
+        <div class="buffer-json"><code>parse_array</code> on {&quot;x&quot;:<span class="focus">[12,true]</span>}</div>
+        <div class="buffer-sequence">
+          <div class="buffer-phase"><div class="phase-label">1 · enter array</div><div class="buffer-name">parser-owned Value_buffer</div><div class="buffer-cells"><span class="buffer-mark">mark</span><div class="buffer-cell empty">·</div><div class="buffer-cell empty">·</div></div><div class="phase-copy">mark the current scratch end</div></div>
+          <div class="buffer-arrow">→</div>
+          <div class="buffer-phase"><div class="phase-label">2 · call parse_value</div><div class="buffer-name">parser-owned Value_buffer</div><div class="buffer-cells"><span class="buffer-mark">mark</span><span class="buffer-end">end ↓</span><div class="buffer-cell">Int 12</div><div class="buffer-cell">Bool true</div></div><div class="phase-copy">append each owned <code>Json.t</code></div></div>
+          <div class="buffer-arrow">→</div>
+          <div class="buffer-phase"><div class="phase-label">3 · see ]</div><div class="buffer-name">Json.Array · exact result</div><div class="exact-array"><div class="buffer-cell">Int 12</div><div class="buffer-cell">Bool true</div></div><div class="reset-line">copy slice · reset scratch end</div></div>
+        </div>
+      </div>
+      <aside class="notes">This is the owned Json.t construction path for an array. parse_array cannot allocate its final OCaml array at the opening bracket because the length is not known until the closing bracket. It marks the current end of the parser-owned Value_buffer, calls parse_value recursively for each element, and appends the resulting owned Json.t nodes. At the closing bracket it allocates an exact array, copies the marked slice, constructs Json.Array, and truncates the scratch buffer back to the mark. Nested arrays work because each recursive call carries its own mark. Objects use the same path with an association buffer.
+
+[Sources]
+- prd/dom-parser-optimizations.md
+- docs/parser-gc-investigation.md</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">Owned tree · buffer reuse</div>
+      <h2>Reusing that scratch array makes it long-lived</h2>
+      <div class="timeline"><div class="step"><div class="dot"></div><div class="label">parse 1</div><div class="sub">grow backing array</div></div><div class="rule"></div><div class="step"><div class="dot"></div><div class="label">parse 2</div><div class="sub">reset length, keep capacity</div></div><div class="rule"></div><div class="step"><div class="dot"></div><div class="label">parse 3</div><div class="sub">young nodes → old array</div></div></div>
+      <p class="dek">Amortized growth, but every young pointer write crosses the GC barrier.</p>
+      <aside class="notes">Now reuse the Parser.t across documents. Its Value_buffer and association buffer keep their backing arrays between calls to Parser.parse: length resets, capacity remains. Those arrays eventually survive into the major heap; writing newly allocated Json.t nodes into them invokes the write barrier.
+
+[Sources]
+- docs/parser-gc-investigation.md</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">Change the allocation shape</div>
+      <h2>For small arrays, parse directly into the result</h2>
+      <div class="small-fast"><div class="small-path bad"><div class="path-title">general path</div><code>[12,true]</code><br>append twice to old scratch<br>allocate exact array<br>copy twice</div><div class="memory-arrow">→</div><div class="small-path good"><div class="path-title">≤ 4 elements</div><code>let v0 = parse_value state</code><br><code>let v1 = parse_value state</code><br><strong>one exact young array</strong></div></div>
+      <div class="result-chip">+31% on canada.json · small-container path + buffer changes</div>
+      <aside class="notes">Now the optimization follows directly from the running example. Most JSON containers are small. For arrays of up to four elements, the parser holds values in local variables while looking for the closing bracket, then emits one exact-size young array. That skips writes into the reusable old scratch array, avoids write barriers, and removes the later copy. Larger containers still fall back to the general shared-buffer path. The chip is a targeted historical experiment: the retained set also scrubbed reusable buffers once per parse rather than once per container, and used Array.sub to allocate-and-copy larger slices. A 32M minor heap later moved optimized canada.json by only about 1%, so runtime tuning was secondary to changing the allocation shape.
+
+[Sources]
+- prd/dom-parser-optimizations.md
+- docs/parser-gc-investigation.md</aside>
+    </section>
+
+    <section class="section-divider violet-divider">
+      <div class="eyebrow violet">Representation meets the ecosystem</div>
+      <h1>Language and libraries</h1>
+      <div class="divider-sub">object buffers need operations · leaves need representation</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">Small arrays improved by changing allocation shape. The two remaining pieces of the owned tree run into the ecosystem instead: object buffers need bulk operations the libraries do not provide, and numeric leaves need a representation the language does not yet have.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">Object buffers meet the libraries</div>
+      <h2>Flattening object fields exposed a library gap</h2>
+      <div class="assoc-story"><pre><code class="language-ocaml">type assoc = {
+  key : string;
+  value : Json.t;
+}
+
+assoc# array
+(* layout: value &amp; value *)</code></pre><div class="buffer-cycle"><strong>What the parser needs</strong><div class="cycle"><span>append fields</span><b>→</b><span>bulk blit</span><b>→</b><span>exact result</span></div><div class="cycle"><span>reusable scratch</span><b>→</b><span>bulk fill / clear</span></div><div class="quiet"><code>assoc#</code> saves one heap block per field. Using it here also requires efficient <code>blit</code> and <code>fill</code>.</div></div></div>
+      <aside class="notes">Objects have unknown length, so fields are first accumulated in a reusable scratch buffer and then copied into an exact-size result array. An assoc# array stores key and Json.t directly as a value-and-value product, saving one association record allocation per field. But element access is not enough: the implementation also needs bulk blit to produce the exact array and bulk fill to clear retained pointers before the buffer is reused. This sets up the library problem on the next slide.
+
+[Sources]
+- docs/parser-gc-investigation.md</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">Library gap · attempted workaround</div>
+      <h2><code>value &amp; value</code> lacked a complete bulk-operation path</h2>
+      <div class="stack-list"><div class="stack-item"><div class="layer">Library surface</div><div class="need">neither Stdlib nor Base exposed <code>blit</code> + <code>fill</code><br><span class="quiet">for arrays with layout <code>value &amp; value</code></span></div></div><div class="stack-item"><div class="layer">Custom blit</div><div class="need">bind a special external directly to <code>%arrayblit</code><br><span class="quiet">compiler emits a loop with two <code>caml_modify</code> calls per field</span></div></div><div class="stack-item"><div class="layer">Still no fill</div><div class="need">clearing scratch remained a handwritten product loop<br><span class="quiet">two more <code>caml_modify</code> calls + one poll per field</span></div></div><div class="stack-item"><div class="layer">Value arrays</div><div class="need">standard <code>caml_array_blit</code> + <code>caml_array_fill</code><br><span class="quiet">one pair of runtime calls for the complete slice</span></div></div></div>
+      <aside class="notes">Start one level above the assembly. There was no ordinary library operation to call: neither Stdlib nor the installed Base templates exposed the required blit-and-fill pair for arrays whose layout is value & value. %arrayblit entered the investigation only through a custom external declaration bound directly to this internal compiler primitive—a workaround, not an API available from Stdlib or Base.
+
+The workaround was also incomplete. Flambda2 expands product-array %arrayblit into a forward-or-backward OCaml loop. For value & value, its product store becomes two calls to caml_modify per association. There was no matching usable product-layout fill primitive, so clearing reusable scratch remained a handwritten loop with two further caml_modify calls. The linked x86 code contains those four calls and an OCaml polling check inside the per-association loop.
+
+After associations were boxed, slice_to_array could use the standard value-array path: one call to caml_array_blit and one to caml_array_fill for the entire slice. The exact result array is newly allocated, so caml_array_blit uses the runtime's direct-copy path for a young destination. Clearing the potentially old reusable scratch array still requires barrier work, but caml_array_fill performs that in its internal loop and checks for urgent GC after the batch rather than calling caml_modify and polling from OCaml for every field.
+
+This comparison changes representation as well as the copy mechanism: the boxed array copies one pointer per association, whereas the product array copies two value words and avoids the association block allocation. End-to-end results were therefore workload-dependent, ranging from a 10% loss to an 8% win in the recorded fixture table. Present this as the concrete cost that made the mature value-array path attractive, not proof that boxing is universally faster.
+
+[Sources]
+- docs/parser-gc-investigation.md
+- OxCaml Flambda2 lambda_to_lambda_transforms.ml, arrayblit_expanded
+- OxCaml runtime/array.c, caml_array_blit and caml_array_fill
+- x86 disassembly of parser_perf.exe at 3ee4e04^ and 3ee4e04 on blue, 2026-08-23</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">Parser fallback</div>
+      <h2>So the parser boxed associations</h2>
+      <div class="transform"><div class="from">one extra record block<br>per field</div><div class="arr">⇄</div><div class="to">caml_array_blit<br>+ caml_array_fill</div></div>
+      <p class="dek">Fixture-dependent: from a 10% loss to an 8% win. A tradeoff forced by the missing operations, not a universal speedup.</p>
+      <aside class="notes">The previous slide explains why this compromise exists. assoc# would remove one record per field, but the parser needs a complete buffer lifecycle and the libraries do not provide it for value-and-value products. Writing that support in Base-style template code is also harder than it should be, because repeated product kinds cannot yet be given library-defined names—there is a backup slide on that if it comes up. The implementation therefore boxed each association and recovered the mature value-array blit and fill operations. The measured effect varied by fixture; this is a tradeoff, not a universal win.
+
+[Sources]
+- docs/parser-gc-investigation.md</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">Owned tree · leaves</div>
+      <h2>Owned numeric leaves still allocate</h2>
+      <div class="transform"><div class="from">Float of<br><span class="accent">float#</span></div><div class="arr">→</div><div class="to">one constructor block<br><span class="quiet">payload stored inline</span></div></div>
+      <p class="dek">Objects hit a library gap; leaves hit a language one.</p>
+      <aside class="notes">Turn from the object buffer to the other half of the owned tree. Unboxing the payload was not enough: float# removes the separate float box, but Json.Float still needs its variant constructor block, and so does Json.Int. Number-heavy documents therefore spend substantial time allocating and collecting leaves—this is the largest single component of the tape-to-tree gap. Unlike the association buffer, no library workaround exists, because the constructor block is a language-level representation decision. That leads directly to the next slide.
+
+[Sources]
+- proposal.tex, DOM allocation
+- prd/tape-performance-investigation.md</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">Highest-value language extension</div>
+      <h2>Unboxed variants could avoid leaf blocks</h2>
+      <div class="split"><div class="panel"><h3>today</h3><p><code>Int of int</code><br><code>Float of float#</code></p><p class="quiet">constructor block per leaf</p></div><div class="panel orange"><h3>desired</h3><p>same pattern-matchable <code>Json.t</code></p><p class="accent">unboxed numeric alternatives</p></div></div>
+      <aside class="notes">This could narrow the tape/tree gap without changing how users inspect JSON. It is unimplemented, so make no speedup claim.
+
+[Sources]
+- proposal.tex, Future work</aside>
+    </section>
+
+    <section class="section-divider">
+      <div class="eyebrow orange">The other performance gap</div>
+      <h1>The parser core</h1>
+      <div class="divider-sub">OxCaml tape · C++ simdjson</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">The owned-output gap is accounted for. Return to the separate question left in the benchmark comparison: why the allocation-free OxCaml tape still trails C++ simdjson. Two slides: the whole-document measurement first, then one slice of assembly showing what that work is made of.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow orange">Back to the parser core · why 1.2 ≠ 3.3 GB/s</div>
+      <h2>The OxCaml parser simply does more work</h2>
+      <div class="split"><div class="panel"><h3>C++ simdjson</h3><div class="big-number cyan" style="font-size:1.4em;margin-top:25px">15.8<small>instructions / byte</small></div></div><div class="panel orange"><h3>OxCaml tape</h3><div class="big-number orange" style="font-size:1.4em;margin-top:25px">≈ 33<small>instructions / byte</small></div></div></div>
+      <div class="footer"><span>canada.json · complete parse</span><span>not one missing primitive</span></div>
+      <aside class="notes">The owned-output thread is now complete: leaf blocks, unknown-size containers, reusable buffers, and library coverage explain why Json.t trails the tape. This is the other gap in the comparison: why the shared OxCaml parser core, measured through the borrowed tape at 1.2 GB/s, trails C++ simdjson at 3.3 GB/s. On a complete canada.json parse the OxCaml tape path executes about 33 instructions per input byte against 15.8 for C++. Both keep the core busy, so this is not a stall: it is roughly twice the work. And it is spread across scalar parsing, tagged and control representation, runtime bookkeeping, and many small routines rather than concentrated in one missing SIMD primitive. The next slide shows what that extra work actually looks like.
+
+[Sources]
+- prd/tape-performance-investigation.md
+- proposal.tex</aside>
+    </section>
+
+    <section class="assembly-slide">
+      <div class="eyebrow orange">Parser core · one slice of that work</div>
+      <h2>The decimal-integer loop carries extra runtime work</h2>
+      <div class="asm-grid"><div class="asm-panel"><div class="asm-head"><span>C++ simdjson</span><span class="asm-n">8</span></div><div class="asm-lines"><div>.loop:</div><div class="useful">  imul   $0xa,%rdx,%rdx   # value *= 10</div><div class="useful">  movzbl %cl,%ecx          # digit</div><div class="useful">  add    $0x1,%rax          # next byte</div><div class="useful">  add    %rcx,%rdx          # value += digit</div><div class="useful">  movzbl (%rax),%r12d       # load byte</div><div class="useful">  lea    -0x30(%r12),%ecx   # byte - '0'</div><div class="useful">  cmp    $0x9,%cl           # still a digit?</div><div class="useful">  jbe    .loop</div></div></div><div class="asm-panel ocaml"><div class="asm-head"><span>OxCaml tape</span><span class="asm-n">19</span></div><div class="asm-lines"><div>.loop:</div><div class="runtime">  mov    %rsi,%rax</div><div class="runtime">  sar    $1,%rax            # untag position</div><div class="useful">  movzbq 0(%rbp,%rax),%rax  # load byte</div><div class="runtime">  lea    -0x5f(%rax,%rax),%r8 # tagged digit</div><div class="useful">  cmp    $1,%r8</div><div class="useful">  jl     .done</div><div class="useful">  cmp    $0x13,%r8</div><div class="useful">  jg     .done              # digit range</div><div class="runtime">  add    $2,%rsi            # tagged position++</div><div class="runtime">  cmp    %r13,%rsi</div><div class="runtime">  setl   %al</div><div class="runtime">  movzbq %al,%rax           # materialize bound</div><div class="runtime">  sar    $1,%r8             # untag digit</div><div class="useful">  imul   $0xa,%rdi,%rdi</div><div class="useful">  add    %r8,%rdi           # value = 10v + d</div><div class="poll">  cmp    (%r14),%r15</div><div class="poll">  jbe    .poll              # runtime poll</div><div class="runtime">  test   %rax,%rax          # that bound, as a value</div><div class="useful">  jne    .loop</div></div></div></div>
+      <div class="asm-legend"><span class="l-useful">cyan</span> parsing work · <span class="l-runtime">orange</span> tagged values / explicit bound · <span class="l-poll">violet</span> runtime poll</div>
+      <p class="dek">19 vs 8 is a count, not a time ratio: most of the extra work runs for free alongside the dependency chain. Micro-optimization is left here—which of it pays is not obvious from the source.</p>
+      <aside class="notes">Now zoom into one representative scalar routine behind that 33-versus-15.8: the decimal-integer fast path, which accumulates one byte per iteration. Both loops load a byte, test whether it is a digit, and compute value = 10 × value + digit. These are exact loop bodies from the current x86 binaries on blue: C++ haswell DOM at 0x43d5ee and the inlined OxCaml scan_digits loop in Tape.parse_number_entry at 0x51be50. Cyan is parsing work. Orange is representation/control work: untagging positions and digits, updating a tagged index, and materializing the explicit end bound. Violet is the runtime poll. Two details worth having ready if someone reads the listing closely. First, the digit test: C++ subtracts '0' and does one unsigned compare against 9, so a byte below '0' wraps around and fails the same test; the OxCaml loop carries the digit tagged as 2d+1, so it needs a signed range check at both ends—the two cmp/jump pairs against 1 and 0x13. Second, the loop exit: instead of branching on the end bound where it is computed, setl and movzbq turn it into a 0-or-1 value in %rax, and the loop back-edge then tests that value. The test is not a redundant re-read; it is the branch that the materialized boolean forced to the bottom of the loop.
+
+Then land the caveat on the visible line, because it is the thought to carry into the lessons. Nineteen against eight is a count, not a ratio of times. This loop carries a serial dependency—value becomes ten times value plus digit—and the multiply alone is about three cycles of latency, so the bookkeeping instructions issue in its shadow on a wide out-of-order core and cost close to nothing. Our own checkpoints show it: unrolling the first scalar digit added instructions and gained the largest single throughput improvement in the number-parsing work, while removing instructions elsewhere gained little. So the honest position is that there is real micro-optimization left here, but which of it pays has to be measured rather than reasoned from the source. There is a backup slide with those checkpoint numbers.
+
+[Sources]
+- proposal.tex, number-loop table
+- prd/number-parsing-performance.md
+- x86 disassembly of parser_cpp_bench.exe and parser_perf.exe on blue, 2026-08-16</aside>
+    </section>
+
+    <section class="section-divider violet-divider">
+      <div class="eyebrow violet">Synthesis</div>
+      <h1>Lessons</h1>
+      <div class="divider-sub">what worked · what took work</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">The experiments are complete. Two slides: the features that carried their weight, and the places that needed rethinking or manual effort.</aside>
+    </section>
+
+    <section>
+      <div class="eyebrow">Lessons · 1/2</div>
+      <h2>What worked</h2>
+      <div class="stack-list">
+        <div class="stack-item"><div class="layer">SIMD</div><div class="need">the paper's scanner ported straight across—vectors, intrinsics, unboxed records<br><span class="quiet">no C calls on the hot path · 6 GB/s</span></div></div>
+        <div class="stack-item"><div class="layer">Unboxed types</div><div class="need">packed <code>int64#</code> masks, unboxed loop state, <code>float#</code> payloads<br><span class="quiet">allocation removed where it actually mattered</span></div></div>
+        <div class="stack-item"><div class="layer"><code>zero_alloc</code></div><div class="need">a property the compiler rechecks, not a hope—wherever you put it<br><span class="quiet">annotated helpers stay allocation-free as the code changes</span></div></div>
+        <div class="stack-item"><div class="layer">The API</div><div class="need">an owned, pattern-matchable <code>Json.t</code> at 730 MB/s<br><span class="quiet">roughly 5× the existing OCaml parsers—the goal was reachable</span></div></div>
+      </div>
+      <aside class="notes">Start with the good news, and be specific about it. Stage 1 is the clearest result: the algorithm from the paper went into OxCaml essentially as written, using vector types, bit intrinsics, and unboxed records, with nothing dropping to C on the hot path. Unboxed types did their job wherever a representation was on a hot loop—the packed mask array, the block-loop state, the float payload in the tree. zero_alloc is worth calling out separately because it is a different kind of feature: it does not make anything faster, it stops a property from silently regressing, which is what let the tape path stay at zero words through months of edits. And the headline question of the talk got a yes: an ordinary owned tree that callers can retain and pattern-match, at roughly five times the throughput of what OCaml had.
+
+[Sources]
+- proposal.tex, Takeaways
+- docs/parser-benchmark-snapshot-2026-08-15.md</aside>
+    </section>
+
+    <section class="lessons-asks">
+      <div class="eyebrow orange">Lessons · 2/2</div>
+      <h2>What took rethinking and elbow grease</h2>
+      <div class="stack-list">
+        <div class="stack-item"><div class="layer">Trust the binary</div><div class="need">inlining and intrinsic lowering needed explicit guidance and assembly audits<br><span class="quiet">26 <code>[@inline always]</code> · a missing <code>[@@builtin]</code> worth 11%</span></div></div>
+        <div class="stack-item"><div class="layer">Port the idea</div><div class="need">flat indices → packed masks; <code>goto</code> state machine → recursive descent<br><span class="quiet">the faithful explicit-stack rewrite came out 8–10% slower</span></div></div>
+        <div class="stack-item"><div class="layer">Shape beats tuning</div><div class="need">changing what gets allocated moved more than tuning the GC that collects it<br><span class="quiet">small-container path +31% · a 32M minor heap ≈ 1%</span></div></div>
+        <div class="stack-item"><div class="layer">Fit the libraries</div><div class="need">a flatter representation is only better if its bulk operations exist<br><span class="quiet"><code>value &amp; value</code> had no blit/fill, so associations went back to boxes</span></div></div>
+        <div class="stack-item"><div class="layer">Measure</div><div class="need">instruction count is not the clock—both directions surprised us</div></div>
+      </div>
+      <div class="asks">
+        <div class="asks-label">would help<br>downstream</div>
+        <div class="asks-items"><span>unboxed variants</span><span>non-value-layout library coverage</span><span>kind &amp; layout ergonomics</span><span>more <code>zero_alloc</code>-shaped guarantees</span></div>
+      </div>
+      <aside class="notes">The other half, and the more useful half for this audience. Four of these are about expectations rather than missing features. Optimization decisions I would have assumed were automatic—inlining a tiny local helper, lowering an intrinsic to its instruction—had to be requested and then verified in the linked binary. simdjson's C++ design choices had to be ported as ideas rather than as code, and the most faithful rewrite of all, the explicit parser stack, was the one that lost. On allocation, changing the shape of what gets allocated consistently beat tuning the collector. And a representation is only as good as the operations the libraries provide for it, which is what sent the association buffer back to boxed records.
+
+The last line is the consolidated ask the abstract promised: unboxed variants would remove the per-leaf block behind the same API; broader non-value-layout coverage would have kept the flat association buffer; and better kind and layout ergonomics would make that coverage maintainable. Nothing here is new to the talk—each one was demonstrated earlier.
+
+The fourth is the one this project argues for hardest, so spend a sentence on it. Every performance problem in this talk was silent. The popcount intrinsic lowered to a software helper and produced correct results eleven percent slower. Deleting the inline annotations produced a correct parser that was up to twenty-eight percent slower and allocated a hundred and nine thousand words per parse. The zero-alloc check passed on that build, because it covers annotated leaves and not their composition. And a record declared @ local without stack_ was heap-allocated the whole time, hidden by inlining. In none of those cases did anything fail. What I wanted was not more diagnostics—the inlining report already explains every decision—but the ability to assert the properties I depend on and have the build break when they stop holding. zero_alloc is the proof that OCaml can do this; it simply is not available for call-freedom, for instruction selection, or across a composed path.
+
+BE PRECISE ABOUT "ACTIONABLE", because someone who works on Flambda2 may be in the room. The decisions are already reported: -inlining-report writes a per-round .inlining.org file covering every definition and every call site, with source spans, the estimated code size, the full cost-model parameter table, and a plain-English reason. It says "The function must be inlined at its use-sites because the function's body is smaller than the threshold size for small functions: size=66 <= large function size=100", and for a refusal, "The function cannot be inlined at its use-sites because the function's body is too large, more specifically, it is larger than the large function size: 500". There is also -flambda2-inlining-report-bin. On content that is richer than an LLVM remark, not poorer.
+
+So the ask is not observability, it is usability: a fourteen-line module with five functions produced a four-hundred-and-sixty-line report, most of it the same parameter table reprinted per entry. There is no misses-only mode the way LLVM has -Rpass-missed=inline, no way to rank by profile hotness the way -fdiagnostics-hotness-threshold does, and no viewer. That is why the disassembly route won. The lowering half of the ask has no equivalent anywhere—LLVM does not warn either when __builtin_popcountll silently expands to a twenty-instruction sequence because the target lacks popcnt.
+
+And the ask is not "raise the threshold" either—I measured that. With -O3 and the annotations deleted the parser loses eleven to twenty-eight percent and the zero-allocation tape path starts allocating about a hundred and nine thousand minor words per parse; -O2 and -O3 are otherwise a wash against the default build. The benefit the annotations buy is caller-side: an unboxed number stays unboxed only while the call around it disappears. A benefit estimate computed from the callee's own body cannot see that, which is why no preset substitutes for the annotation. Backup slide has the table.
+
+[Sources]
+- proposal.tex, Guarantees and Heuristics, Takeaways
+- prd/tape-performance-investigation.md
+- prd/structural-index-representation-benchmark.md
+- docs/parser-gc-investigation.md
+- review.md, request for a consolidated list</aside>
+    </section>
+
+    <section class="section-divider">
+      <div class="eyebrow orange">Thank you</div>
+      <h1>Questions?</h1>
+      <div class="divider-sub">github.com/artempyanykh/simdjson-oxcaml</div>
+      <div class="divider-rule"></div>
+      <div class="backup-index">backup slides: benchmark setup · per-fixture results · what each row owns · structural-index matrix · <span style="color:#e85d2a">does -O3 replace the annotations?</span> · instructions vs the clock · conformance · template kinds · agents · what's next</div>
+      <aside class="notes">Leave this up during questions. The list is a reminder of which backup slide to jump to; the deck order after this slide follows the same order as the list.
+
+[Sources]
+- review.md, reviewer questions</aside>
+    </section>
+
+    <section class="section-divider violet-divider">
+      <div class="eyebrow violet">Appendix</div>
+      <h1>Backup</h1>
+      <div class="divider-sub">methodology · full results · scope</div>
+      <div class="divider-rule"></div>
+      <aside class="notes">Everything after this point is for questions only.</aside>
+    </section>
+
+    <section class="backup-slide">
+      <div class="eyebrow">Backup · how the numbers were produced</div>
+      <h2>Benchmark setup</h2>
+      <div class="stack-list">
+        <div class="stack-item"><div class="layer">Machine</div><div class="need">Intel Core i7-12700K · pinned to logical CPU 0, a Golden Cove P-core<br><span class="quiet">12 MiB L2, 25 MiB shared L3 · 62 GiB RAM, no swap in use</span></div></div>
+        <div class="stack-item"><div class="layer">Run conditions</div><div class="need"><code>performance</code> governor and EPP · ASLR off via <code>setarch -R</code><br><span class="quiet">turbo enabled, frequency not locked · machine lightly loaded</span></div></div>
+        <div class="stack-item"><div class="layer">Toolchain</div><div class="need">OxCaml <code>5.2.0+ox</code> · Dune 3.22.2 · GCC 15.2.1, CMake Release<br><span class="quiet">Fedora 43, Linux 6.19.14 · commit <code>423c6f2</code>, 2026-08-15</span></div></div>
+        <div class="stack-item"><div class="layer">Method</div><div class="need">Bechamel for OCaml, Google Benchmark for C++ · fixtures loaded before timing<br><span class="quiet">per-case resource isolation · geomean over 7 <code>simdjson-data</code> inputs</span></div></div>
+      </div>
+      <div class="footer"><span>point-in-time snapshot, not a stable guarantee</span><span>small differences are noise</span></div>
+      <aside class="notes">This answers the machine-and-versions question from the reviews. Two known variance sources are removed: the performance governor and ASLR. Turbo was left enabled and the frequency was not locked, and temperature and instantaneous clock were not recorded, so treat small gaps as noise rather than regressions. Each parser is driven by its own harness—Bechamel on the OCaml side, Google Benchmark on the C++ side—with fixtures read into memory before any timed work. The 15 August run followed a fix for cross-case resource retention in the Bechamel harness: before it, warmed buffers and inputs for every case stayed live throughout Benchmark.all, and changing the selected case count shifted results repeatably. After the fix the spread across case selections is below 1%.
+
+[Sources]
+- docs/parser-benchmark-snapshot-2026-08-15.md
+- prd/benchmarking.md</aside>
+    </section>
+
+    <section class="backup-slide">
+      <div class="eyebrow">Backup · geomean hides the spread</div>
+      <h2>Per-fixture throughput</h2>
+      <table class="benchmark-table"><thead><tr><th>fixture</th><th>Yojson.Safe</th><th>ox DOM</th><th>ox tape</th><th>RapidJSON</th><th>C++ simdjson</th></tr></thead><tbody>
+        <tr><td>apache_builds</td><td>204</td><td>678</td><td class="winner">1,555</td><td>867</td><td>5,835</td></tr>
+        <tr><td>citm_catalog</td><td>183</td><td>1,604</td><td class="winner">2,072</td><td>1,649</td><td>5,556</td></tr>
+        <tr><td>gsoc-2018</td><td>347</td><td>1,087</td><td class="winner">2,257</td><td>1,092</td><td>6,522</td></tr>
+        <tr><td>twitter</td><td>210</td><td>1,112</td><td class="winner">1,428</td><td>1,048</td><td>5,515</td></tr>
+        <tr><td>numbers</td><td>111</td><td>557</td><td class="bad">894</td><td>1,047</td><td>1,640</td></tr>
+        <tr><td>canada</td><td>74</td><td>434</td><td class="bad">759</td><td>990</td><td>1,525</td></tr>
+        <tr><td>marine_ik</td><td>76</td><td>346</td><td class="bad">668</td><td>885</td><td>1,605</td></tr>
+        <tr><td><strong>geomean</strong></td><td><strong>150</strong></td><td><strong>730</strong></td><td><strong>1,248</strong></td><td><strong>1,060</strong></td><td><strong>3,345</strong></td></tr>
+      </tbody></table>
+      <div class="table-key"><span>MB/s · reusable OCaml rows</span><span>orange: tape ahead of RapidJSON · violet: tape behind it</span></div>
+      <aside class="notes">Use this whenever someone asks whether the geometric mean is hiding something—it is. On the four object- and string-heavy fixtures the borrowed tape is comfortably ahead of RapidJSON. On the three number-heavy ones—numbers, canada, marine_ik—it is behind, and those are exactly the fixtures where the C++ parsers also lose most of their lead, because number parsing is scalar work rather than SIMD work. The geomean row is the number quoted on the opening chart.
+
+[Sources]
+- docs/parser-benchmark-snapshot-2026-08-15.md</aside>
+    </section>
+
+    <section class="backup-slide">
+      <div class="eyebrow">Backup · do the rows do the same work?</div>
+      <h2>What each row produces</h2>
+      <div class="stack-list">
+        <div class="stack-item"><div class="layer">Owned trees</div><div class="need">Yojson · Jsont · <code>simdjson-ox</code> DOM · RapidJSON · nlohmann<br><span class="quiet">caller keeps the result; parser state can be discarded</span></div></div>
+        <div class="stack-item"><div class="layer">Borrowed results</div><div class="need"><code>simdjson-ox</code> tape · C++ simdjson DOM · sajson<br><span class="quiet">handles into parser-owned storage, invalidated by the next parse</span></div></div>
+        <div class="stack-item"><div class="layer">Held constant</div><div class="need">full materialization, never validation-only or scan-only<br><span class="quiet">fixtures preloaded · buffers hot · harness picks iteration counts</span></div></div>
+        <div class="stack-item"><div class="layer">Not equivalent</div><div class="need">checksums are per-driver smoke guards, not a cross-parser proof<br><span class="quiet">large integer literals can differ; UTF-8 validation strictness differs</span></div></div>
+      </div>
+      <p class="dek">The honest comparison is owned-vs-owned; the tape row is on the chart to isolate what materializing a tree costs.</p>
+      <aside class="notes">This is the equivalence question from the third review, and it deserves a straight answer: the rows are not all doing identical work. Every row fully materializes its result rather than validating or tokenizing only, and every row is measured with fixtures already in memory and buffers hot. But the output contracts differ, which is the whole point of the talk: the tape and the C++ simdjson DOM hand back handles into parser-owned storage, while the tree producers hand back something the caller owns. That is why the deck never claims the tape beats RapidJSON at the same job. The checksums in the snapshot are per-driver smoke guards that catch a driver silently parsing nothing; they are not aligned closely enough across languages to prove equivalence, particularly for large integer literals.
+
+[Sources]
+- prd/benchmarking.md, parser benchmark goals
+- docs/parser-benchmark-snapshot-2026-08-15.md</aside>
+    </section>
+
+    <section class="backup-slide">
+      <div class="eyebrow">Backup · what packed costs the iterator</div>
+      <h2>Structural index: production, consumption, memory</h2>
+      <table class="benchmark-table"><thead><tr><th>allocation · workload</th><th>packed</th><th>flat</th><th>Dynarray</th></tr></thead><tbody>
+        <tr><td>reusable · produce</td><td class="winner">5,992</td><td>4,103</td><td class="bad">1,022</td></tr>
+        <tr><td>reusable · produce + consume</td><td>3,168</td><td class="winner">3,499</td><td class="bad">923</td></tr>
+        <tr><td>one-shot · produce</td><td class="winner">4,947</td><td>1,050</td><td class="bad">352</td></tr>
+        <tr><td>one-shot · produce + consume</td><td class="winner">2,852</td><td>1,001</td><td class="bad">339</td></tr>
+      </tbody></table>
+      <div class="stack-list" style="margin-top:26px">
+        <div class="stack-item"><div class="layer">Decode cost</div><div class="need">consuming every index costs packed 47% of its production throughput<br><span class="quiet">5.99 → 3.17 GB/s · flat then leads by about 10%</span></div></div>
+        <div class="stack-item"><div class="layer">Retained memory</div><div class="need"><code>canada.json</code>: packed 281 KB · flat 9.0 MB · Dynarray 448 K slots<br><span class="quiet">packed and flat allocate zero GC words per reusable scan; Dynarray does not</span></div></div>
+      </div>
+      <aside class="notes">This is the first reviewer's question: was the extra iterator work of the packed representation measured, or was the memory win simply assumed dominant? It was measured. Decoding set bits while parsing costs packed nearly half its raw production throughput, and once every index is consumed from warm storage, flat is about ten percent ahead. Packed still wins overall because that comparison assumes the reservation is already paid for: in one-shot use flat must allocate and zero a four-bytes-per-input-byte buffer on every call, and Array.create initializes the whole reservation, not just the prefix that gets written. Dynarray also never reaches zero allocation when reused, because clear replaces live slots with Empty and every later add_last allocates a fresh Elem block.
+
+[Sources]
+- prd/structural-index-representation-benchmark.md</aside>
+    </section>
+
+    <section class="backup-slide lessons-asks">
+      <div class="eyebrow">Backup · could a preset have done it instead?</div>
+      <h2>No: <code>-O3</code> does not replace the annotations</h2>
+      <table class="benchmark-table"><thead><tr><th>build</th><th>DOM numbers</th><th>DOM twitter</th><th>tape numbers</th><th>tape twitter</th></tr></thead><tbody>
+        <tr><td>current (default preset, annotated)</td><td>508</td><td>1,073</td><td>901</td><td>1,477</td></tr>
+        <tr><td><code>-O2</code>, annotated</td><td>499</td><td>1,076</td><td>897</td><td>1,443</td></tr>
+        <tr><td><code>-O3</code>, annotated</td><td>499</td><td>1,079</td><td>896</td><td>1,441</td></tr>
+        <tr><td class="bad"><code>-O3</code>, annotations removed</td><td class="bad">366 <span class="quiet">−28%</span></td><td class="bad">957 <span class="quiet">−11%</span></td><td class="bad">657 <span class="quiet">−27%</span></td><td class="bad">1,205 <span class="quiet">−18%</span></td></tr>
+        <tr><td class="bad">…plus explicit <code>exclave_ stack_</code></td><td>—</td><td>—</td><td class="bad">628 <span class="quiet">0 words</span></td><td class="bad">1,205 <span class="quiet">0 words</span></td></tr>
+      </tbody></table>
+      <div class="table-key"><span>MB/s · median of three pinned-CPU runs · identical checksums</span><span>the preset itself is a wash: ±2%</span></div>
+      <div class="asks">
+        <div class="asks-label">the annotations<br>do two jobs</div>
+        <div class="asks-items"><span>allocation-free <em>by accident</em>: inlining deletes the records</span><span>fast: scalar replacement beats stack records</span></div>
+      </div>
+      <p class="dek">Five number-scanning records were <code>@ local</code> without <code>stack_</code>, so they were heap-allocated: 0 → ~109,000 words once inlining stopped removing them. Adding <code>exclave_ stack_</code> restores 0 words <em>by construction</em>—but not the speed.</p>
+      <aside class="notes">This is the answer to "did you just forget to turn on optimization?", and it is worth having ready because it is the first thing an optimizer person will ask.
+
+Three results. First, the annotations are load-bearing: delete them and the parser loses eleven to twenty-eight percent, worst on the number-heavy fixtures and on the tape path. Second, the preset itself is a wash—-O2 and -O3 land within about two percent of the default build either way, and the two are indistinguishable from each other, so the extra inlining depth in -O3 found nothing. Third, and most telling, allocation comes back: a path that reports zero words per parse starts allocating roughly a hundred and nine thousand minor words per parse.
+
+That third result is the real point, and the allocation profile says exactly where it comes from. Nearly all of it is number scanning: scan_digits, scan_integer and scan_exponent dominate the new allocation on both fixtures. Those functions deliberately return local, stack-allocated records—digit_run, integer_part, exponent_part—and the source relies on inlining to flatten that chain into the caller. Delete the annotations and Flambda2 does not reconstruct the flattened path, so numbers start bouncing between boxed and unboxed form across each call boundary: Int64_u and Float_u work on unboxed values, and a value that has to survive a real call gets boxed on the way out and unboxed on the way back. The flat representation survives only as long as the call disappears—which is why no threshold setting substitutes for the annotation.
+
+The fourth row is the follow-up experiment, and it separates two things the annotations were doing at once. Those five records were declared @ local but built without stack_, so they were heap blocks that merely satisfied a local mode—and the parser was allocation-free only because inlining removed them before they were ever built. Adding exclave_ stack_ to all five makes the allocation-free property hold by construction: zero words on both fixtures with every inline annotation still deleted, and the number-scanning hotspots vanish from the allocation profile. But the throughput does not come back—628 against 898, if anything slightly slower than the heap version on numbers.json. Inlining is not merely relocating those records, it is eliminating them by scalar replacement, and a stack region with entry, exit and a real call boundary still costs more than no record at all. Worth saying out loud: allocation-free is not the same thing as fast.
+
+Be straight about the zero_alloc question, because it is the obvious follow-up: how can an allocating build pass the check? Because -zero-alloc-check all means "check every annotation that is present", not "check every function". The annotations sit on leaf helpers—peek_index, the tape-word operations, the SIMD helpers, scan_block—and those remain allocation-free in isolation, so the check legitimately passes. Tape.Parser.parse, the recursive stage-2 functions, and the scanner entry points carry no annotation at all, so nothing certifies their composition. The accurate contract today is that the reusable tape path is empirically allocation-free with the project's inlining structure, not statically certified. The fix is available and worth stating as the ask: put [@zero_alloc opt] on an internal function spanning the whole successful hot path, and this experiment would have failed to compile instead of silently producing an allocating parser.
+
+[Sources]
+- pinned-CPU A/B on blue, three runs per configuration, medians reported
+- dune ocamlopt_flags: the default :standard is -g, with no -O2/-O3 in any profile</aside>
+    </section>
+
+    <section class="backup-slide">
+      <div class="eyebrow">Backup · why the digit loop resists tuning</div>
+      <h2>Instruction count is not the clock</h2>
+      <table class="benchmark-table"><thead><tr><th>number-parsing checkpoint</th><th>tape MB/s</th><th>instructions</th></tr></thead><tbody>
+        <tr><td>investigation baseline</td><td>842</td><td>45.14B</td></tr>
+        <tr><td>remove redundant finite checks</td><td>857</td><td>43.94B</td></tr>
+        <tr><td class="winner">unroll first scalar tail digit</td><td class="winner">885</td><td class="winner">44.34B</td></tr>
+        <tr><td>outline cold path, trim scan result</td><td>899</td><td>42.13B</td></tr>
+      </tbody></table>
+      <div class="table-key"><span>reusable tape · <code>numbers.json</code></span><span>the largest gain <em>added</em> instructions</span></div>
+      <p class="dek">The loop is limited by the <code>10·v + d</code> dependency chain, not by how many instructions surround it.</p>
+      <aside class="notes">This is the evidence behind the caveat on the assembly slide. Read the third row aloud: unrolling the first scalar digit retired more instructions than the checkpoint before it and produced the largest single throughput gain in the sequence, because it removed a loop back edge and its poll from the common post-SWAR tail. Meanwhile three billion fewer instructions across the whole sequence—about seven percent—bought roughly seven percent of throughput, so the coupling is weak and unreliable.
+
+The mechanism is the serial dependency: each digit needs the previous accumulator value, and the multiply is about three cycles of latency, so roughly four cycles per digit is the floor regardless of what else is in flight. Independent bookkeeping issues inside that window.
+
+If asked what would actually help: shorten the chain rather than the listing—split accumulation into two independent chains combined at the end, widen SWAR coverage so fewer digits go through the scalar tail at all, or remove more back edges. Note the tension with the whole-document number: at parser scale, roughly twice the instructions does track roughly the throughput gap, because that work is spread over many independent routines. Inside one dependent loop it does not. Both statements are true at their own scale.
+
+[Sources]
+- prd/number-parsing-performance.md, retained checkpoints
+- proposal.tex, number-loop discussion</aside>
+    </section>
+
+    <section class="backup-slide">
+      <div class="eyebrow">Backup · correctness</div>
+      <h2>Conformance and tests</h2>
+      <div class="stack-list">
+        <div class="stack-item"><div class="layer">jsonchecker</div><div class="need">105 / 105 conformant · 0 internal exceptions<br><span class="quiet">vendored upstream fixtures, reported as an expect test that tracks drift</span></div></div>
+        <div class="stack-item"><div class="layer">Cross-path parity</div><div class="need">tape parser vs tree parser on every fixture<br><span class="quiet">reusable parser vs stateless parser on every fixture</span></div></div>
+        <div class="stack-item"><div class="layer">Scanner</div><div class="need">SIMD scanner vs an independent scalar scanner<br><span class="quiet">equivalence checked on representative inputs</span></div></div>
+        <div class="stack-item"><div class="layer">Property tests</div><div class="need">generated valid JSON compared against expected DOM values<br><span class="quiet">plus numeric and string edge-case suites</span></div></div>
+      </div>
+      <aside class="notes">Worth having ready because a fast parser that is subtly wrong is not interesting. The conformance suite reports unexpected passes as well as unexpected failures, so the number cannot drift silently. The parity tests matter for this talk specifically: the tape and tree paths must agree, and the reusable parser must agree with the stateless one, otherwise the throughput comparison between them would be comparing different behaviour. Known weak spot, if asked: error reporting is still rudimentary—failures come back as an invalid-JSON result without a stable position or category.
+
+[Sources]
+- simdjson-oxcaml/README.md, testing section
+- test/conformance_jsonchecker.ml, tape_integration_tests.ml, reusable_parser_test.ml, scanner_equivalence.ml</aside>
+    </section>
+
+    <section class="backup-slide">
+      <div class="eyebrow">Backup · trying to add the missing library case</div>
+      <h2>Template case lists cannot name repeated product kinds</h2>
+      <div class="kind-alias-layout">
+        <div class="kind-builtins"><h3>built-in abbreviations</h3><pre><code class="language-ocaml">value
+immediate
+immutable_data</code></pre><div class="kind-status">Named kind-abbreviation syntax is already part of the grammar.</div></div>
+        <div class="kind-template"><h3>what templates still require</h3><pre><code class="language-ocaml">[@@kind k =
+  (value,
+   value &amp; value,
+   (value &amp; value) &amp; value, ...)]</code></pre><div class="kind-status">The public syntax exposes only the fixed built-ins. These repeated product kinds <strong>cannot be given library-defined names</strong> yet.</div></div>
+      </div>
+      <aside class="notes">Pull this up if someone asks why the missing blit-and-fill pair was not simply written. This is a narrower limitation than “aliases do not exist.” OxCaml's kind grammar already has a kind-abbreviation category, including fixed built-ins such as value and immutable_data. The current user-facing grammar exposes only those built-ins; the documentation says user-defined kind abbreviations are expected eventually. Therefore Base-style ppx_template code cannot give readable library-defined names to repeated product kinds and must spell those expressions out in each enumeration. That makes it harder to keep a coherent create/access/copy/slice/fill/clear family in sync.
+
+[Sources]
+- proposal.tex, template ergonomics
+- Base template implementations
+- https://oxcaml.org/documentation/kinds/syntax/
+- https://oxcaml.org/documentation/templates/02-reference/</aside>
+    </section>
+
+    <section class="backup-slide">
+      <div class="eyebrow">Backup · coding agents on this project</div>
+      <h2>Delegate what a benchmark can check</h2>
+      <p class="dek">Codex harness driven by an OCaml/OxCaml skill: <code>github.com/artempyanykh/ocaml-codex</code><br><span class="quiet">the same idea as <code>avsm/ocaml-claude-marketplace</code> for Claude Code</span></p>
+      <div class="stack-list">
+        <div class="stack-item"><div class="layer">Delegated</div><div class="need">work with an automatic oracle—tests, benchmarks, harness and corpus wiring<br><span class="quiet">plus anything I had no strong opinion about</span></div></div>
+        <div class="stack-item"><div class="layer">Kept</div><div class="need">anything needing subjective judgement: API shape, representation, what to measure<br><span class="quiet">agent output here was consistently poor</span></div></div>
+        <div class="stack-item"><div class="layer">Still steered</div><div class="need">even validatable work: bogus benchmark results, or circling the same dead end<br><span class="quiet">the strongest models included</span></div></div>
+        <div class="stack-item"><div class="layer">Best use</div><div class="need">fuzzy search—finding things across an unfamiliar toolchain, package, and compiler</div></div>
+      </div>
+      <div class="result-chip">net: a real time saving</div>
+      <aside class="notes">This answers the workflow question from the third review. The setup is the Codex harness with the ocaml-codex skill, which is the same idea as the OCaml marketplace for Claude Code.
+
+The rule that emerged is the one in the title: delegate work that has an automatic oracle. Tests, benchmarks, and harness or corpus wiring can be checked by running them, so a wrong answer surfaces immediately. Anything calling for subjective judgement—what the public API should look like, which representation to pick, which experiment is worth running—came back consistently poor.
+
+Two honest caveats. First, even inside the validatable category the results needed real steering: benchmark numbers that were simply bogus, or an agent circling the same dead end, and that includes the strongest models available. Second, the standout use was not writing code at all—it was fuzzy search, locating things across an unfamiliar toolchain, package set, and compiler source, which is exactly what the popcount and Flambda2 lowering investigations needed.
+
+Net, it saved time. The arbiter never moved though: the benchmark and the linked binary decided, whoever wrote the diff. The plans in prd/ and the investigations in docs/ are all committed if anyone wants to see the trail.
+
+[Sources]
+- https://github.com/artempyanykh/ocaml-codex
+- https://github.com/avsm/ocaml-claude-marketplace
+- simdjson-oxcaml AGENTS.md, prd/, docs/
+- review.md, third review</aside>
+    </section>
+
+    <section class="backup-slide">
+      <div class="eyebrow">Backup · scope today</div>
+      <h2>Limitations and what comes next</h2>
+      <div class="stack-list">
+        <div class="stack-item"><div class="layer">Status</div><div class="need">no production or downstream use—this is an experience report, not a released library<br><span class="quiet">source is public; the parser exists to answer the question in this talk</span></div></div>
+        <div class="stack-item"><div class="layer">Errors</div><div class="need">failures return <code>Invalid_json</code> without a stable position or category<br><span class="quiet">known follow-up; conformance is complete but diagnostics are not</span></div></div>
+        <div class="stack-item"><div class="layer">CPU targets</div><div class="need">SSE only — the 64-byte block is four 128-bit <code>int8x16#</code> registers<br><span class="quiet">every vector op goes through <code>Ocaml_simd_sse</code></span></div></div>
+        <div class="stack-item"><div class="layer">AVX</div><div class="need">available in <code>ocaml_simd</code>, unused here — a to-do, not a blocker<br><span class="quiet">wider blocks would also need runtime CPU feature dispatch to select the path</span></div></div>
+        <div class="stack-item"><div class="layer">ARM</div><div class="need">blocked on upstream <code>ocaml_simd</code> exposing the interfaces</div></div>
+        <div class="stack-item"><div class="layer">Representation</div><div class="need">unboxed variants would remove the per-leaf block behind the same API<br><span class="quiet">designed upstream, not yet implemented</span></div></div>
+      </div>
+      <aside class="notes">The portability answer matters for anyone thinking of using this. Be precise about the AVX point: the scanner is built entirely on SSE 128-bit vectors—one 64-byte block is four int8x16# registers—and nothing in lib/ touches Ocaml_simd_avx. The 256-bit types are already available in the package, so this is unfinished work on my side rather than a missing capability; taking advantage of them also means adding runtime CPU feature detection to choose the path, which does not exist yet. ARM is the one that genuinely waits on upstream.
+
+The third review also asks whether the parser has seen production or downstream use: it has not. Say so plainly—it is a research vehicle for the question this talk asks, the source is public, and the error-reporting gap above is one concrete reason it is not something to depend on yet.
+
+[Sources]
+- simdjson-oxcaml/README.md, current limitations and portability
+- proposal.tex, future work</aside>
+    </section>
+
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    width: 1600,
+    height: 900,
+    margin: 0,
+    controls: false,
+    progress: true,
+    center: false,
+    slideNumber: 'c/t',
+    transition: 'fade',
+    backgroundTransition: 'fade',
+    plugins: [ RevealNotes, RevealHighlight ]
+  });
+</script>
+</body>
+</html>
