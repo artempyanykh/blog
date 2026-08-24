@@ -61,6 +61,12 @@
     .hero .subtitle { position: relative; z-index: 1; margin-top: 28px; width: 790px; font-size: .58em; line-height: 1.35; color: var(--muted); }
     .hero .byline { margin-top: 76px; font-size: .48em; }
     .hero .repo { margin-top: 10px; font: .36em "JetBrains Mono", monospace; color: var(--cyan); }
+    .slide-qr { position: absolute; z-index: 2; padding: 5px; border-radius: 5px; background: #fff; line-height: 0; }
+    .slide-qr img { display: block; }
+    .title-qr { right: 76px; bottom: 56px; }
+    .questions-qr { right: 112px; top: 340px; }
+    .questions-url { position: absolute; right: 70px; top: 485px; width: 300px; text-align: center; font: 500 .25em/1.35 "JetBrains Mono", monospace; color: #aeb3bd; }
+    .questions-name { margin-top: 26px; font-size: .52em; color: #f7f2e9; }
 
     .section-divider { display: flex !important; flex-direction: column; justify-content: center; background: var(--dark) !important; color: #f7f2e9; }
     .section-divider::after { content: ""; position: absolute; right: 92px; top: 108px; width: 250px; height: 250px; border: 38px solid currentColor; opacity: .07; border-radius: 50%; }
@@ -513,6 +519,7 @@
       <img class="hero-art" src="ocaml-workshop-2026-assets/ocaml-camel-rusted-gear.png" alt="A geometric orange camel framed by a rusted gear">
       <div class="byline">Artem Pianykh</div>
       <div class="repo">github.com/artempyanykh/simdjson-oxcaml</div>
+      <div id="qr-title" class="slide-qr title-qr" aria-label="QR code linking to the web version of these slides"></div>
       <aside class="notes">This is an experience report about a complete parser, not a catalogue of compiler features.
 
 [Sources]
@@ -1284,8 +1291,11 @@ And the ask is not "raise the threshold" either—I measured that. With -O3 and 
     <section class="section-divider">
       <div class="eyebrow orange">Thank you</div>
       <h1>Questions?</h1>
-      <div class="divider-sub">github.com/artempyanykh/simdjson-oxcaml</div>
+      <div class="questions-name">Artem Pianykh</div>
+      <div class="divider-sub" style="margin-top: 12px;">github.com/artempyanykh/simdjson-oxcaml</div>
       <div class="divider-rule"></div>
+      <div id="qr-questions" class="slide-qr questions-qr" aria-label="QR code linking to the web version of these slides"></div>
+      <div class="questions-url">pianykh.com/blog/talks/<br>ocaml-workshop-2026.html</div>
       <div class="backup-index">backup slides: benchmark setup · per-fixture results · what each row owns · structural-index matrix · <span style="color:#e85d2a">does -O3 replace the annotations?</span> · instructions vs the clock · conformance · template kinds · agents · what's next</div>
       <aside class="notes">Leave this up during questions. The list is a reminder of which backup slide to jump to; the deck order after this slide follows the same order as the list.
 
@@ -1512,6 +1522,7 @@ The third review also asks whether the parser has seen production or downstream 
 
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/dist/reveal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/plugin/notes/notes.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.2.1/plugin/highlight/highlight.js"></script>
@@ -1529,6 +1540,14 @@ The third review also asks whether the parser has seen production or downstream 
     backgroundTransition: 'fade',
     plugins: [ RevealNotes, RevealHighlight ]
   });
+
+  (function() {
+    var qr = qrcode(0, 'M');
+    qr.addData('https://pianykh.com/blog/talks/ocaml-workshop-2026.html');
+    qr.make();
+    document.getElementById('qr-title').innerHTML = qr.createImgTag(3, 0);
+    document.getElementById('qr-questions').innerHTML = qr.createImgTag(4, 0);
+  })();
 </script>
 </body>
 </html>
