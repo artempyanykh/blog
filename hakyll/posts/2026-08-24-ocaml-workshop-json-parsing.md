@@ -10,11 +10,11 @@ title: "JSON parsing in OxCaml: fast, but not too fast"
 
 ❤️ Unboxed types and SIMD are brilliant. More, please!
 
-🤔 Ecosystem maturity and support for non-value layouts are rough.
+🤔 Ecosystem maturity and support for non-value layouts are still rough.
 
-💀 Templates are questionable. Layout polymorphism when?
+💀 Templates feel awkward. Layout polymorphism when?
 
-Oh, and this thing about a GC'd language with an escape hatch when you need more performance? Yeah, I'm really not sure.
+And as for a GC'd language with a clean escape hatch when you need more performance... I'm not so sure now.
 
 <!--more-->
 
