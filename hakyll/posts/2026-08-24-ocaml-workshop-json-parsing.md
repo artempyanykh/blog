@@ -269,7 +269,7 @@ I didn't want to copy simdjson blindly. Its borrowed DOM is a natural fit for it
 
 So [simdjson-oxcaml][simdjson-oxcaml][^fn-simdjson-oxcaml] exposes two APIs. The main one returns that owned `Json.t`; a lower-level borrowed tape isolates the cost of materializing the tree and makes comparison with C++ simdjson fairer. On simdjson's benchmark corpus, the owned parser reaches about 730 MB/s—roughly five times the throughput of existing OCaml parsers—and the tape reaches 1.25 GB/s. That's the *fast* part. The *not too fast* part is that even the borrowed tape remains 2.7 times slower than the original C++ implementation.
 
-SIMD vectors, unboxed types, and bit-manipulation intrinsics let me express the algorithm directly in OxCaml. Making it fast still required profiling, benchmarking, and reading disassembly. CPU-level techniques transferred from C++. Allocation strategies had to fit OCaml's garbage collector. Some combinations of the new features also needed extensive annotations or library workarounds.
+SIMD vectors, unboxed types, and bit-manipulation intrinsics let me express the algorithm directly in OxCaml. Making it fast still required profiling, benchmarking, and reading disassembly. CPU-level techniques transferred from C++. Allocation strategies had to fit OCaml's garbage collector. Some combinations of the new features also needed extensive annotations or library workarounds. The result was not C++ in OCaml syntax; it was a faster OCaml program with OCaml-shaped tradeoffs.
 
 # A simdjson primer
 
